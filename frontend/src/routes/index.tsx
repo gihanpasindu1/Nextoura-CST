@@ -1,0 +1,1035 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { useMemo, useState } from "react";
+import {
+  LayoutDashboard,
+  Plane,
+  Users,
+  BarChart3,
+  Settings,
+  Search,
+  Bell,
+  Sun,
+  Moon,
+  ChevronDown,
+  MapPin,
+  Calendar,
+  Phone,
+  Mail,
+  CreditCard,
+  AlertTriangle,
+  Info,
+  CheckCircle2,
+  Building2,
+  UserPlus,
+  Briefcase,
+  ArrowLeft,
+  MessageCircle,
+  Send,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
+import { useTheme } from "@/lib/theme";
+import {
+  AGENTS,
+  DRIVERS,
+  TOURISTS,
+  NOTIFICATIONS,
+  flagEmoji,
+  type Tourist,
+  type TourStatus,
+} from "@/lib/tourism-data";
+import { AddTouristSheet } from "@/components/AddTouristSheet";
+import { toast } from "sonner";
+
+export const Route = createFileRoute("/")({
+  head: () => ({
+    meta: [
+      { title: "Horizon Travel — Operations Console" },
+      { name: "description", content: "Tour operator dashboard for managing tourists, agents and itineraries." },
+    ],
+  }),
+  component: Console,
+});
+
+type NavKey = "dashboard" | "tours" | "leads" | "agents" | "reports" | "settings";
+
+const NAV: { key: NavKey; label: string; icon: typeof LayoutDashboard }[] = [
+  { key: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { key: "tours", label: "Active Tours", icon: Plane },
+  { key: "leads", label: "Inquiries", icon: Users },
+  { key: "agents", label: "Agent Management", icon: Briefcase },
+  { key: "reports", label: "Reports", icon: BarChart3 },
+  { key: "settings", label: "Settings", icon: Settings },
+];
+
+function Console() {
+  const [nav, setNav] = useState<NavKey>("tours");
+  const [agentFilter, setAgentFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | TourStatus>("all");
+  const [driverFilter, setDriverFilter] = useState("All Drivers");
+  const [query, setQuery] = useState("");
+  const [selectedId, setSelectedId] = useState<string>("t1");
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [isAddClientOpen, setIsAddClientOpen] = useState(false);
+  const [addClientMode, setAddClientMode] = useState<"lead" | "confirmed">("confirmed");
+  const [editingTourist, setEditingTourist] = useState<Tourist | undefined>(undefined);
+  const { theme, toggle } = useTheme();
+
+  const [touristsList, setTouristsList] = useState(TOURISTS);
+  const [notifications, setNotifications] = useState<{ id: string; touristId: string; type: string; title: string; body: string; time: string; resolved?: boolean }[]>(NOTIFICATIONS);
+
+  const alertCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const n of notifications) {
+      if (!n.resolved && n.touristId && n.touristId !== "all" && (n.type === "alert" || n.type === "warn")) {
+        counts[n.touristId] = (counts[n.touristId] || 0) + 1;
+      }
+    }
+    return counts;
+  }, [notifications]);
+
+  const filtered = useMemo(() => {
+    const results = touristsList.filter((t) => {
+      // Filter by nav section: leads show isLead=true, tours show isLead=falsy
+      if (nav === "leads") {
+        if (!t.isLead) return false;
+      } else if (nav === "tours") {
+        if (t.isLead) return false;
+      }
+
+      if (agentFilter !== "all") {
+        const agent = AGENTS.find((a) => a.id === agentFilter);
+        if (agent && t.agent !== agent.name) return false;
+      }
+      if (statusFilter !== "all" && t.status !== statusFilter) return false;
+      if (driverFilter !== "All Drivers" && t.driver !== driverFilter) return false;
+      if (query.trim()) {
+        const q = query.toLowerCase();
+        if (
+          !t.name.toLowerCase().includes(q) &&
+          !t.country.toLowerCase().includes(q) &&
+          !t.passport.toLowerCase().includes(q)
+        )
+          return false;
+      }
+      return true;
+    });
+
+    results.sort((a, b) => {
+      const aCount = alertCounts[a.id] || 0;
+      const bCount = alertCounts[b.id] || 0;
+      return bCount - aCount;
+    });
+
+    return results;
+  }, [agentFilter, statusFilter, driverFilter, query, alertCounts, nav, touristsList]);
+
+  const selected = touristsList.find((t) => t.id === selectedId) ?? filtered[0] ?? touristsList[0];
+
+  const stats = useMemo(() => {
+    const active = touristsList.filter((t) => t.status === "Active").length;
+    const upcoming = touristsList.filter((t) => t.status === "Upcoming").length;
+    const pax = touristsList.filter((t) => t.status !== "Completed").reduce((s, t) => s + t.pax, 0);
+    return { active, upcoming, pax, countries: new Set(touristsList.map((t) => t.country)).size };
+  }, [touristsList]);
+
+  return (
+    <div className="flex h-screen w-full overflow-hidden bg-background text-foreground">
+      {/* Left sidebar */}
+      <aside className="flex w-64 shrink-0 flex-col border-r border-border bg-sidebar">
+        <div className="flex items-center gap-2 px-5 py-5">
+          <div className="grid h-9 w-9 place-items-center rounded-md bg-primary text-primary-foreground">
+            <Plane className="h-4 w-4" />
+          </div>
+          <div className="min-w-0">
+            <div className="text-sm font-semibold tracking-tight">Horizon Travel</div>
+            <div className="text-[11px] text-muted-foreground">Operations Console</div>
+          </div>
+        </div>
+
+        <div className="px-4 pb-3">
+          <Label className="mb-1.5 block text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+            Agent View
+          </Label>
+          <Select value={agentFilter} onValueChange={setAgentFilter}>
+            <SelectTrigger className="h-9 w-full bg-card">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {AGENTS.map((a) => (
+                <SelectItem key={a.id} value={a.id}>
+                  {a.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <Separator />
+
+        <nav className="flex-1 px-3 py-3">
+          {NAV.map((item) => {
+            const Icon = item.icon;
+            const active = nav === item.key;
+            return (
+              <button
+                key={item.key}
+                onClick={() => setNav(item.key)}
+                className={cn(
+                  "mb-0.5 flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-sm transition-colors",
+                  active
+                    ? "bg-sidebar-accent font-medium text-sidebar-accent-foreground"
+                    : "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground",
+                )}
+              >
+                <Icon className="h-4 w-4 shrink-0" />
+                <span className="truncate">{item.label}</span>
+              </button>
+            );
+          })}
+        </nav>
+
+        <div className="border-t border-border p-3">
+          <div className="flex items-center gap-3 rounded-md p-2">
+            <div className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-accent text-xs font-semibold text-accent-foreground">
+              MW
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="truncate text-sm font-medium">Marcus Whitfield</div>
+              <div className="truncate text-xs text-muted-foreground">Senior Operations</div>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      {/* Center + Right */}
+      <div className="flex min-w-0 flex-1">
+        <main className="flex min-w-0 flex-1 flex-col">
+          {/* Top bar */}
+          <header className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-card px-6">
+            <div>
+              <h1 className="text-base font-semibold tracking-tight">
+                {nav === "agents"
+                  ? "Agent Management"
+                  : nav === "leads"
+                    ? "Inquiries & Leads"
+                  : nav === "dashboard"
+                    ? "Dashboard"
+                    : nav === "reports"
+                      ? "Reports"
+                      : nav === "settings"
+                        ? "Settings"
+                        : "Active Tours"}
+              </h1>
+              <p className="text-xs text-muted-foreground">
+                {nav === "agents"
+                  ? "Manage your operations team"
+                  : nav === "leads"
+                    ? "Unconfirmed inquiries and requested itineraries"
+                  : "Live overview of tourists currently on tour"}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label="Toggle theme"
+                onClick={toggle}
+                className="h-9 w-9"
+              >
+                {theme === "light" ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+              </Button>
+              <Button variant="ghost" size="icon" className="h-9 w-9 relative">
+                <Bell className="h-4 w-4" />
+                <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-destructive" />
+              </Button>
+            </div>
+          </header>
+
+          {nav === "agents" ? (
+            <AgentManagement />
+          ) : nav === "dashboard" || nav === "reports" || nav === "settings" ? (
+            <DashboardOverview stats={stats} navLabel={nav} />
+          ) : (
+            <ToursWorkspace
+              query={query}
+              setQuery={setQuery}
+              statusFilter={statusFilter}
+              setStatusFilter={setStatusFilter}
+              driverFilter={driverFilter}
+              setDriverFilter={setDriverFilter}
+              tourists={filtered}
+              selected={selected}
+              onSelect={setSelectedId}
+              isDetailOpen={isDetailOpen}
+              setIsDetailOpen={setIsDetailOpen}
+              alertCounts={alertCounts}
+              notifications={notifications}
+              onResolveAlert={(id) => setNotifications((prev) => prev.map((n) => n.id === id ? { ...n, resolved: true } : n))}
+              onAddClient={() => {
+                setAddClientMode(nav === "leads" ? "lead" : "confirmed");
+                setEditingTourist(undefined);
+                setIsAddClientOpen(true);
+              }}
+              onConfirmTour={(t) => {
+                setAddClientMode("confirmed");
+                setEditingTourist(t);
+                setIsAddClientOpen(true);
+              }}
+            />
+          )}
+        </main>
+
+        <AddTouristSheet 
+          open={isAddClientOpen} 
+          onOpenChange={setIsAddClientOpen} 
+          mode={addClientMode}
+          initialData={editingTourist}
+          onAdd={(newTourist) => {
+            if (editingTourist) {
+              setTouristsList(touristsList.map(t => t.id === newTourist.id ? newTourist : t));
+            } else {
+              setTouristsList([newTourist, ...touristsList]);
+            }
+            setSelectedId(newTourist.id);
+            setIsDetailOpen(true);
+          }} 
+        />
+
+        {/* Right sidebar */}
+        {!isDetailOpen && (
+          <aside className="hidden w-80 shrink-0 flex-col border-l border-border bg-sidebar xl:flex">
+            <div className="px-5 py-4">
+            <h3 className="text-sm font-semibold">Today</h3>
+            <p className="text-xs text-muted-foreground">Monday, 22 June 2026</p>
+          </div>
+          <Separator />
+
+          <div className="grid grid-cols-2 gap-3 p-4">
+            <StatTile label="Active" value={stats.active} tone="success" />
+            <StatTile label="Upcoming" value={stats.upcoming} tone="info" />
+            <StatTile label="Pax on tour" value={stats.pax} tone="default" />
+            <StatTile label="Countries" value={stats.countries} tone="default" />
+          </div>
+          </aside>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ---------- Right-panel pieces ---------- */
+
+function StatTile({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: number;
+  tone: "success" | "info" | "default";
+}) {
+  return (
+    <div className="rounded-md border border-border bg-card p-3">
+      <div className="text-[11px] uppercase tracking-wider text-muted-foreground">{label}</div>
+      <div className="mt-0.5 flex items-baseline gap-1.5">
+        <span className="text-xl font-semibold tracking-tight">{value}</span>
+        <span
+          className={cn(
+            "h-1.5 w-1.5 rounded-full",
+            tone === "success" && "bg-success",
+            tone === "info" && "bg-primary",
+            tone === "default" && "bg-muted-foreground/40",
+          )}
+        />
+      </div>
+    </div>
+  );
+}
+
+function NotificationItem({
+  n,
+  onResolve,
+}: {
+  n: { id: string; type: string; title: string; body: string; time: string; resolved?: boolean };
+  onResolve?: (id: string) => void;
+}) {
+  const Icon = n.type === "alert" ? AlertTriangle : n.type === "warn" ? Info : CheckCircle2;
+  const color =
+    n.type === "alert"
+      ? "text-destructive"
+      : n.type === "warn"
+        ? "text-warning"
+        : "text-success";
+  return (
+    <div className={cn("rounded-md border border-border p-3 transition-colors hover:bg-accent/40", n.resolved ? "bg-muted/30" : "bg-card")}>
+      <div className="flex items-start gap-2.5">
+        <Icon className={cn("mt-0.5 h-4 w-4 shrink-0", color)} />
+        <div className="min-w-0 flex-1">
+          <div className="text-xs font-medium leading-tight">{n.title}</div>
+          <div className="mt-1 line-clamp-2 text-[11px] text-muted-foreground">{n.body}</div>
+          <div className="mt-2 flex items-center justify-between">
+            <div className="text-[10px] text-muted-foreground/70">{n.time}</div>
+            {!n.resolved && onResolve && (
+              <Button variant="outline" size="sm" onClick={() => onResolve(n.id)} className="h-7 text-xs px-3">
+                Mark as Resolved
+              </Button>
+            )}
+            {n.resolved && (
+              <Badge variant="outline" className="text-[10px] font-normal text-muted-foreground bg-muted/50 border-border">Resolved</Badge>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ---------- Tours workspace ---------- */
+
+function ToursWorkspace({
+  query,
+  setQuery,
+  statusFilter,
+  setStatusFilter,
+  driverFilter,
+  setDriverFilter,
+  tourists,
+  selected,
+  onSelect,
+  isDetailOpen,
+  setIsDetailOpen,
+  alertCounts,
+  notifications,
+  onResolveAlert,
+  onAddClient,
+  onConfirmTour,
+}: {
+  query: string;
+  setQuery: (v: string) => void;
+  statusFilter: "all" | TourStatus;
+  setStatusFilter: (v: "all" | TourStatus) => void;
+  driverFilter: string;
+  setDriverFilter: (v: string) => void;
+  tourists: Tourist[];
+  selected: Tourist;
+  onSelect: (id: string) => void;
+  isDetailOpen: boolean;
+  setIsDetailOpen: (v: boolean) => void;
+  alertCounts: Record<string, number>;
+  notifications: any[];
+  onResolveAlert: (id: string) => void;
+  onAddClient: () => void;
+  onConfirmTour: (t: Tourist) => void;
+}) {
+  return (
+    <div className="flex min-h-0 flex-1 flex-col">
+      {isDetailOpen ? (
+        <div className="flex-1 bg-background overflow-hidden">
+          <TouristDetail 
+            t={selected} 
+            onBack={() => setIsDetailOpen(false)} 
+            notifications={notifications}
+            onResolveAlert={onResolveAlert}
+            onConfirmTour={() => onConfirmTour(selected)}
+          />
+        </div>
+      ) : (
+        <>
+          {/* Filter bar */}
+          <div className="flex flex-wrap items-center gap-2 border-b border-border bg-card px-6 py-3">
+            <div className="relative min-w-0 flex-1">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search by name, country, or passport number…"
+                className="h-9 pl-9"
+              />
+            </div>
+            <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as any)}>
+              <SelectTrigger className="h-9 w-[160px]">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Statuses</SelectItem>
+                <SelectItem value="Active">Active</SelectItem>
+                <SelectItem value="Upcoming">Upcoming</SelectItem>
+                <SelectItem value="Completed">Completed</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={driverFilter} onValueChange={setDriverFilter}>
+              <SelectTrigger className="h-9 w-[180px]">
+                <SelectValue placeholder="Driver" />
+              </SelectTrigger>
+              <SelectContent>
+                {DRIVERS.map((d) => (
+                  <SelectItem key={d} value={d}>
+                    {d}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* List Full Width */}
+          <div className="flex min-h-0 flex-1">
+            <div className="flex w-full flex-col">
+              <div className="flex items-center justify-between border-b border-border bg-card px-5 py-2.5">
+                <div className="flex items-center gap-4 text-xs font-medium text-muted-foreground">
+                  {tourists.length} {tourists.length === 1 ? "tourist" : "tourists"}
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="text-[11px] text-muted-foreground">Sorted by arrival</div>
+                  <Button size="sm" onClick={onAddClient} className="gap-2 h-7 px-3 text-xs">
+                    <UserPlus className="h-3.5 w-3.5" />
+                    Add Client
+                  </Button>
+                </div>
+              </div>
+              <ScrollArea className="flex-1">
+                <ul>
+                  {tourists.map((t) => {
+                    const hasAlerts = (alertCounts[t.id] || 0) > 0;
+                    return (
+                      <li
+                        key={t.id}
+                        onClick={() => {
+                          onSelect(t.id);
+                          setIsDetailOpen(true);
+                        }}
+                        className={cn(
+                          "group cursor-pointer border-b px-6 py-4 transition-all duration-500 relative",
+                          hasAlerts 
+                            ? "animate-[alert-glow_3s_ease-in-out_infinite] z-10 hover:brightness-110" 
+                            : "border-border hover:bg-accent/30"
+                        )}
+                      >
+                        <div className="flex items-center justify-between gap-4">
+                          <div className="flex min-w-0 items-center gap-4">
+                            <span className="text-2xl leading-none">{flagEmoji(t.countryCode)}</span>
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-3">
+                                <span className="truncate text-base font-semibold">{t.name}</span>
+                                <StatusPill status={t.status} />
+                              </div>
+                              <div className="mt-1 truncate text-sm text-muted-foreground">
+                                {t.country} · {t.pax} Pax · {t.duration}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="shrink-0 text-right">
+                            <div className="flex items-center justify-end gap-1.5 text-sm font-medium">
+                              <MapPin className="h-4 w-4 text-muted-foreground" />
+                              {t.currentLocation}
+                            </div>
+                            <div className="mt-1 text-xs text-muted-foreground">Driver: {t.driver.split(" ")[0]}</div>
+                          </div>
+                        </div>
+                      </li>
+                    );
+                  })}
+                  {tourists.length === 0 && (
+                    <li className="p-10 text-center text-sm text-muted-foreground">
+                      No tourists match these filters.
+                    </li>
+                  )}
+                </ul>
+              </ScrollArea>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+function StatusPill({ status }: { status: TourStatus }) {
+  const map: Record<TourStatus, string> = {
+    Active: "bg-success/15 text-success border-success/30",
+    Upcoming: "bg-primary/10 text-primary border-primary/25",
+    Completed: "bg-muted text-muted-foreground border-border",
+  };
+  return (
+    <span
+      className={cn(
+        "inline-flex h-4 items-center rounded-full border px-1.5 text-[10px] font-medium",
+        map[status],
+      )}
+    >
+      {status}
+    </span>
+  );
+}
+
+function TouristDetail({ 
+  t, 
+  onBack, 
+  notifications, 
+  onResolveAlert, 
+  onConfirmTour 
+}: { 
+  t: Tourist; 
+  onBack?: () => void; 
+  notifications: any[]; 
+  onResolveAlert: (id: string) => void;
+  onConfirmTour: () => void;
+}) {
+  const personAlerts = notifications.filter((n) => n.touristId === t.id || n.touristId === "all");
+  const activeAlerts = personAlerts.filter((n) => !n.resolved);
+  const resolvedAlerts = personAlerts.filter((n) => n.resolved);
+
+  return (
+    <ScrollArea className="h-full">
+      <div key={t.id} className="animate-in fade-in slide-in-from-right-2 duration-200">
+        {/* Header */}
+        <div className="border-b border-border bg-card px-7 py-5">
+          {onBack && (
+            <div className="mb-4">
+              <Button variant="ghost" size="sm" onClick={onBack} className="gap-2 -ml-2 text-muted-foreground hover:text-foreground">
+                <ArrowLeft className="h-4 w-4" />
+                Back to list
+              </Button>
+            </div>
+          )}
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex min-w-0 items-start gap-4">
+              <div className="grid h-12 w-12 shrink-0 place-items-center rounded-md bg-accent text-xl">
+                {flagEmoji(t.countryCode)}
+              </div>
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h2 className="truncate text-lg font-semibold tracking-tight">{t.name}</h2>
+                  <StatusPill status={t.status} />
+                </div>
+                <div className="mt-1 flex items-center gap-3 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-1.5">
+                    <MapPin className="h-3.5 w-3.5" />
+                    {t.currentLocation}
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <Calendar className="h-3.5 w-3.5" />
+                    {t.duration}
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="hidden shrink-0 gap-2 sm:flex">
+              {t.isLead && (
+                <Button variant="default" size="sm" onClick={onConfirmTour} className="gap-2 bg-green-600 hover:bg-green-700 text-white">
+                  Confirm Tour
+                </Button>
+              )}
+              <Button variant="outline" size="sm" className="gap-2">
+                <MessageCircle className="h-4 w-4 text-green-600" />
+                WhatsApp
+              </Button>
+              <Button variant="outline" size="sm" className="gap-2">
+                <Mail className="h-4 w-4" />
+                Email
+              </Button>
+              <Button size="sm">Open Booking</Button>
+            </div>
+          </div>
+        </div>
+
+        {activeAlerts.length > 0 && (
+          <div className="px-7 pt-5">
+            <div className="flex items-center justify-between pb-2 border-b border-border mb-3">
+              <h3 className="text-sm font-semibold text-destructive flex items-center gap-2 pb-2">
+                <AlertTriangle className="h-4 w-4" />
+                Urgent Alerts
+              </h3>
+              <Badge variant="destructive" className="h-5 px-1.5 text-[10px] mb-2">
+                {activeAlerts.length}
+              </Badge>
+            </div>
+            <div className="space-y-2">
+              {activeAlerts.map((n) => (
+                <NotificationItem key={n.id} n={n} onResolve={onResolveAlert} />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {resolvedAlerts.length > 0 && (
+          <div className="px-7 pt-5">
+            <div className="flex items-center justify-between pb-2 border-b border-border mb-3">
+              <h3 className="text-sm font-semibold text-muted-foreground flex items-center gap-2 pb-2">
+                <CheckCircle2 className="h-4 w-4" />
+                Alert History
+              </h3>
+              <Badge variant="outline" className="h-5 px-1.5 text-[10px] mb-2 font-normal">
+                {resolvedAlerts.length}
+              </Badge>
+            </div>
+            <div className="space-y-2 opacity-70">
+              {resolvedAlerts.map((n) => (
+                <NotificationItem key={n.id} n={n} />
+              ))}
+            </div>
+          </div>
+        )}
+
+        <Tabs defaultValue="contact" className="px-7 py-5">
+          <TabsList>
+            <TabsTrigger value="contact">Contact</TabsTrigger>
+            <TabsTrigger value="group">Group ({t.group.length + 1})</TabsTrigger>
+            <TabsTrigger value="itinerary">Itinerary</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="contact" className="mt-5">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <InfoField icon={Users} label="Full Name" value={t.name} />
+              <InfoField icon={CreditCard} label="Passport Number" value={t.passport} />
+              <InfoField icon={Phone} label="Phone" value={t.phone} />
+              <InfoField icon={Mail} label="Email" value={t.email} />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="group" className="mt-5">
+            <div className="overflow-hidden rounded-md border border-border bg-card">
+              <table className="w-full text-sm text-left">
+                <thead className="bg-muted/40 text-xs uppercase tracking-wider text-muted-foreground">
+                  <tr>
+                    <th className="px-4 py-2 font-medium">Traveler</th>
+                    <th className="px-4 py-2 font-medium">Passport No.</th>
+                    <th className="px-4 py-2 font-medium hidden sm:table-cell">Phone</th>
+                    <th className="px-4 py-2 font-medium hidden md:table-cell">Email</th>
+                    <th className="px-4 py-2 font-medium">Role</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="border-t border-border">
+                    <td className="px-4 py-2.5 font-medium">{t.name}</td>
+                    <td className="px-4 py-2.5 font-mono text-xs">{t.passport}</td>
+                    <td className="px-4 py-2.5 text-xs hidden sm:table-cell">{t.phone}</td>
+                    <td className="px-4 py-2.5 text-xs hidden md:table-cell">{t.email}</td>
+                    <td className="px-4 py-2.5"><Badge variant="secondary">Lead</Badge></td>
+                  </tr>
+                  {t.group.map((g) => (
+                    <tr key={g.passport} className="border-t border-border">
+                      <td className="px-4 py-2.5">{g.name}</td>
+                      <td className="px-4 py-2.5 font-mono text-xs">{g.passport}</td>
+                      <td className="px-4 py-2.5 text-xs text-muted-foreground hidden sm:table-cell">{g.phone || "—"}</td>
+                      <td className="px-4 py-2.5 text-xs text-muted-foreground hidden md:table-cell">{g.email || "—"}</td>
+                      <td className="px-4 py-2.5 text-muted-foreground">Companion</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="itinerary" className="mt-5">
+            <ol className="relative ml-3 space-y-5 border-l border-border pl-6">
+              {t.itinerary.map((d) => (
+                <li key={d.day} className="relative">
+                  <span className="absolute -left-[31px] top-0.5 grid h-6 w-6 place-items-center rounded-full border-2 border-background bg-primary text-[10px] font-semibold text-primary-foreground">
+                    {d.day.toString().padStart(2, "0")}
+                  </span>
+                  <div className="rounded-md border border-border bg-card p-4">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div>
+                        <div className="text-xs uppercase tracking-wider text-muted-foreground">
+                          Day {d.day.toString().padStart(2, "0")} {d.location ? `· ${d.location}` : ""}
+                        </div>
+                        <div className="mt-0.5 text-sm font-semibold">{d.title}</div>
+                      </div>
+                    </div>
+                    
+                    {d.destinations && d.destinations.length > 0 ? (
+                      <div className="mt-4 space-y-4">
+                        {d.destinations.map((dest, i) => (
+                          <div key={i} className="space-y-1.5 relative pl-4 border-l-2 border-muted">
+                            <span className="absolute -left-1.5 top-1.5 h-2 w-2 rounded-full bg-primary/40 ring-4 ring-background" />
+                            <h4 className="text-sm font-medium">{dest.location}</h4>
+                            <p className="text-[13px] text-muted-foreground leading-relaxed whitespace-pre-wrap">{dest.activities}</p>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <ul className="mt-3 space-y-1 text-sm text-muted-foreground">
+                        {d.activities?.map((a, i) => (
+                          <li key={i} className="flex gap-2">
+                            <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-muted-foreground/60" />
+                            <span>{a}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    
+                    <div className="mt-4 grid gap-2 rounded-md bg-muted/40 p-3 sm:grid-cols-[1fr_1fr_auto] items-center">
+                      <div className="flex items-center gap-2 text-xs">
+                        <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
+                        <span className="font-medium">{d.hotel}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <Mail className="h-3.5 w-3.5" />
+                        <span className="truncate">{d.hotelEmail}</span>
+                      </div>
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button variant="outline" size="sm" className="h-7 text-[10px] gap-1.5 w-full sm:w-auto">
+                            <Send className="h-3 w-3" />
+                            Email
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Send Email to {d.hotel}</DialogTitle>
+                            <DialogDescription>Draft a message to {d.hotelEmail}</DialogDescription>
+                          </DialogHeader>
+                          <div className="space-y-4 py-2">
+                            <div className="grid gap-2">
+                              <Label htmlFor="subject">Subject</Label>
+                              <Input id="subject" defaultValue={`Booking Inquiry for ${t.name} (Ref: ${t.id})`} />
+                            </div>
+                            <div className="grid gap-2">
+                              <Label htmlFor="message">Message</Label>
+                              <textarea 
+                                id="message"
+                                className="flex min-h-[120px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                                placeholder="Type your message here..."
+                              />
+                            </div>
+                          </div>
+                          <DialogFooter>
+                            <Button type="submit">Send Message</Button>
+                          </DialogFooter>
+                        </DialogContent>
+                      </Dialog>
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </ScrollArea>
+  );
+}
+
+function InfoField({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: typeof Users;
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="rounded-md border border-border bg-card p-3.5">
+      <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-wider text-muted-foreground">
+        <Icon className="h-3 w-3" />
+        {label}
+      </div>
+      <div className="mt-1 break-words text-sm font-medium">{value}</div>
+    </div>
+  );
+}
+
+/* ---------- Agent management ---------- */
+
+function AgentManagement() {
+  const [agents, setAgents] = useState(
+    AGENTS.filter((a) => a.id !== "all").map((a) => ({ ...a, clients: a.clients ?? 0 })),
+  );
+  const [open, setOpen] = useState(false);
+  const [form, setForm] = useState({ name: "", email: "", region: "" });
+
+  function submit() {
+    if (!form.name || !form.email) {
+      toast.error("Name and email required");
+      return;
+    }
+    setAgents((a) => [
+      ...a,
+      {
+        id: `a${a.length + 1}`,
+        name: form.name,
+        email: form.email,
+        region: form.region || "Unassigned",
+        clients: 0,
+      },
+    ]);
+    setForm({ name: "", email: "", region: "" });
+    setOpen(false);
+    toast.success(`${form.name} added to the team`);
+  }
+
+  return (
+    <div className="flex min-h-0 flex-1 flex-col bg-background">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-card px-6 py-3">
+        <div className="text-sm text-muted-foreground">
+          {agents.length} agents · {agents.reduce((s, a) => s + (a.clients || 0), 0)} clients under management
+        </div>
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild>
+            <Button size="sm" className="gap-1.5">
+              <UserPlus className="h-4 w-4" />
+              Add agent
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Add new agent</DialogTitle>
+              <DialogDescription>Create a profile for a new team member.</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-3">
+              <div>
+                <Label htmlFor="ag-name">Full name</Label>
+                <Input
+                  id="ag-name"
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  placeholder="e.g. Amara Jayawardena"
+                />
+              </div>
+              <div>
+                <Label htmlFor="ag-email">Email</Label>
+                <Input
+                  id="ag-email"
+                  type="email"
+                  value={form.email}
+                  onChange={(e) => setForm({ ...form, email: e.target.value })}
+                  placeholder="amara@horizon.travel"
+                />
+              </div>
+              <div>
+                <Label htmlFor="ag-region">Assigned region</Label>
+                <Select value={form.region} onValueChange={(v) => setForm({ ...form, region: v })}>
+                  <SelectTrigger id="ag-region">
+                    <SelectValue placeholder="Choose a region" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {["South Asia", "Europe", "East Asia", "Oceania", "Middle East", "Americas"].map(
+                      (r) => (
+                        <SelectItem key={r} value={r}>
+                          {r}
+                        </SelectItem>
+                      ),
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
+              <Button onClick={submit}>Create agent</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      <ScrollArea className="flex-1">
+        <div className="grid gap-3 p-6 sm:grid-cols-2 xl:grid-cols-3">
+          {agents.map((a) => {
+            const initials = a.name
+              .split(" ")
+              .map((p) => p[0])
+              .slice(0, 2)
+              .join("");
+            return (
+              <div key={a.id} className="rounded-lg border border-border bg-card p-5">
+                <div className="flex items-start gap-3">
+                  <div className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
+                    {initials}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-sm font-semibold">{a.name}</div>
+                    <div className="truncate text-xs text-muted-foreground">{a.email}</div>
+                  </div>
+                </div>
+                <Separator className="my-4" />
+                <div className="flex items-center justify-between text-xs">
+                  <div>
+                    <div className="text-muted-foreground">Region</div>
+                    <div className="mt-0.5 font-medium">{a.region}</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-muted-foreground">Clients</div>
+                    <div className="mt-0.5 text-base font-semibold">{a.clients}</div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </ScrollArea>
+    </div>
+  );
+}
+
+/* ---------- Dashboard placeholder ---------- */
+
+function DashboardOverview({
+  stats,
+  navLabel,
+}: {
+  stats: { active: number; upcoming: number; pax: number; countries: number };
+  navLabel: NavKey;
+}) {
+  const tiles = [
+    { label: "Active tours", value: stats.active, hint: "Currently in country" },
+    { label: "Upcoming arrivals", value: stats.upcoming, hint: "Next 30 days" },
+    { label: "Travelers on tour", value: stats.pax, hint: "Total pax in service" },
+    { label: "Source countries", value: stats.countries, hint: "Markets this month" },
+  ];
+  const labelMap: Record<NavKey, string> = {
+    dashboard: "Dashboard",
+    tours: "Active Tours",
+    leads: "Inquiries & Leads",
+    agents: "Agent Management",
+    reports: "Reports",
+    settings: "Settings",
+  };
+  return (
+    <ScrollArea className="flex-1">
+      <div className="p-6">
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {tiles.map((t) => (
+            <div key={t.label} className="rounded-lg border border-border bg-card p-5">
+              <div className="text-xs uppercase tracking-wider text-muted-foreground">{t.label}</div>
+              <div className="mt-2 text-3xl font-semibold tracking-tight">{t.value}</div>
+              <div className="mt-1 text-xs text-muted-foreground">{t.hint}</div>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-6 rounded-lg border border-border bg-card p-6">
+          <h3 className="text-sm font-semibold">{labelMap[navLabel]}</h3>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Detailed {labelMap[navLabel].toLowerCase()} views are available here. Switch to{" "}
+            <span className="font-medium text-foreground">Active Tours</span> from the left
+            navigation to manage tourist itineraries and bookings.
+          </p>
+        </div>
+      </div>
+    </ScrollArea>
+  );
+}
