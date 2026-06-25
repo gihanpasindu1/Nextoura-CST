@@ -6,8 +6,9 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tourist, AGENTS, DRIVERS } from "@/lib/tourism-data";
-import { Loader2, Plus, UploadCloud, FileText, Settings2, Trash2, X, Users, AlertCircle } from "lucide-react";
+import { Loader2, Plus, UploadCloud, FileText, Settings2, Trash2, X, Users, AlertCircle, Send } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 
@@ -362,6 +363,49 @@ export function AddTouristSheet({
                             }} />
                           </div>
                         </div>
+                        {day.hotel && (
+                          <div className="pt-1">
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button variant="outline" size="sm" className="h-7 text-[10px] gap-1.5 bg-green-50 text-green-700 border-green-200 hover:bg-green-100 w-full sm:w-auto">
+                                  <Send className="h-3 w-3" />
+                                  Send Booking Request
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent>
+                                <DialogHeader>
+                                  <DialogTitle>Auto-Generated Booking Request</DialogTitle>
+                                  <DialogDescription>Draft a new booking email to {day.hotel}</DialogDescription>
+                                </DialogHeader>
+                                <div className="space-y-4 py-2">
+                                  <div className="grid gap-2">
+                                    <Label>From</Label>
+                                    <Input disabled defaultValue="info@ceylonsignaturetravels.com" />
+                                  </div>
+                                  <div className="grid gap-2">
+                                    <Label>To</Label>
+                                    <Input disabled value={day.hotelEmail || "No email provided"} />
+                                  </div>
+                                  <div className="grid gap-2">
+                                    <Label htmlFor={`subject-${i}`}>Subject</Label>
+                                    <Input id={`subject-${i}`} defaultValue={`New Booking Request - ${formData.name || "Client"} (Pax: ${formData.pax})`} />
+                                  </div>
+                                  <div className="grid gap-2">
+                                    <Label htmlFor={`message-${i}`}>Message</Label>
+                                    <textarea 
+                                      id={`message-${i}`}
+                                      className="flex min-h-[160px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                                      defaultValue={`Dear Reservation Team at ${day.hotel},\n\nWe would like to request a new booking for our client, ${formData.name || "Client Name"} (Group Size: ${formData.pax}), arriving for Day ${day.day} of their tour.\n\nPlease check your availability for these dates and provide us with a quotation.\n\nWe look forward to hearing from you soon.\n\nBest regards,\nCeylon Signature Travels`}
+                                    />
+                                  </div>
+                                </div>
+                                <DialogFooter>
+                                  <Button type="submit">Send Booking Request</Button>
+                                </DialogFooter>
+                              </DialogContent>
+                            </Dialog>
+                          </div>
+                        )}
                       </div>
                       
                       <div className="space-y-3 pt-2">

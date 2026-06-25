@@ -599,6 +599,8 @@ function TouristDetail({
 }) {
   const personAlerts = notifications.filter((n) => n.touristId === t.id || n.touristId === "all");
   const activeAlerts = personAlerts.filter((n) => !n.resolved);
+  const activeComplains = activeAlerts.filter((n) => n.type === "alert");
+  const activeGuideNotices = activeAlerts.filter((n) => n.type !== "alert");
   const resolvedAlerts = personAlerts.filter((n) => n.resolved);
 
   return (
@@ -656,21 +658,44 @@ function TouristDetail({
         </div>
 
         {activeAlerts.length > 0 && (
-          <div className="px-7 pt-5">
-            <div className="flex items-center justify-between pb-2 border-b border-border mb-3">
-              <h3 className="text-sm font-semibold text-destructive flex items-center gap-2 pb-2">
-                <AlertTriangle className="h-4 w-4" />
-                Urgent Alerts
-              </h3>
-              <Badge variant="destructive" className="h-5 px-1.5 text-[10px] mb-2">
-                {activeAlerts.length}
-              </Badge>
-            </div>
-            <div className="space-y-2">
-              {activeAlerts.map((n) => (
-                <NotificationItem key={n.id} n={n} onResolve={onResolveAlert} />
-              ))}
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 px-7 pt-5">
+            {activeComplains.length > 0 && (
+              <div>
+                <div className="flex items-center justify-between pb-2 border-b border-border mb-3">
+                  <h3 className="text-sm font-semibold text-destructive flex items-center gap-2 pb-2">
+                    <AlertTriangle className="h-4 w-4" />
+                    Client Complain
+                  </h3>
+                  <Badge variant="destructive" className="h-5 px-1.5 text-[10px] mb-2">
+                    {activeComplains.length}
+                  </Badge>
+                </div>
+                <div className="space-y-2">
+                  {activeComplains.map((n) => (
+                    <NotificationItem key={n.id} n={n} onResolve={onResolveAlert} />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {activeGuideNotices.length > 0 && (
+              <div>
+                <div className="flex items-center justify-between pb-2 border-b border-border mb-3">
+                  <h3 className="text-sm font-semibold text-orange-500 flex items-center gap-2 pb-2">
+                    <MessageCircle className="h-4 w-4" />
+                    Guide Notice
+                  </h3>
+                  <Badge className="bg-orange-500/10 text-orange-500 hover:bg-orange-500/20 border-orange-500/20 h-5 px-1.5 text-[10px] mb-2">
+                    {activeGuideNotices.length}
+                  </Badge>
+                </div>
+                <div className="space-y-2">
+                  {activeGuideNotices.map((n) => (
+                    <NotificationItem key={n.id} n={n} onResolve={onResolveAlert} />
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -792,32 +817,36 @@ function TouristDetail({
                       </div>
                       <Dialog>
                         <DialogTrigger asChild>
-                          <Button variant="outline" size="sm" className="h-7 text-[10px] gap-1.5 w-full sm:w-auto">
+                          <Button variant="outline" size="sm" className="h-7 text-[10px] gap-1.5 w-full sm:w-auto bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100">
                             <Send className="h-3 w-3" />
-                            Email
+                            Review Auto-Generated Email
                           </Button>
                         </DialogTrigger>
                         <DialogContent>
                           <DialogHeader>
-                            <DialogTitle>Send Email to {d.hotel}</DialogTitle>
-                            <DialogDescription>Draft a message to {d.hotelEmail}</DialogDescription>
+                            <DialogTitle>Review Confirmation Email</DialogTitle>
+                            <DialogDescription>Automated email to {d.hotelEmail}</DialogDescription>
                           </DialogHeader>
                           <div className="space-y-4 py-2">
                             <div className="grid gap-2">
+                              <Label>From</Label>
+                              <Input disabled defaultValue="info@ceylonsignaturetravels.com" />
+                            </div>
+                            <div className="grid gap-2">
                               <Label htmlFor="subject">Subject</Label>
-                              <Input id="subject" defaultValue={`Booking Inquiry for ${t.name} (Ref: ${t.id})`} />
+                              <Input id="subject" defaultValue={`Booking Confirmation for ${t.name} (Ref: ${t.id})`} />
                             </div>
                             <div className="grid gap-2">
                               <Label htmlFor="message">Message</Label>
                               <textarea 
                                 id="message"
-                                className="flex min-h-[120px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                                placeholder="Type your message here..."
+                                className="flex min-h-[160px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                                defaultValue={`Dear Reservation Team at ${d.hotel},\n\nWe would like to confirm the booking for our client, ${t.name} (Group Size: ${t.pax}), arriving for Day ${d.day} of their tour.\n\nPlease let us know if everything is confirmed on your end and provide any relevant reservation numbers.\n\nBest regards,\nCeylon Signature Travels`}
                               />
                             </div>
                           </div>
                           <DialogFooter>
-                            <Button type="submit">Send Message</Button>
+                            <Button type="submit">Send Confirmation</Button>
                           </DialogFooter>
                         </DialogContent>
                       </Dialog>
