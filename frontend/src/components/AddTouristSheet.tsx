@@ -363,7 +363,7 @@ export function AddTouristSheet({
                             }} />
                           </div>
                         </div>
-                        {day.hotel && (
+                        {(day.hotel && day.hotelEmail) && (
                           <div className="pt-1">
                             <Dialog>
                               <DialogTrigger asChild>
