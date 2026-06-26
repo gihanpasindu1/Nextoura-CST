@@ -410,8 +410,9 @@ export function AddTouristSheet({
                       
                       <div className="space-y-3 pt-2">
                         <Label className="text-xs text-muted-foreground uppercase tracking-wider">Destinations & Activities</Label>
+                        
                         {(day.destinations || []).map((dest: any, destIndex: number) => (
-                          <div key={destIndex} className="space-y-2 border-l-2 border-primary/20 pl-3 relative">
+                          <div key={`dest-${destIndex}`} className="space-y-2 border-l-2 border-primary/20 pl-3 relative">
                             <Button variant="ghost" size="icon" className="absolute -left-3 top-0 h-5 w-5 rounded-full bg-background border border-border text-muted-foreground hover:text-destructive hover:border-destructive" onClick={() => {
                               const updated = [...itinerary];
                               updated[i].destinations.splice(destIndex, 1);
@@ -427,14 +428,40 @@ export function AddTouristSheet({
                             }} />
                           </div>
                         ))}
-                        <Button variant="ghost" size="sm" className="h-7 text-xs gap-1.5" onClick={() => {
-                          const updated = [...itinerary];
-                          if (!updated[i].destinations) updated[i].destinations = [];
-                          updated[i].destinations.push({ location: "", activities: "" });
-                          setItinerary(updated);
-                        }}>
-                          <Plus className="h-3 w-3" /> Add Location
-                        </Button>
+
+                        {(day.activities || []).map((activity: string, actIndex: number) => (
+                          <div key={`act-${actIndex}`} className="relative pl-3">
+                            <Button variant="ghost" size="icon" className="absolute -left-3 top-1.5 h-5 w-5 rounded-full bg-background border border-border text-muted-foreground hover:text-destructive hover:border-destructive" onClick={() => {
+                              const updated = [...itinerary];
+                              updated[i].activities.splice(actIndex, 1);
+                              setItinerary(updated);
+                            }}>
+                              <X className="h-3 w-3" />
+                            </Button>
+                            <Input className="h-8 text-sm border-dashed" placeholder="Activity description..." value={activity} onChange={e => {
+                              const updated = [...itinerary]; updated[i].activities[actIndex] = e.target.value; setItinerary(updated);
+                            }} />
+                          </div>
+                        ))}
+
+                        <div className="flex gap-2">
+                          <Button variant="ghost" size="sm" className="h-7 text-xs gap-1.5" onClick={() => {
+                            const updated = [...itinerary];
+                            if (!updated[i].destinations) updated[i].destinations = [];
+                            updated[i].destinations.push({ location: "", activities: "" });
+                            setItinerary(updated);
+                          }}>
+                            <Plus className="h-3 w-3" /> Add Location
+                          </Button>
+                          <Button variant="ghost" size="sm" className="h-7 text-xs gap-1.5" onClick={() => {
+                            const updated = [...itinerary];
+                            if (!updated[i].activities) updated[i].activities = [];
+                            updated[i].activities.push("");
+                            setItinerary(updated);
+                          }}>
+                            <Plus className="h-3 w-3" /> Add Activity
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   ))}

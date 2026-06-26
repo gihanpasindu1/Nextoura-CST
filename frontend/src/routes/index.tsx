@@ -25,6 +25,7 @@ import {
   ArrowLeft,
   MessageCircle,
   Send,
+  Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -857,6 +858,36 @@ function TouristDetail({
             </ol>
           </TabsContent>
         </Tabs>
+
+        <div className="px-7 pb-10 pt-6 mt-8 border-t border-border/50">
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="destructive" className="w-full sm:w-auto">
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete Client
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Are you absolutely sure?</DialogTitle>
+                <DialogDescription>
+                  This action cannot be undone. This will permanently delete <strong>{t.name}</strong> and remove all of their data, itineraries, and group members from our servers.
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter className="mt-4">
+                <DialogTrigger asChild>
+                  <Button variant="outline">Cancel</Button>
+                </DialogTrigger>
+                <Button variant="destructive" onClick={() => {
+                  toast.success("Client deleted successfully");
+                  if (onBack) onBack();
+                }}>
+                  Yes, delete client
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
     </ScrollArea>
   );
