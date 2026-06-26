@@ -53,10 +53,6 @@ import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/lib/theme";
 import {
-  AGENTS,
-  DRIVERS,
-  TOURISTS,
-  NOTIFICATIONS,
   flagEmoji,
   type Tourist,
   type TourStatus,
@@ -98,8 +94,75 @@ function Console() {
   const [editingTourist, setEditingTourist] = useState<Tourist | undefined>(undefined);
   const { theme, toggle } = useTheme();
 
-  const [touristsList, setTouristsList] = useState(TOURISTS);
-  const [notifications, setNotifications] = useState<{ id: string; touristId: string; type: string; title: string; body: string; time: string; resolved?: boolean }[]>(NOTIFICATIONS);
+  const [touristsList, setTouristsList] = useState<Tourist[]>([]);
+  const [notifications, setNotifications] = useState<{ id: string; touristId: string; type: string; title: string; body: string; time: string; resolved?: boolean }[]>([]);
+  const [agents, setAgents] = useState<any[]>([]);
+  const [drivers, setDrivers] = useState<any[]>([]);
+
+  const loadData = async () => {
+    try {
+      const [touristsRes, agentsRes, driversRes, notifsRes] = await Promise.all([
+        fetch("http://localhost:8000/api/tourists"),
+        fetch("http://localhost:8000/api/agents"),
+        fetch("http://localhost:8000/api/drivers"),
+        fetch("http://localhost:8000/api/notifications")
+      ]);
+      const touristsData = await touristsRes.json();
+      const agentsData = await agentsRes.json();
+      const driversData = await driversRes.json();
+      const notifsData = await notifsRes.json();
+
+      setAgents(agentsData);
+      setDrivers(driversData);
+
+      const agentMap: Record<string, string> = {};
+      agentsData.forEach((a: any) => agentMap[a.id] = a.agent_name || a.name);
+      const driverMap: Record<string, string> = {};
+      driversData.forEach((d: any) => driverMap[d.id] = d.name);
+
+      const mappedTourists = touristsData.map((t: any) => ({
+        id: t.id,
+        name: t.name,
+        country: t.country,
+        countryCode: t.country_code,
+        passport: t.passport_number,
+        phone: t.phone || "",
+        email: t.email,
+        pax: t.pax_count,
+        arrival: t.arrival_date,
+        duration: t.duration,
+        status: t.status,
+        agent: agentMap[t.agent_id] || "All Agents",
+        driver: driverMap[t.driver_id] || "All Drivers",
+        group: t.group_members?.map((g: any) => ({ name: g.name, passport: g.passport_number, email: g.email })) || [],
+        itinerary: t.itineraries?.map((i: any) => ({
+          day: i.day_number,
+          title: i.day_title,
+          hotel: i.hotel_id,
+          destinations: i.destinations?.map((d: any) => ({ location: d.location_name, activities: d.activities })) || []
+        })) || [],
+        isLead: t.is_lead
+      }));
+      setTouristsList(mappedTourists);
+      
+      const mappedNotifs = notifsData.map((n: any) => ({
+        id: n.id,
+        touristId: n.tourist_id,
+        type: n.notification_type,
+        title: n.alert_title,
+        body: n.alert_message,
+        time: n.created_at,
+        resolved: n.is_resolved
+      }));
+      setNotifications(mappedNotifs);
+    } catch (e) {
+      console.error("Failed to load backend data", e);
+    }
+  };
+
+  useEffect(() => {
+    loadData();
+  }, []);
 
   const alertCounts = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -121,7 +184,7 @@ function Console() {
       }
 
       if (agentFilter !== "all") {
-        const agent = AGENTS.find((a) => a.id === agentFilter);
+        const agent = agents.find((a) => a.id === agentFilter);
         if (agent && t.agent !== agent.name) return false;
       }
       if (statusFilter !== "all" && t.status !== statusFilter) return false;
@@ -179,7 +242,7 @@ function Console() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {AGENTS.map((a) => (
+              {agents.map((a) => (
                 <SelectItem key={a.id} value={a.id}>
                   {a.name}
                 </SelectItem>
@@ -288,7 +351,14 @@ function Console() {
               setIsDetailOpen={setIsDetailOpen}
               alertCounts={alertCounts}
               notifications={notifications}
-              onResolveAlert={(id) => setNotifications((prev) => prev.map((n) => n.id === id ? { ...n, resolved: true } : n))}
+              onResolveAlert={async (id) => {
+                try {
+                  await fetch(`http://localhost:8000/api/notifications/${id}/resolve`, { method: "PATCH" });
+                  loadData();
+                } catch (e) {
+                  toast.error("Failed to resolve notification");
+                }
+              }}
               onAddClient={() => {
                 setAddClientMode(nav === "leads" ? "lead" : "confirmed");
                 setEditingTourist(undefined);
@@ -486,7 +556,7 @@ function ToursWorkspace({
                 <SelectValue placeholder="Driver" />
               </SelectTrigger>
               <SelectContent>
-                {DRIVERS.map((d) => (
+                {drivers.map((d) => (
                   <SelectItem key={d} value={d}>
                     {d}
                   </SelectItem>

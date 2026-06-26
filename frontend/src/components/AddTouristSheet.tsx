@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Tourist, AGENTS, DRIVERS } from "@/lib/tourism-data";
+import { Tourist } from "@/lib/tourism-data";
 import { Loader2, Plus, UploadCloud, FileText, Settings2, Trash2, X, Users, AlertCircle, Send } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
@@ -24,6 +24,8 @@ export function AddTouristSheet({
   onAdd: (tourist: Tourist) => void;
   mode?: "lead" | "confirmed";
   initialData?: Tourist;
+  agents: any[];
+  drivers: any[];
 }) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -232,7 +234,10 @@ export function AddTouristSheet({
                   <Select value={formData.agent} onValueChange={v => { setFormData({...formData, agent: v}); if (errors.agent) setErrors({...errors, agent: ""}); }}>
                     <SelectTrigger className={cn(errors.agent && "border-destructive focus:ring-destructive")}><SelectValue placeholder="Select Agent" /></SelectTrigger>
                     <SelectContent>
-                      {AGENTS.map(a => <SelectItem key={a.id} value={a.name}>{a.name}</SelectItem>)}
+                      <SelectItem value="All Agents">Select Agent</SelectItem>
+                      {agents.map(a => (
+                        <SelectItem key={a.id} value={a.agent_name || a.name}>{a.agent_name || a.name}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                   {errors.agent && <div className="text-[10px] text-destructive flex items-center gap-1"><AlertCircle className="h-3 w-3" /> {errors.agent}</div>}
