@@ -1,11 +1,13 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { createFileRoute, useRouter } from "@tanstack/react-router";
+import { supabase } from "@/lib/supabase";
+import { useMemo, useState, useEffect } from "react";
 import {
   LayoutDashboard,
   Plane,
   Users,
   BarChart3,
   Settings,
+  Settings2,
   Search,
   Bell,
   Sun,
@@ -26,6 +28,7 @@ import {
   MessageCircle,
   Send,
   Trash2,
+  Copy,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -47,6 +50,17 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
@@ -70,13 +84,14 @@ export const Route = createFileRoute("/")({
   component: Console,
 });
 
-type NavKey = "dashboard" | "tours" | "leads" | "agents" | "reports" | "settings";
+type NavKey = "dashboard" | "tours" | "leads" | "agents" | "drivers" | "reports" | "settings";
 
 const NAV: { key: NavKey; label: string; icon: typeof LayoutDashboard }[] = [
   { key: "dashboard", label: "Dashboard", icon: LayoutDashboard },
   { key: "tours", label: "Active Tours", icon: Plane },
   { key: "leads", label: "Inquiries", icon: Users },
   { key: "agents", label: "Agent Management", icon: Briefcase },
+  { key: "drivers", label: "Drivers & Guides", icon: Users },
   { key: "reports", label: "Reports", icon: BarChart3 },
   { key: "settings", label: "Settings", icon: Settings },
 ];
@@ -98,14 +113,61 @@ function Console() {
   const [notifications, setNotifications] = useState<{ id: string; touristId: string; type: string; title: string; body: string; time: string; resolved?: boolean }[]>([]);
   const [agents, setAgents] = useState<any[]>([]);
   const [drivers, setDrivers] = useState<any[]>([]);
+  const [session, setSession] = useState<any>(null);
+  const [companyId, setCompanyId] = useState<string | null>(null);
+  const [isLoadingAuth, setIsLoadingAuth] = useState(true);
+  const router = useRouter();
 
-  const loadData = async () => {
+  useEffect(() => {
+    const checkOnboarding = async (userSession: any) => {
+      try {
+        const res = await fetch(`http://localhost:8000/api/companies/me?user_id=${userSession.user.id}`);
+        if (res.status === 404) {
+          router.navigate({ to: "/onboarding" });
+        } else if (res.ok) {
+          const data = await res.json();
+          setCompanyId(data.id);
+          loadData(data.id);
+        } else {
+          console.error("Failed to fetch company profile");
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      if (!session) {
+        setIsLoadingAuth(false);
+        router.navigate({ to: "/login" });
+      } else {
+        checkOnboarding(session).finally(() => setIsLoadingAuth(false));
+      }
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      if (!session) {
+        router.navigate({ to: "/login" });
+      } else {
+        checkOnboarding(session);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [router]);
+
+  const loadData = async (compId: string) => {
+    if (!compId) return;
     try {
       const [touristsRes, agentsRes, driversRes, notifsRes] = await Promise.all([
-        fetch("http://localhost:8000/api/tourists"),
-        fetch("http://localhost:8000/api/agents"),
-        fetch("http://localhost:8000/api/drivers"),
-        fetch("http://localhost:8000/api/notifications")
+        fetch(`http://localhost:8000/api/tourists?company_id=${compId}`),
+        fetch(`http://localhost:8000/api/agents?company_id=${compId}`),
+        fetch(`http://localhost:8000/api/drivers?company_id=${compId}`),
+        fetch(`http://localhost:8000/api/notifications?company_id=${compId}`)
       ]);
       const touristsData = await touristsRes.json();
       const agentsData = await agentsRes.json();
@@ -160,9 +222,7 @@ function Console() {
     }
   };
 
-  useEffect(() => {
-    loadData();
-  }, []);
+
 
   const alertCounts = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -185,7 +245,7 @@ function Console() {
 
       if (agentFilter !== "all") {
         const agent = agents.find((a) => a.id === agentFilter);
-        if (agent && t.agent !== agent.name) return false;
+        if (agent && t.agent !== (agent.agent_name || agent.name)) return false;
       }
       if (statusFilter !== "all" && t.status !== statusFilter) return false;
       if (driverFilter !== "All Drivers" && t.driver !== driverFilter) return false;
@@ -219,6 +279,14 @@ function Console() {
     return { active, upcoming, pax, countries: new Set(touristsList.map((t) => t.country)).size };
   }, [touristsList]);
 
+  if (isLoadingAuth) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-background">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-screen w-full overflow-hidden bg-background text-foreground">
       {/* Left sidebar */}
@@ -244,7 +312,7 @@ function Console() {
             <SelectContent>
               {agents.map((a) => (
                 <SelectItem key={a.id} value={a.id}>
-                  {a.name}
+                  {a.agent_name || a.name}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -275,16 +343,42 @@ function Console() {
           })}
         </nav>
 
-        <div className="border-t border-border p-3">
+        <div className="border-t border-border p-3 space-y-2">
           <div className="flex items-center gap-3 rounded-md p-2">
             <div className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-accent text-xs font-semibold text-accent-foreground">
-              MW
+              {session?.user?.email?.substring(0, 2).toUpperCase() || "CP"}
             </div>
             <div className="min-w-0 flex-1">
-              <div className="truncate text-sm font-medium">Marcus Whitfield</div>
-              <div className="truncate text-xs text-muted-foreground">Senior Operations</div>
+              <div className="truncate text-sm font-medium">{session?.user?.email || "Company Profile"}</div>
+              <div className="truncate text-xs text-muted-foreground">Authorized Access</div>
             </div>
           </div>
+          
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="outline" className="w-full justify-start text-sm font-medium h-9 text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200">
+                <Building2 className="mr-2 h-4 w-4" />
+                Sign Out
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Are you sure you want to sign out?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This will end your current session. You will need to enter your email and password again to access the Operations Console.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction className="bg-red-600 hover:bg-red-700 text-white" onClick={async () => {
+                  await supabase.auth.signOut();
+                  toast.success("Signed out successfully");
+                }}>
+                  Sign Out
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </aside>
 
@@ -333,11 +427,94 @@ function Console() {
           </header>
 
           {nav === "agents" ? (
-            <AgentManagement />
+            <AgentManagement agents={agents} onAddAgent={async (form) => {
+              try {
+                const res = await fetch("http://localhost:8000/api/agents", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ agent_name: form.name, email: form.email, region: form.region, company_id: companyId })
+                });
+                if (res.ok) {
+                  const newAgent = await res.json();
+                  setAgents((prev: any[]) => [...prev, newAgent]);
+                }
+              } catch (e) {
+                console.error(e);
+              }
+            }}
+            onEditAgent={async (agent: any, form: any) => {
+              try {
+                const res = await fetch(`http://localhost:8000/api/agents/${agent.id}`, {
+                  method: "PUT",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ agent_name: form.name, email: form.email, region: form.region, company_id: companyId })
+                });
+                if (res.ok) {
+                  const updated = await res.json();
+                  setAgents((prev: any[]) => prev.map((a: any) => a.id === updated.id ? updated : a));
+                }
+              } catch (e) {
+                console.error(e);
+              }
+            }}
+            onDeleteAgent={async (agentId: string) => {
+              try {
+                const res = await fetch(`http://localhost:8000/api/agents/${agentId}`, { method: "DELETE" });
+                if (res.ok) {
+                  setAgents((prev: any[]) => prev.filter((a: any) => a.id !== agentId));
+                }
+              } catch (e) {
+                console.error(e);
+              }
+            }}
+            />
+          ) : nav === "drivers" ? (
+            <DriverManagement drivers={drivers} onAddDriver={async (form) => {
+              const res = await fetch("http://localhost:8000/api/drivers", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name: form.name, phone: form.phone, email: form.email, password: form.password, company_id: companyId })
+              });
+              if (res.ok) {
+                const newDriver = await res.json();
+                setDrivers((prev: any[]) => [...prev, newDriver]);
+                toast.success("Driver added!");
+              } else {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.detail || "Server error");
+              }
+            }}
+            onUpdateDriver={async (driverId: string, form) => {
+              try {
+                const res = await fetch(`http://localhost:8000/api/drivers/${driverId}`, {
+                  method: "PUT",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ name: form.name, phone: form.phone, email: form.email, password: form.password, company_id: companyId })
+                });
+                if (res.ok) {
+                  const updated = await res.json();
+                  setDrivers((prev: any[]) => prev.map((d: any) => d.id === updated.id ? updated : d));
+                }
+              } catch (e) {
+                console.error(e);
+              }
+            }}
+            onDeleteDriver={async (driverId: string) => {
+              try {
+                const res = await fetch(`http://localhost:8000/api/drivers/${driverId}`, { method: "DELETE" });
+                if (res.ok) {
+                  setDrivers((prev: any[]) => prev.filter((d: any) => d.id !== driverId));
+                }
+              } catch (e) {
+                console.error(e);
+              }
+            }}
+            />
           ) : nav === "dashboard" || nav === "reports" || nav === "settings" ? (
             <DashboardOverview stats={stats} navLabel={nav} />
           ) : (
             <ToursWorkspace
+              drivers={drivers}
               query={query}
               setQuery={setQuery}
               statusFilter={statusFilter}
@@ -354,7 +531,7 @@ function Console() {
               onResolveAlert={async (id) => {
                 try {
                   await fetch(`http://localhost:8000/api/notifications/${id}/resolve`, { method: "PATCH" });
-                  loadData();
+                  if (companyId) loadData(companyId);
                 } catch (e) {
                   toast.error("Failed to resolve notification");
                 }
@@ -369,6 +546,22 @@ function Console() {
                 setEditingTourist(t);
                 setIsAddClientOpen(true);
               }}
+              onDeleteClient={async (id) => {
+                console.log('DELETE called with id:', id);
+                try {
+                  const res = await fetch(`http://localhost:8000/api/tourists/${id}`, { method: 'DELETE' });
+                  console.log('DELETE response status:', res.status);
+                  if (res.ok) {
+                    setTouristsList(prev => prev.filter(t => t.id !== id));
+                    setIsDetailOpen(false);
+                  } else {
+                    const text = await res.text();
+                    console.error('DELETE failed:', text);
+                  }
+                } catch (e) {
+                  console.error("Failed to delete client", e);
+                }
+              }}
             />
           )}
         </main>
@@ -378,7 +571,9 @@ function Console() {
           onOpenChange={setIsAddClientOpen} 
           mode={addClientMode}
           initialData={editingTourist}
-          onAdd={(newTourist) => {
+          agents={agents}
+          drivers={drivers}
+          onAdd={async (newTourist) => {
             if (editingTourist) {
               setTouristsList(touristsList.map(t => t.id === newTourist.id ? newTourist : t));
             } else {
@@ -386,6 +581,63 @@ function Console() {
             }
             setSelectedId(newTourist.id);
             setIsDetailOpen(true);
+
+            try {
+              const matchedAgent = agents.find((a: any) => (a.agent_name || a.name) === newTourist.agent);
+              const matchedDriver = drivers.find((d: any) => d.name === newTourist.driver);
+              
+              let arrivalStr = new Date().toISOString().split('T')[0];
+              if (newTourist.arrival && newTourist.arrival !== 'TBD') {
+                 const parsed = new Date(newTourist.arrival);
+                 if (!isNaN(parsed.getTime())) {
+                    arrivalStr = parsed.toISOString().split('T')[0];
+                 }
+              }
+
+              const payload = {
+                name: newTourist.name || 'Unknown',
+                passport_number: newTourist.passport || 'N/A',
+                email: newTourist.email || 'N/A',
+                pax_count: newTourist.pax || 1,
+                country: newTourist.country || 'Unknown',
+                country_code: newTourist.countryCode || 'UN',
+                arrival_date: arrivalStr,
+                duration: newTourist.duration || '1 Day',
+                status: newTourist.status || 'Upcoming',
+                is_lead: newTourist.isLead || false,
+                company_id: companyId,
+                agent_id: matchedAgent ? matchedAgent.id : null,
+                driver_id: matchedDriver ? matchedDriver.id : null,
+                group_members: (newTourist.group || []).map((g: any) => ({
+                  name: g.name || 'Unknown',
+                  passport_number: g.passport || 'N/A',
+                  email: g.email || 'N/A'
+                })),
+                itineraries: (newTourist.itinerary || []).map((i: any) => ({
+                  day_number: i.day || 1,
+                  day_title: i.title || 'Day 1',
+                  stop_order: 1,
+                  location_name: i.location || 'Unknown',
+                  is_hotel_stay: false,
+                  destinations: [{
+                    location_name: i.location || 'Unknown',
+                    activities: i.description || ''
+                  }]
+                }))
+              };
+              
+              const url = editingTourist 
+                ? `http://localhost:8000/api/tourists/${editingTourist.id}`
+                : 'http://localhost:8000/api/tourists';
+              const method = editingTourist ? 'PUT' : 'POST';
+              await fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+              });
+            } catch (e) {
+              console.error('Failed to save to db', e);
+            }
           }} 
         />
 
@@ -481,6 +733,7 @@ function NotificationItem({
 /* ---------- Tours workspace ---------- */
 
 function ToursWorkspace({
+  drivers,
   query,
   setQuery,
   statusFilter,
@@ -497,7 +750,9 @@ function ToursWorkspace({
   onResolveAlert,
   onAddClient,
   onConfirmTour,
+  onDeleteClient,
 }: {
+  drivers: any[];
   query: string;
   setQuery: (v: string) => void;
   statusFilter: "all" | TourStatus;
@@ -514,6 +769,7 @@ function ToursWorkspace({
   onResolveAlert: (id: string) => void;
   onAddClient: () => void;
   onConfirmTour: (t: Tourist) => void;
+  onDeleteClient: (id: string) => void;
 }) {
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -525,6 +781,8 @@ function ToursWorkspace({
             notifications={notifications}
             onResolveAlert={onResolveAlert}
             onConfirmTour={() => onConfirmTour(selected)}
+            onEditClient={() => onConfirmTour(selected)}
+            onDeleteClient={() => onDeleteClient(selected.id)}
           />
         </div>
       ) : (
@@ -556,9 +814,9 @@ function ToursWorkspace({
                 <SelectValue placeholder="Driver" />
               </SelectTrigger>
               <SelectContent>
-                {drivers.map((d) => (
-                  <SelectItem key={d} value={d}>
-                    {d}
+                {drivers.map((d: any) => (
+                  <SelectItem key={d.id} value={d.name}>
+                    {d.name}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -580,7 +838,8 @@ function ToursWorkspace({
                   </Button>
                 </div>
               </div>
-              <ScrollArea className="flex-1">
+        
+      <ScrollArea className="flex-1">
                 <ul>
                   {tourists.map((t) => {
                     const hasAlerts = (alertCounts[t.id] || 0) > 0;
@@ -660,14 +919,19 @@ function TouristDetail({
   onBack, 
   notifications, 
   onResolveAlert, 
-  onConfirmTour 
+  onConfirmTour,
+  onEditClient,
+  onDeleteClient
 }: { 
   t: Tourist; 
   onBack?: () => void; 
   notifications: any[]; 
   onResolveAlert: (id: string) => void;
   onConfirmTour: () => void;
+  onEditClient?: () => void;
+  onDeleteClient: () => void;
 }) {
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const personAlerts = notifications.filter((n) => n.touristId === t.id || n.touristId === "all");
   const activeAlerts = personAlerts.filter((n) => !n.resolved);
   const activeComplains = activeAlerts.filter((n) => n.type === "alert");
@@ -715,6 +979,10 @@ function TouristDetail({
                   Confirm Tour
                 </Button>
               )}
+              <Button variant="outline" size="sm" onClick={onEditClient} className="gap-2 border-primary text-primary hover:bg-primary/10">
+                <Settings2 className="h-4 w-4" />
+                Edit Profile
+              </Button>
               <Button variant="outline" size="sm" className="gap-2">
                 <MessageCircle className="h-4 w-4 text-green-600" />
                 WhatsApp
@@ -930,7 +1198,7 @@ function TouristDetail({
         </Tabs>
 
         <div className="px-7 pb-10 pt-6 mt-8 border-t border-border/50">
-          <Dialog>
+          <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
             <DialogTrigger asChild>
               <Button variant="destructive" className="w-full sm:w-auto">
                 <Trash2 className="mr-2 h-4 w-4" />
@@ -945,10 +1213,10 @@ function TouristDetail({
                 </DialogDescription>
               </DialogHeader>
               <DialogFooter className="mt-4">
-                <DialogTrigger asChild>
-                  <Button variant="outline">Cancel</Button>
-                </DialogTrigger>
+                <Button variant="outline" onClick={() => setDeleteOpen(false)}>Cancel</Button>
                 <Button variant="destructive" onClick={() => {
+                  setDeleteOpen(false);
+                  onDeleteClient();
                   toast.success("Client deleted successfully");
                   if (onBack) onBack();
                 }}>
@@ -985,32 +1253,52 @@ function InfoField({
 
 /* ---------- Agent management ---------- */
 
-function AgentManagement() {
-  const [agents, setAgents] = useState(
-    AGENTS.filter((a) => a.id !== "all").map((a) => ({ ...a, clients: a.clients ?? 0 })),
-  );
-  const [open, setOpen] = useState(false);
+function AgentManagement({ agents, onAddAgent, onEditAgent, onDeleteAgent }: {
+  agents: any[];
+  onAddAgent: (form: any) => void;
+  onEditAgent: (agent: any, form: any) => void;
+  onDeleteAgent: (agentId: string) => void;
+}) {
+  const [addOpen, setAddOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [editingAgent, setEditingAgent] = useState<any>(null);
   const [form, setForm] = useState({ name: "", email: "", region: "" });
+  const [editForm, setEditForm] = useState({ name: "", email: "", region: "" });
 
-  function submit() {
+  function submitAdd() {
     if (!form.name || !form.email) {
       toast.error("Name and email required");
       return;
     }
-    setAgents((a) => [
-      ...a,
-      {
-        id: `a${a.length + 1}`,
-        name: form.name,
-        email: form.email,
-        region: form.region || "Unassigned",
-        clients: 0,
-      },
-    ]);
+    onAddAgent(form);
     setForm({ name: "", email: "", region: "" });
-    setOpen(false);
-    toast.success(`${form.name} added to the team`);
+    setAddOpen(false);
+    toast.success("Agent profile created");
   }
+
+  function submitEdit() {
+    if (!editForm.name || !editForm.email) {
+      toast.error("Name and email required");
+      return;
+    }
+    onEditAgent(editingAgent, editForm);
+    setEditOpen(false);
+    toast.success("Agent updated successfully");
+  }
+
+  function openEdit(a: any) {
+    setEditingAgent(a);
+    setEditForm({ name: a.agent_name || a.name || "", email: a.email || "", region: a.region || "" });
+    setEditOpen(true);
+  }
+
+  function openDelete(a: any) {
+    setEditingAgent(a);
+    setDeleteOpen(true);
+  }
+
+  const regions = ["South Asia", "Europe", "East Asia", "Oceania", "Middle East", "Americas"];
 
   return (
     <div className="flex min-h-0 flex-1 flex-col bg-background">
@@ -1018,7 +1306,7 @@ function AgentManagement() {
         <div className="text-sm text-muted-foreground">
           {agents.length} agents · {agents.reduce((s, a) => s + (a.clients || 0), 0)} clients under management
         </div>
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog open={addOpen} onOpenChange={setAddOpen}>
           <DialogTrigger asChild>
             <Button size="sm" className="gap-1.5">
               <UserPlus className="h-4 w-4" />
@@ -1033,65 +1321,122 @@ function AgentManagement() {
             <div className="space-y-3">
               <div>
                 <Label htmlFor="ag-name">Full name</Label>
-                <Input
-                  id="ag-name"
-                  value={form.name}
-                  onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  placeholder="e.g. Amara Jayawardena"
-                />
+                <Input id="ag-name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="e.g. Amara Jayawardena" />
               </div>
               <div>
                 <Label htmlFor="ag-email">Email</Label>
-                <Input
-                  id="ag-email"
-                  type="email"
-                  value={form.email}
-                  onChange={(e) => setForm({ ...form, email: e.target.value })}
-                  placeholder="amara@horizon.travel"
-                />
+                <Input id="ag-email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="amara@horizon.travel" />
               </div>
               <div>
                 <Label htmlFor="ag-region">Assigned region</Label>
                 <Select value={form.region} onValueChange={(v) => setForm({ ...form, region: v })}>
-                  <SelectTrigger id="ag-region">
-                    <SelectValue placeholder="Choose a region" />
-                  </SelectTrigger>
+                  <SelectTrigger id="ag-region"><SelectValue placeholder="Choose a region" /></SelectTrigger>
                   <SelectContent>
-                    {["South Asia", "Europe", "East Asia", "Oceania", "Middle East", "Americas"].map(
-                      (r) => (
-                        <SelectItem key={r} value={r}>
-                          {r}
-                        </SelectItem>
-                      ),
-                    )}
+                    {regions.map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
             </div>
             <DialogFooter>
-              <Button variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
-              <Button onClick={submit}>Create agent</Button>
+              <Button variant="ghost" onClick={() => setAddOpen(false)}>Cancel</Button>
+              <Button onClick={submitAdd}>Create agent</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
 
+      {/* Edit Dialog */}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Agent</DialogTitle>
+            <DialogDescription>Update the agent's profile information.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label>Full name</Label>
+              <Input value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} placeholder="Full name" />
+            </div>
+            <div>
+              <Label>Email</Label>
+              <Input type="email" value={editForm.email} onChange={(e) => setEditForm({ ...editForm, email: e.target.value })} placeholder="Email" />
+            </div>
+            <div>
+              <Label>Assigned region</Label>
+              <Select value={editForm.region} onValueChange={(v) => setEditForm({ ...editForm, region: v })}>
+                <SelectTrigger><SelectValue placeholder="Choose a region" /></SelectTrigger>
+                <SelectContent>
+                  {regions.map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setEditOpen(false)}>Cancel</Button>
+            <Button onClick={submitEdit}>Save changes</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Agent?</DialogTitle>
+            <DialogDescription>
+              This will permanently delete <strong>{editingAgent?.agent_name || editingAgent?.name}</strong>. This cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="mt-4">
+            <Button variant="outline" onClick={() => setDeleteOpen(false)}>Cancel</Button>
+            <Button variant="destructive" onClick={() => {
+              setDeleteOpen(false);
+              onDeleteAgent(editingAgent.id);
+              toast.success("Agent deleted");
+            }}>Yes, delete agent</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+
       <ScrollArea className="flex-1">
         <div className="grid gap-3 p-6 sm:grid-cols-2 xl:grid-cols-3">
-          {agents.map((a) => {
-            const initials = a.name
+          {agents.map((a: any) => {
+            const initials = (a.agent_name || a.name || "?")
               .split(" ")
-              .map((p) => p[0])
+              .map((p: any) => p[0])
               .slice(0, 2)
               .join("");
             return (
-              <div key={a.id} className="rounded-lg border border-border bg-card p-5">
+              <div key={a.id} className="group relative rounded-lg border border-border bg-card p-5 transition-all hover:shadow-md hover:border-primary/30">
+                {/* Hover action buttons */}
+                <div className="absolute right-3 top-3 flex gap-1.5 opacity-0 transition-opacity group-hover:opacity-100">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 w-7 p-0 border-primary/40 text-primary hover:bg-primary/10"
+                    onClick={() => openEdit(a)}
+                    title="Edit agent"
+                  >
+                    <Settings2 className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 w-7 p-0 border-destructive/40 text-destructive hover:bg-destructive/10"
+                    onClick={() => openDelete(a)}
+                    title="Delete agent"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+
                 <div className="flex items-start gap-3">
                   <div className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
                     {initials}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm font-semibold">{a.name}</div>
+                    <div className="truncate text-sm font-semibold">{a.agent_name || a.name}</div>
                     <div className="truncate text-xs text-muted-foreground">{a.email}</div>
                   </div>
                 </div>
@@ -1115,6 +1460,261 @@ function AgentManagement() {
   );
 }
 
+
+
+/* ---------- Driver Management ---------- */
+
+function DriverManagement({
+  drivers,
+  onAddDriver,
+  onUpdateDriver,
+  onDeleteDriver
+}: {
+  drivers: any[];
+  onAddDriver: (d: any) => void;
+  onUpdateDriver: (id: string, d: any) => void;
+  onDeleteDriver: (id: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [form, setForm] = useState({ name: "", phone: "", email: "", password: "" });
+  const [selectedDriver, setSelectedDriver] = useState<any>(null);
+
+  async function submit() {
+    if (!form.name || !form.phone || !form.email) {
+      toast.error("Name, phone, and email required");
+      return;
+    }
+    try {
+      await onAddDriver(form);
+      setForm({ name: "", phone: "", email: "", password: "" });
+      setOpen(false);
+    } catch (e) {
+      toast.error("Failed to add driver. Please try again.");
+    }
+  }
+
+  async function submitEdit() {
+    if (!form.name || !form.phone || !form.email) {
+      toast.error("Name, phone, and email required");
+      return;
+    }
+    if (selectedDriver) {
+      try {
+        await onUpdateDriver(selectedDriver.id, form);
+      } catch (e) {
+        toast.error("Failed to update driver.");
+        return;
+      }
+      setEditOpen(false);
+      setSelectedDriver(null);
+      toast.success("Driver profile updated");
+    }
+  }
+
+  function confirmDelete() {
+    if (selectedDriver) {
+      onDeleteDriver(selectedDriver.id);
+      setDeleteOpen(false);
+      setSelectedDriver(null);
+      toast.success("Driver deleted");
+    }
+  }
+
+  function openEdit(driver: any) {
+    setSelectedDriver(driver);
+    setForm({ name: driver.name || "", phone: driver.phone || "", email: driver.email || "", password: "" });
+    setEditOpen(true);
+  }
+
+  function openDelete(driver: any) {
+    setSelectedDriver(driver);
+    setDeleteOpen(true);
+  }
+
+  return (
+    <div className="flex min-h-0 flex-1 flex-col bg-background">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-card px-6 py-3">
+        <div className="text-sm text-muted-foreground">
+          {drivers.length} drivers & guides
+        </div>
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild>
+            <Button size="sm" className="gap-1.5">
+              <UserPlus className="h-4 w-4" />
+              Add driver / guide
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Add new driver</DialogTitle>
+              <DialogDescription>Create a profile for a driver or guide.</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-3">
+              <div>
+                <Label htmlFor="drv-name">Full name</Label>
+                <Input
+                  id="drv-name"
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  placeholder="e.g. Kamal Perera"
+                />
+              </div>
+              <div>
+                <Label htmlFor="drv-phone">Phone Number</Label>
+                <Input
+                  id="drv-phone"
+                  value={form.phone}
+                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                  placeholder="+94 77 123 4567"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="drv-email">Email</Label>
+                <Input
+                  id="drv-email"
+                  type="email"
+                  value={form.email}
+                  onChange={(e) => setForm({ ...form, email: e.target.value })}
+                  placeholder="driver@example.com"
+                />
+              </div>
+              <div>
+                <div className="flex justify-between items-center mb-1">
+                  <Label htmlFor="drv-pw">Password</Label>
+                  <Button type="button" variant="link" className="h-auto p-0 text-xs" onClick={() => {
+                    const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
+                    let newPw = "";
+                    for (let i = 0; i < 10; i++) newPw += chars.charAt(Math.floor(Math.random() * chars.length));
+                    setForm({ ...form, password: newPw });
+                  }}>Generate Random</Button>
+                </div>
+                <Input
+                  id="drv-pw"
+                  type="text"
+                  value={form.password}
+                  onChange={(e) => setForm({ ...form, password: e.target.value })}
+                  placeholder="Optional: Auto-assigns if empty"
+                />
+              </div>
+
+            </div>
+            <DialogFooter>
+              <Button variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
+              <Button onClick={submit}>Create profile</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+
+      <ScrollArea className="flex-1">
+        <div className="grid gap-3 p-6 sm:grid-cols-2 xl:grid-cols-3">
+          {drivers.map((d: any) => {
+            const initials = (d.name || "?")
+              .split(" ")
+              .map((p: any) => p[0])
+              .slice(0, 2)
+              .join("");
+            return (
+              <div key={d.id} className="group relative rounded-lg border border-border bg-card p-5 overflow-hidden transition-all hover:shadow-md hover:border-primary/20">
+                
+                {/* Hover Actions */}
+                <div className="absolute right-2 top-2 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                  {d.password && (
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10" onClick={() => {
+                      navigator.clipboard.writeText(`Email: ${d.email}\nPassword: ${d.password}`);
+                      toast.success("Credentials copied!");
+                    }} title="Copy Credentials">
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                  )}
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10" onClick={() => openEdit(d)}>
+                    <Settings2 className="h-4 w-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10" onClick={() => openDelete(d)}>
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <div className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
+                    {initials}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-sm font-semibold pr-16">{d.name}</div>
+                    <div className="truncate text-xs text-muted-foreground">{d.phone}</div>
+                    {d.email && <div className="truncate text-xs text-muted-foreground">{d.email}</div>}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </ScrollArea>
+
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Driver</DialogTitle>
+            <DialogDescription>Update driver details.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label htmlFor="edit-drv-name">Full name</Label>
+              <Input
+                id="edit-drv-name"
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit-drv-phone">Phone Number</Label>
+              <Input
+                id="edit-drv-phone"
+                value={form.phone}
+                onChange={(e) => setForm({ ...form, phone: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit-drv-email">Email</Label>
+              <Input
+                id="edit-drv-email"
+                type="email"
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setEditOpen(false)}>Cancel</Button>
+            <Button onClick={submitEdit}>Save changes</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Driver?</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to permanently delete {selectedDriver?.name}? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="mt-4">
+            <Button variant="ghost" onClick={() => setDeleteOpen(false)}>Cancel</Button>
+            <Button variant="destructive" onClick={confirmDelete}>Delete Driver</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+    </div>
+  );
+}
+
+
 /* ---------- Dashboard placeholder ---------- */
 
 function DashboardOverview({
@@ -1135,6 +1735,7 @@ function DashboardOverview({
     tours: "Active Tours",
     leads: "Inquiries & Leads",
     agents: "Agent Management",
+    drivers: "Drivers & Guides",
     reports: "Reports",
     settings: "Settings",
   };

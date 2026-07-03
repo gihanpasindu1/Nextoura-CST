@@ -6,3 +6,4 @@ python-dotenv
 alembic
 psycopg2-binary
 requests
+supabase>=2.3.0

@@ -18,6 +18,8 @@ export function AddTouristSheet({
   onAdd, 
   mode = "confirmed",
   initialData,
+  agents = [],
+  drivers = [],
 }: { 
   open: boolean; 
   onOpenChange: (open: boolean) => void; 
@@ -38,8 +40,11 @@ export function AddTouristSheet({
     email: "",
     pax: 1,
     arrival: "",
+    departure: "",
     duration: "",
+    status: "Upcoming",
     agent: "All Agents",
+    driver: "All Drivers",
     group: [] as any[],
   });
 
@@ -55,8 +60,11 @@ export function AddTouristSheet({
           email: initialData.email || "",
           pax: initialData.pax || 1,
           arrival: initialData.arrival || "",
+          departure: (initialData as any).departure || "",
           duration: initialData.duration || "",
+          status: initialData.status || "Upcoming",
           agent: initialData.agent || "All Agents",
+          driver: initialData.driver || "All Drivers",
           group: initialData.group || [],
         });
         setItinerary(initialData.itinerary || []);
@@ -71,7 +79,10 @@ export function AddTouristSheet({
           pax: 1,
           arrival: "",
           duration: "",
+          departure: "",
+          status: "Upcoming",
           agent: "All Agents",
+          driver: "All Drivers",
           group: [],
         });
         setItinerary([]);
@@ -79,6 +90,21 @@ export function AddTouristSheet({
       setErrors({});
     }
   }, [open, initialData]);
+
+
+  useEffect(() => {
+    if (formData.arrival && formData.departure) {
+      const start = new Date(formData.arrival);
+      const end = new Date(formData.departure);
+      if (!isNaN(start.getTime()) && !isNaN(end.getTime()) && end >= start) {
+        const diff = end.getTime() - start.getTime();
+        const days = Math.ceil(diff / (1000 * 3600 * 24)) + 1; // inclusive of start day
+        if (formData.duration !== `${days} Days`) {
+          setFormData(prev => ({ ...prev, duration: `${days} Days` }));
+        }
+      }
+    }
+  }, [formData.arrival, formData.departure]);
 
   const [itinerary, setItinerary] = useState<any[]>([]);
   const [itineraryText, setItineraryText] = useState("");
@@ -127,6 +153,7 @@ export function AddTouristSheet({
       if (!formData.phone) newErrors.phone = "Phone is required";
       if (!formData.email) newErrors.email = "Email is required";
       if (!formData.arrival) newErrors.arrival = "Arrival date is required";
+      if (!formData.departure) newErrors.departure = "Departure date is required";
       if (!formData.duration) newErrors.duration = "Duration is required";
       if (formData.agent === "All Agents") newErrors.agent = "Agent is required";
 
@@ -153,14 +180,14 @@ export function AddTouristSheet({
     const newTourist: Tourist = {
       id: initialData ? initialData.id : "t" + Math.floor(Math.random() * 10000),
       name: formData.name,
-      status: initialData ? initialData.status : "Upcoming",
       country: formData.country || "TBD",
       countryCode: formData.countryCode || "UN",
       pax: formData.pax,
       arrival: formData.arrival || "TBD",
       duration: formData.duration || "TBD",
+      status: formData.status as any,
       agent: formData.agent !== "All Agents" ? formData.agent : "Direct",
-      driver: initialData ? initialData.driver : DRIVERS[Math.floor(Math.random() * DRIVERS.length)],
+      driver: formData.driver !== "All Drivers" ? formData.driver : "TBD",
       passport: formData.passport || "N/A",
       phone: formData.phone || "N/A",
       email: formData.email || "N/A",
@@ -235,7 +262,7 @@ export function AddTouristSheet({
                     <SelectTrigger className={cn(errors.agent && "border-destructive focus:ring-destructive")}><SelectValue placeholder="Select Agent" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="All Agents">Select Agent</SelectItem>
-                      {agents.map(a => (
+                      {agents.map((a: any) => (
                         <SelectItem key={a.id} value={a.agent_name || a.name}>{a.agent_name || a.name}</SelectItem>
                       ))}
                     </SelectContent>
@@ -243,9 +270,26 @@ export function AddTouristSheet({
                   {errors.agent && <div className="text-[10px] text-destructive flex items-center gap-1"><AlertCircle className="h-3 w-3" /> {errors.agent}</div>}
                 </div>
                 <div className="space-y-2">
+                  <Label>Driver / Guide</Label>
+                  <Select value={formData.driver} onValueChange={v => setFormData({...formData, driver: v})}>
+                    <SelectTrigger><SelectValue placeholder="Select Driver" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="All Drivers">Select Driver / Guide</SelectItem>
+                      {drivers.map((d: any) => (
+                        <SelectItem key={d.id} value={d.name}>{d.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
                   <Label className={cn(errors.arrival && "text-destructive")}>Arrival Date {mode === "confirmed" && "*"}</Label>
-                  <Input className={cn(errors.arrival && "border-destructive focus-visible:ring-destructive")} value={formData.arrival} onChange={e => { setFormData({...formData, arrival: e.target.value}); if (errors.arrival) setErrors({...errors, arrival: ""}); }} placeholder="e.g. 24 June 2026" />
+                  <Input type="date" className={cn(errors.arrival && "border-destructive focus-visible:ring-destructive")} value={formData.arrival} onChange={e => { setFormData({...formData, arrival: e.target.value}); if (errors.arrival) setErrors({...errors, arrival: ""}); }} />
                   {errors.arrival && <div className="text-[10px] text-destructive flex items-center gap-1"><AlertCircle className="h-3 w-3" /> {errors.arrival}</div>}
+                </div>
+                <div className="space-y-2">
+                  <Label className={cn(errors.departure && "text-destructive")}>Departure Date {mode === "confirmed" && "*"}</Label>
+                  <Input type="date" className={cn(errors.departure && "border-destructive focus-visible:ring-destructive")} value={formData.departure} onChange={e => { setFormData({...formData, departure: e.target.value}); if (errors.departure) setErrors({...errors, departure: ""}); }} />
+                  {errors.departure && <div className="text-[10px] text-destructive flex items-center gap-1"><AlertCircle className="h-3 w-3" /> {errors.departure}</div>}
                 </div>
                 <div className="space-y-2">
                   <Label className={cn(errors.duration && "text-destructive")}>Duration {mode === "confirmed" && "*"}</Label>

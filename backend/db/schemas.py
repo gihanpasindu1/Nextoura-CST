@@ -7,6 +7,9 @@ from datetime import date, datetime
 class CompanyBase(BaseModel):
     company_name: str
     email: Optional[str] = None
+    auth_user_id: Optional[uuid.UUID] = None
+    ceo_name: Optional[str] = None
+    phone_numbers: Optional[List[str]] = []
 
 class CompanyCreate(CompanyBase):
     pass
@@ -20,6 +23,8 @@ class Company(CompanyBase):
 # ----------------- Agents -----------------
 class AgentBase(BaseModel):
     agent_name: str
+    email: Optional[str] = None
+    region: Optional[str] = None
     company_id: Optional[uuid.UUID] = None
 
 class AgentCreate(AgentBase):
@@ -35,10 +40,12 @@ class Agent(AgentBase):
 class DriverBase(BaseModel):
     name: str
     phone: Optional[str] = None
+    email: Optional[str] = None
+    password: Optional[str] = None
     company_id: Optional[uuid.UUID] = None
 
 class DriverCreate(DriverBase):
-    pass
+    password: Optional[str] = None
 
 class Driver(DriverBase):
     id: uuid.UUID
@@ -51,6 +58,7 @@ class HotelBase(BaseModel):
     hotel_name: str
     hotel_email: Optional[str] = None
     phone_number: Optional[str] = None
+    company_id: Optional[uuid.UUID] = None
 
 class HotelCreate(HotelBase):
     pass
@@ -115,6 +123,7 @@ class Itinerary(ItineraryBase):
     class Config:
         from_attributes = True
 
+
 # ----------------- Tourists -----------------
 class TouristBase(BaseModel):
     name: str
@@ -124,11 +133,13 @@ class TouristBase(BaseModel):
     country: str
     country_code: str
     arrival_date: date
+    departure_date: Optional[date] = None
     duration: str
     status: Optional[str] = "Active"
     is_lead: Optional[bool] = False
     agent_id: Optional[uuid.UUID] = None
     driver_id: Optional[uuid.UUID] = None
+    company_id: Optional[uuid.UUID] = None
 
 class TouristCreate(TouristBase):
     group_members: Optional[List[GroupMemberCreate]] = []
@@ -150,6 +161,7 @@ class NotificationBase(BaseModel):
     alert_message: str
     is_resolved: bool = False
     notification_type: str = "alert"
+    company_id: Optional[uuid.UUID] = None
 
 class NotificationCreate(NotificationBase):
     tourist_id: Optional[uuid.UUID] = None
