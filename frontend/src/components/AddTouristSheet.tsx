@@ -20,6 +20,7 @@ export function AddTouristSheet({
   initialData,
   agents = [],
   drivers = [],
+  hotels = [],
 }: { 
   open: boolean; 
   onOpenChange: (open: boolean) => void; 
@@ -28,6 +29,7 @@ export function AddTouristSheet({
   initialData?: Tourist;
   agents: any[];
   drivers: any[];
+  hotels?: any[];
 }) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -184,6 +186,7 @@ export function AddTouristSheet({
       countryCode: formData.countryCode || "UN",
       pax: formData.pax,
       arrival: formData.arrival || "TBD",
+      departure: formData.departure || "",
       duration: formData.duration || "TBD",
       status: formData.status as any,
       agent: formData.agent !== "All Agents" ? formData.agent : "Direct",
@@ -210,6 +213,12 @@ export function AddTouristSheet({
               ? "Create a new lead profile. Only the name is mandatory." 
               : "Create a confirmed client profile. All personal details are required."}
           </SheetDescription>
+          {/* Datalist for hotel autocomplete */}
+          <datalist id="hotels-list">
+            {hotels.map(h => (
+              <option key={h.id} value={h.hotel_name} />
+            ))}
+          </datalist>
         </SheetHeader>
         
         <ScrollArea className="flex-1 p-6">
@@ -295,6 +304,19 @@ export function AddTouristSheet({
                   <Label className={cn(errors.duration && "text-destructive")}>Duration {mode === "confirmed" && "*"}</Label>
                   <Input className={cn(errors.duration && "border-destructive focus-visible:ring-destructive")} value={formData.duration} onChange={e => { setFormData({...formData, duration: e.target.value}); if (errors.duration) setErrors({...errors, duration: ""}); }} placeholder="e.g. 7 Days" />
                   {errors.duration && <div className="text-[10px] text-destructive flex items-center gap-1"><AlertCircle className="h-3 w-3" /> {errors.duration}</div>}
+                </div>
+                <div className="space-y-2">
+                  <Label>Status</Label>
+                  <Select value={formData.status} onValueChange={v => setFormData({...formData, status: v})}>
+                    <SelectTrigger><SelectValue placeholder="Select Status" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Upcoming">Upcoming</SelectItem>
+                      <SelectItem value="Active">Active</SelectItem>
+                      <SelectItem value="On Tour">On Tour</SelectItem>
+                      <SelectItem value="Completed">Completed</SelectItem>
+                      <SelectItem value="Cancelled">Cancelled</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
             </div>
@@ -401,8 +423,18 @@ export function AddTouristSheet({
                         <div className="grid grid-cols-2 gap-3">
                           <div className="space-y-1">
                             <Label className="text-xs">Hotel</Label>
-                            <Input className="h-8 text-sm" value={day.hotel} onChange={e => {
-                              const updated = [...itinerary]; updated[i].hotel = e.target.value; setItinerary(updated);
+                            <Input className="h-8 text-sm" list="hotels-list" value={day.hotel} onChange={e => {
+                              const val = e.target.value;
+                              const updated = [...itinerary]; 
+                              updated[i].hotel = val; 
+                              
+                              // Auto-fill email if a match is found
+                              const matched = hotels.find(h => h.hotel_name === val);
+                              if (matched && matched.hotel_email) {
+                                updated[i].hotelEmail = matched.hotel_email;
+                              }
+                              
+                              setItinerary(updated);
                             }} />
                           </div>
                           <div className="space-y-1">
@@ -459,58 +491,102 @@ export function AddTouristSheet({
                       
                       <div className="space-y-3 pt-2">
                         <Label className="text-xs text-muted-foreground uppercase tracking-wider">Destinations & Activities</Label>
-                        
+
                         {(day.destinations || []).map((dest: any, destIndex: number) => (
-                          <div key={`dest-${destIndex}`} className="space-y-2 border-l-2 border-primary/20 pl-3 relative">
-                            <Button variant="ghost" size="icon" className="absolute -left-3 top-0 h-5 w-5 rounded-full bg-background border border-border text-muted-foreground hover:text-destructive hover:border-destructive" onClick={() => {
-                              const updated = [...itinerary];
-                              updated[i].destinations.splice(destIndex, 1);
-                              setItinerary(updated);
-                            }}>
+                          <div key={`dest-${destIndex}`} className="border border-border rounded-lg bg-background relative">
+                            {/* Remove location button */}
+                            <Button
+                              variant="ghost" size="icon"
+                              className="absolute -top-2.5 -right-2.5 h-5 w-5 rounded-full bg-background border border-border text-muted-foreground hover:text-destructive hover:border-destructive z-10"
+                              onClick={() => {
+                                const updated = [...itinerary];
+                                updated[i].destinations.splice(destIndex, 1);
+                                setItinerary(updated);
+                              }}
+                            >
                               <X className="h-3 w-3" />
                             </Button>
-                            <Input className="h-8 text-sm" placeholder="Location name (e.g. Dambulla)" value={dest.location} onChange={e => {
-                              const updated = [...itinerary]; updated[i].destinations[destIndex].location = e.target.value; setItinerary(updated);
-                            }} />
-                            <Textarea className="min-h-[50px] text-sm" placeholder="Activities at this location..." value={dest.activities} onChange={e => {
-                              const updated = [...itinerary]; updated[i].destinations[destIndex].activities = e.target.value; setItinerary(updated);
-                            }} />
+
+                            {/* Location name */}
+                            <div className="px-3 pt-3 pb-2 border-b border-border">
+                              <Input
+                                className="h-8 text-sm font-semibold border-0 p-0 focus-visible:ring-0 bg-transparent"
+                                placeholder="Location name (e.g. Sigiriya Rock)"
+                                value={dest.location}
+                                onChange={e => {
+                                  const updated = [...itinerary];
+                                  updated[i].destinations[destIndex].location = e.target.value;
+                                  setItinerary(updated);
+                                }}
+                              />
+                            </div>
+
+                            {/* Activities list */}
+                            <div className="px-3 pt-2 pb-1 space-y-1.5">
+                              {(Array.isArray(dest.activities) ? dest.activities : (dest.activities ? [dest.activities] : [])).map((act: string, actIdx: number) => (
+                                <div key={actIdx} className="flex items-center gap-1.5">
+                                  <span className="text-muted-foreground text-xs mt-0.5">•</span>
+                                  <Input
+                                    className="h-7 text-xs flex-1 bg-muted/30"
+                                    placeholder="Activity description..."
+                                    value={act}
+                                    onChange={e => {
+                                      const updated = [...itinerary];
+                                      const acts = Array.isArray(updated[i].destinations[destIndex].activities)
+                                        ? [...updated[i].destinations[destIndex].activities]
+                                        : (updated[i].destinations[destIndex].activities ? [updated[i].destinations[destIndex].activities] : []);
+                                      acts[actIdx] = e.target.value;
+                                      updated[i].destinations[destIndex].activities = acts;
+                                      setItinerary(updated);
+                                    }}
+                                  />
+                                  <Button
+                                    variant="ghost" size="icon"
+                                    className="h-5 w-5 shrink-0 text-muted-foreground hover:text-destructive"
+                                    onClick={() => {
+                                      const updated = [...itinerary];
+                                      const acts = Array.isArray(updated[i].destinations[destIndex].activities)
+                                        ? [...updated[i].destinations[destIndex].activities]
+                                        : [];
+                                      acts.splice(actIdx, 1);
+                                      updated[i].destinations[destIndex].activities = acts;
+                                      setItinerary(updated);
+                                    }}
+                                  >
+                                    <X className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              ))}
+
+                              {/* Add Activity under THIS location */}
+                              <Button
+                                variant="ghost" size="sm"
+                                className="h-6 text-xs gap-1 text-muted-foreground hover:text-foreground px-1 mt-1"
+                                onClick={() => {
+                                  const updated = [...itinerary];
+                                  const acts = Array.isArray(updated[i].destinations[destIndex].activities)
+                                    ? [...updated[i].destinations[destIndex].activities]
+                                    : (updated[i].destinations[destIndex].activities ? [updated[i].destinations[destIndex].activities] : []);
+                                  acts.push("");
+                                  updated[i].destinations[destIndex].activities = acts;
+                                  setItinerary(updated);
+                                }}
+                              >
+                                <Plus className="h-3 w-3" /> Add Activity
+                              </Button>
+                            </div>
                           </div>
                         ))}
 
-                        {(day.activities || []).map((activity: string, actIndex: number) => (
-                          <div key={`act-${actIndex}`} className="relative pl-3">
-                            <Button variant="ghost" size="icon" className="absolute -left-3 top-1.5 h-5 w-5 rounded-full bg-background border border-border text-muted-foreground hover:text-destructive hover:border-destructive" onClick={() => {
-                              const updated = [...itinerary];
-                              updated[i].activities.splice(actIndex, 1);
-                              setItinerary(updated);
-                            }}>
-                              <X className="h-3 w-3" />
-                            </Button>
-                            <Input className="h-8 text-sm border-dashed" placeholder="Activity description..." value={activity} onChange={e => {
-                              const updated = [...itinerary]; updated[i].activities[actIndex] = e.target.value; setItinerary(updated);
-                            }} />
-                          </div>
-                        ))}
-
-                        <div className="flex gap-2">
-                          <Button variant="ghost" size="sm" className="h-7 text-xs gap-1.5" onClick={() => {
-                            const updated = [...itinerary];
-                            if (!updated[i].destinations) updated[i].destinations = [];
-                            updated[i].destinations.push({ location: "", activities: "" });
-                            setItinerary(updated);
-                          }}>
-                            <Plus className="h-3 w-3" /> Add Location
-                          </Button>
-                          <Button variant="ghost" size="sm" className="h-7 text-xs gap-1.5" onClick={() => {
-                            const updated = [...itinerary];
-                            if (!updated[i].activities) updated[i].activities = [];
-                            updated[i].activities.push("");
-                            setItinerary(updated);
-                          }}>
-                            <Plus className="h-3 w-3" /> Add Activity
-                          </Button>
-                        </div>
+                        {/* Add new Location */}
+                        <Button variant="ghost" size="sm" className="h-7 text-xs gap-1.5" onClick={() => {
+                          const updated = [...itinerary];
+                          if (!updated[i].destinations) updated[i].destinations = [];
+                          updated[i].destinations.push({ location: "", activities: [] });
+                          setItinerary(updated);
+                        }}>
+                          <Plus className="h-3 w-3" /> Add Location
+                        </Button>
                       </div>
                     </div>
                   ))}

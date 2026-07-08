@@ -29,6 +29,7 @@ import {
   Send,
   Trash2,
   Copy,
+  Clock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -113,6 +114,7 @@ function Console() {
   const [notifications, setNotifications] = useState<{ id: string; touristId: string; type: string; title: string; body: string; time: string; resolved?: boolean }[]>([]);
   const [agents, setAgents] = useState<any[]>([]);
   const [drivers, setDrivers] = useState<any[]>([]);
+  const [hotels, setHotels] = useState<any[]>([]);
   const [session, setSession] = useState<any>(null);
   const [companyId, setCompanyId] = useState<string | null>(null);
   const [isLoadingAuth, setIsLoadingAuth] = useState(true);
@@ -163,48 +165,79 @@ function Console() {
   const loadData = async (compId: string) => {
     if (!compId) return;
     try {
-      const [touristsRes, agentsRes, driversRes, notifsRes] = await Promise.all([
+      const [touristsRes, agentsRes, driversRes, notifsRes, hotelsRes] = await Promise.all([
         fetch(`http://localhost:8000/api/tourists?company_id=${compId}`),
         fetch(`http://localhost:8000/api/agents?company_id=${compId}`),
         fetch(`http://localhost:8000/api/drivers?company_id=${compId}`),
-        fetch(`http://localhost:8000/api/notifications?company_id=${compId}`)
+        fetch(`http://localhost:8000/api/notifications?company_id=${compId}`),
+        fetch(`http://localhost:8000/api/hotels?company_id=${compId}`)
       ]);
       const touristsData = await touristsRes.json();
       const agentsData = await agentsRes.json();
       const driversData = await driversRes.json();
       const notifsData = await notifsRes.json();
+      const hotelsData = await hotelsRes.json();
 
       setAgents(agentsData);
       setDrivers(driversData);
+      setHotels(hotelsData);
 
       const agentMap: Record<string, string> = {};
       agentsData.forEach((a: any) => agentMap[a.id] = a.agent_name || a.name);
       const driverMap: Record<string, string> = {};
       driversData.forEach((d: any) => driverMap[d.id] = d.name);
 
-      const mappedTourists = touristsData.map((t: any) => ({
-        id: t.id,
-        name: t.name,
-        country: t.country,
-        countryCode: t.country_code,
-        passport: t.passport_number,
-        phone: t.phone || "",
-        email: t.email,
-        pax: t.pax_count,
-        arrival: t.arrival_date,
-        duration: t.duration,
-        status: t.status,
-        agent: agentMap[t.agent_id] || "All Agents",
-        driver: driverMap[t.driver_id] || "All Drivers",
-        group: t.group_members?.map((g: any) => ({ name: g.name, passport: g.passport_number, email: g.email })) || [],
-        itinerary: t.itineraries?.map((i: any) => ({
-          day: i.day_number,
-          title: i.day_title,
-          hotel: i.hotel_id,
-          destinations: i.destinations?.map((d: any) => ({ location: d.location_name, activities: d.activities })) || []
-        })) || [],
-        isLead: t.is_lead
-      }));
+      const mappedTourists = touristsData.map((t: any) => {
+        const sortedItinerary = (t.itineraries || []).sort((a: any, b: any) => {
+          if (a.day_number !== b.day_number) return a.day_number - b.day_number;
+          return (a.stop_order || 0) - (b.stop_order || 0);
+        });
+        let loc = "Not Started";
+        for (const i of sortedItinerary) {
+          if (i.driver_status === 'Completed') {
+             loc = i.location_name || i.day_title || "TBD";
+          }
+          if (i.destinations && i.destinations.length > 0) {
+            const sortedDests = [...i.destinations].sort((a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+            for (const d of sortedDests) {
+               if (d.driver_status === 'Completed') {
+                 loc = d.location_name;
+               }
+            }
+          }
+          if (i.hotel_driver_status === 'Completed' && i.hotel?.hotel_name) {
+             loc = i.hotel.hotel_name;
+          }
+        }
+
+        return {
+          id: t.id,
+          name: t.name,
+          country: t.country,
+          countryCode: t.country_code,
+          passport: t.passport_number,
+          phone: t.phone || "",
+          email: t.email,
+          pax: t.pax_count,
+          arrival: t.arrival_date,
+          departure: t.departure_date || "",
+          duration: t.duration,
+          status: t.status,
+          currentLocation: loc,
+          agent: agentMap[t.agent_id] || "All Agents",
+          driver: driverMap[t.driver_id] || "All Drivers",
+          group: t.group_members?.map((g: any) => ({ name: g.name, passport: g.passport_number, email: g.email })) || [],
+          itinerary: sortedItinerary.map((i: any) => ({
+            day: i.day_number,
+            title: i.day_title,
+            hotel: i.hotel?.hotel_name || '',
+            hotelEmail: i.hotel?.hotel_email || '',
+            status: i.driver_status || 'Pending',
+            destinations: i.destinations?.map((d: any) => ({ location: d.location_name, activities: d.activities, status: d.driver_status || 'Pending' })) || []
+          })),
+          isLead: t.is_lead
+        };
+      });
       setTouristsList(mappedTourists);
       
       const mappedNotifs = notifsData.map((n: any) => ({
@@ -221,6 +254,37 @@ function Console() {
       console.error("Failed to load backend data", e);
     }
   };
+  useEffect(() => {
+    if (!companyId) return;
+    
+    // Subscribe to realtime updates for itineraries (when a driver marks a stop as completed)
+    const channel1 = supabase.channel('itineraries_updates')
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'tour_itineraries' },
+        (payload) => {
+          console.log('Itinerary updated in realtime! Refreshing data...', payload);
+          loadData(companyId);
+        }
+      )
+      .subscribe();
+
+    const channel2 = supabase.channel('destinations_updates')
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'itinerary_destinations' },
+        (payload) => {
+          console.log('Destination updated in realtime! Refreshing data...', payload);
+          loadData(companyId);
+        }
+      )
+      .subscribe();
+      
+    return () => {
+      supabase.removeChannel(channel1);
+      supabase.removeChannel(channel2);
+    };
+  }, [companyId]);
 
 
 
@@ -573,6 +637,7 @@ function Console() {
           initialData={editingTourist}
           agents={agents}
           drivers={drivers}
+          hotels={hotels}
           onAdd={async (newTourist) => {
             if (editingTourist) {
               setTouristsList(touristsList.map(t => t.id === newTourist.id ? newTourist : t));
@@ -597,11 +662,13 @@ function Console() {
               const payload = {
                 name: newTourist.name || 'Unknown',
                 passport_number: newTourist.passport || 'N/A',
+                phone: newTourist.phone || 'N/A',
                 email: newTourist.email || 'N/A',
                 pax_count: newTourist.pax || 1,
                 country: newTourist.country || 'Unknown',
                 country_code: newTourist.countryCode || 'UN',
                 arrival_date: arrivalStr,
+                departure_date: (newTourist as any).departure && (newTourist as any).departure !== '' ? (newTourist as any).departure : null,
                 duration: newTourist.duration || '1 Day',
                 status: newTourist.status || 'Upcoming',
                 is_lead: newTourist.isLead || false,
@@ -613,16 +680,20 @@ function Console() {
                   passport_number: g.passport || 'N/A',
                   email: g.email || 'N/A'
                 })),
-                itineraries: (newTourist.itinerary || []).map((i: any) => ({
-                  day_number: i.day || 1,
-                  day_title: i.title || 'Day 1',
+                itineraries: (newTourist.itinerary || []).map((it: any) => ({
+                  day_number: it.day || 1,
+                  day_title: it.title || `Day ${it.day || 1}`,
                   stop_order: 1,
-                  location_name: i.location || 'Unknown',
-                  is_hotel_stay: false,
-                  destinations: [{
-                    location_name: i.location || 'Unknown',
-                    activities: i.description || ''
-                  }]
+                  location_name: (it.destinations?.[0]?.location) || it.title || 'Unknown',
+                  is_hotel_stay: !!it.hotel,
+                  hotel_name: it.hotel || null,
+                  hotel_email: it.hotelEmail || null,
+                  destinations: (it.destinations || []).map((d: any) => ({
+                    location_name: d.location || 'Unknown',
+                    activities: Array.isArray(d.activities)
+                      ? d.activities.filter(Boolean).join('\n')
+                      : (d.activities || '')
+                  }))
                 }))
               };
               
@@ -1116,11 +1187,22 @@ function TouristDetail({
                   </span>
                   <div className="rounded-md border border-border bg-card p-4">
                     <div className="flex flex-wrap items-center justify-between gap-2">
-                      <div>
-                        <div className="text-xs uppercase tracking-wider text-muted-foreground">
-                          Day {d.day.toString().padStart(2, "0")} {d.location ? `· ${d.location}` : ""}
+                      <div className="flex flex-wrap items-center gap-3">
+                        <div>
+                          <div className="text-xs uppercase tracking-wider text-muted-foreground">
+                            Day {d.day.toString().padStart(2, "0")} {d.location ? `· ${d.location}` : ""}
+                          </div>
+                          <div className="mt-0.5 text-sm font-semibold">{d.title}</div>
                         </div>
-                        <div className="mt-0.5 text-sm font-semibold">{d.title}</div>
+                        {d.status === 'Completed' ? (
+                          <div className="flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-medium text-green-700 border border-green-200">
+                            <CheckCircle2 className="h-3 w-3" /> Arrived
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-medium text-amber-600 border border-amber-200">
+                            <Clock className="h-3 w-3" /> Pending
+                          </div>
+                        )}
                       </div>
                     </div>
                     

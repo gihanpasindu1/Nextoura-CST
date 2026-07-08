@@ -36,10 +36,12 @@ def create_tourist(tourist: schemas.TouristCreate, db: Session = Depends(get_db)
         name=tourist.name,
         passport_number=tourist.passport_number,
         email=tourist.email,
+        phone=tourist.phone,
         pax_count=tourist.pax_count,
         country=tourist.country,
         country_code=tourist.country_code,
         arrival_date=tourist.arrival_date,
+        departure_date=tourist.departure_date,
         duration=tourist.duration,
         status=tourist.status,
         is_lead=tourist.is_lead,
@@ -60,7 +62,18 @@ def create_tourist(tourist: schemas.TouristCreate, db: Session = Depends(get_db)
     # Add itinerary and destinations
     if tourist.itineraries:
         for day in tourist.itineraries:
-            day_data = day.dict(exclude={"destinations"})
+            hotel_id = None
+            if day.hotel_name:
+                db_hotel = db.query(models.Hotel).filter(models.Hotel.hotel_name == day.hotel_name, models.Hotel.company_id == tourist.company_id).first()
+                if not db_hotel:
+                    db_hotel = models.Hotel(hotel_name=day.hotel_name, hotel_email=day.hotel_email or "N/A", phone_number="N/A", company_id=tourist.company_id)
+                    db.add(db_hotel)
+                    db.commit()
+                    db.refresh(db_hotel)
+                hotel_id = db_hotel.id
+
+            day_data = day.dict(exclude={"destinations", "hotel_name", "hotel_email"})
+            day_data["hotel_id"] = hotel_id
             db_itinerary = models.TourItinerary(**day_data, tourist_id=db_tourist.id)
             db.add(db_itinerary)
             db.commit() # Commit to get the itinerary ID
@@ -85,6 +98,7 @@ def update_tourist(tourist_id: uuid.UUID, tourist: schemas.TouristCreate, db: Se
     db_tourist.name = tourist.name
     db_tourist.passport_number = tourist.passport_number
     db_tourist.email = tourist.email
+    db_tourist.phone = tourist.phone
     db_tourist.pax_count = tourist.pax_count
     db_tourist.country = tourist.country
     db_tourist.country_code = tourist.country_code
@@ -96,6 +110,39 @@ def update_tourist(tourist_id: uuid.UUID, tourist: schemas.TouristCreate, db: Se
     db_tourist.agent_id = tourist.agent_id
     db_tourist.driver_id = tourist.driver_id
     db_tourist.company_id = tourist.company_id
+
+    # Update group members (delete old, insert new)
+    db.query(models.TouristGroupMember).filter(models.TouristGroupMember.main_tourist_id == db_tourist.id).delete()
+    if tourist.group_members:
+        for member in tourist.group_members:
+            db_member = models.TouristGroupMember(**member.dict(), main_tourist_id=db_tourist.id)
+            db.add(db_member)
+
+    # Update itineraries (delete old, insert new)
+    db.query(models.TourItinerary).filter(models.TourItinerary.tourist_id == db_tourist.id).delete()
+    if tourist.itineraries:
+        for day in tourist.itineraries:
+            hotel_id = None
+            if day.hotel_name:
+                db_hotel = db.query(models.Hotel).filter(models.Hotel.hotel_name == day.hotel_name, models.Hotel.company_id == tourist.company_id).first()
+                if not db_hotel:
+                    db_hotel = models.Hotel(hotel_name=day.hotel_name, hotel_email=day.hotel_email or "N/A", phone_number="N/A", company_id=tourist.company_id)
+                    db.add(db_hotel)
+                    db.commit()
+                    db.refresh(db_hotel)
+                hotel_id = db_hotel.id
+
+            day_data = day.dict(exclude={"destinations", "hotel_name", "hotel_email"})
+            day_data["hotel_id"] = hotel_id
+            db_itinerary = models.TourItinerary(**day_data, tourist_id=db_tourist.id)
+            db.add(db_itinerary)
+            db.commit()
+            db.refresh(db_itinerary)
+            
+            if day.destinations:
+                for dest in day.destinations:
+                    db_dest = models.ItineraryDestination(**dest.dict(), itinerary_id=db_itinerary.id)
+                    db.add(db_dest)
 
     db.commit()
     db.refresh(db_tourist)
@@ -323,8 +370,8 @@ def resolve_notification(notif_id: uuid.UUID, db: Session = Depends(get_db)):
 # ----------------- Hotels -----------------
 
 @app.get("/api/hotels", response_model=List[schemas.Hotel])
-def read_hotels(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    return db.query(models.Hotel).offset(skip).limit(limit).all()
+def read_hotels(company_id: uuid.UUID, skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    return db.query(models.Hotel).filter(models.Hotel.company_id == company_id).offset(skip).limit(limit).all()
 
 @app.post("/api/hotels", response_model=schemas.Hotel)
 def create_hotel(hotel: schemas.HotelCreate, db: Session = Depends(get_db)):

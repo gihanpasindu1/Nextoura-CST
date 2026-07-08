@@ -48,6 +48,7 @@ class ForeignTourist(Base):
     created_at = Column(DateTime(timezone=True), server_default=text("now()"))
     name = Column(String)
     passport_number = Column(String)
+    phone = Column(String)
     email = Column(String)
     pax_count = Column(Integer)
     agent_id = Column(UUID(as_uuid=True), ForeignKey("foreign_tour_agents.id"))
@@ -87,6 +88,7 @@ class TourItinerary(Base):
     location_name = Column(String)
     is_hotel_stay = Column(Boolean)
     driver_status = Column(String)
+    hotel_driver_status = Column(String, default="Pending")
     tourist_id = Column(UUID(as_uuid=True), ForeignKey("foreign_tourists.id"))
     hotel_id = Column(UUID(as_uuid=True), ForeignKey("hotels.id"))
     
@@ -95,6 +97,7 @@ class TourItinerary(Base):
     
     tourist = relationship("ForeignTourist", back_populates="itineraries")
     destinations = relationship("ItineraryDestination", back_populates="itinerary")
+    hotel = relationship("Hotel")
 
 class ItineraryDestination(Base):
     __tablename__ = "itinerary_destinations"
@@ -103,6 +106,7 @@ class ItineraryDestination(Base):
     itinerary_id = Column(UUID(as_uuid=True), ForeignKey("tour_itineraries.id", ondelete="CASCADE"))
     location_name = Column(String)
     activities = Column(String)
+    driver_status = Column(String, default="Pending")
     
     itinerary = relationship("TourItinerary", back_populates="destinations")
 

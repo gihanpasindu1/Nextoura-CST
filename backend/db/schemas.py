@@ -89,6 +89,7 @@ class GroupMember(GroupMemberBase):
 class ItineraryDestinationBase(BaseModel):
     location_name: str
     activities: Optional[str] = None
+    driver_status: Optional[str] = "Pending"
 
 class ItineraryDestinationCreate(ItineraryDestinationBase):
     pass
@@ -108,17 +109,21 @@ class ItineraryBase(BaseModel):
     location_name: str
     is_hotel_stay: bool = False
     driver_status: Optional[str] = None
+    hotel_driver_status: Optional[str] = "Pending"
     hotel_id: Optional[uuid.UUID] = None
     booking_email_sent: bool = False
     confirmation_email_sent: bool = False
 
 class ItineraryCreate(ItineraryBase):
+    hotel_name: Optional[str] = None
+    hotel_email: Optional[str] = None
     destinations: Optional[List[ItineraryDestinationCreate]] = []
 
 class Itinerary(ItineraryBase):
     id: uuid.UUID
     tourist_id: uuid.UUID
     created_at: datetime
+    hotel: Optional[Hotel] = None
     destinations: List[ItineraryDestination] = []
     class Config:
         from_attributes = True
@@ -129,6 +134,7 @@ class TouristBase(BaseModel):
     name: str
     passport_number: str
     email: str
+    phone: Optional[str] = None
     pax_count: int
     country: str
     country_code: str
