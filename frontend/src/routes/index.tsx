@@ -452,7 +452,13 @@ function Console() {
           {/* Top bar */}
           <header className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-card px-6">
             <div className="flex flex-col gap-0.5">
-              <h1 className="text-xl font-semibold tracking-tight">
+              <h1 className="text-xl font-semibold tracking-tight flex items-center gap-2">
+                {nav === "agents" ? <Users className="h-5 w-5 text-primary" /> : 
+                 nav === "leads" ? <MessageCircle className="h-5 w-5 text-primary" /> : 
+                 nav === "dashboard" ? <LayoutDashboard className="h-5 w-5 text-primary" /> : 
+                 nav === "reports" ? <BarChart3 className="h-5 w-5 text-primary" /> : 
+                 nav === "settings" ? <Settings className="h-5 w-5 text-primary" /> : 
+                 <Plane className="h-5 w-5 text-primary" />}
                 {nav === "agents"
                   ? "Agent Management"
                   : nav === "leads"
