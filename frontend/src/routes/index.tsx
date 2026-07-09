@@ -562,7 +562,8 @@ function Console() {
                     nav === "dashboard" ? <LayoutDashboard className="h-5 w-5 text-primary" /> :
                       nav === "reports" ? <BarChart3 className="h-5 w-5 text-primary" /> :
                         nav === "settings" ? <Settings className="h-5 w-5 text-primary" /> :
-                          <Plane className="h-5 w-5 text-primary" />}
+                          nav === "drivers" ? <Car className="h-5 w-5 text-primary" /> :
+                            <Plane className="h-5 w-5 text-primary" />}
                 {nav === "agents"
                   ? "Agent Management"
                   : nav === "leads"
@@ -573,7 +574,9 @@ function Console() {
                         ? "Reports"
                         : nav === "settings"
                           ? "Settings"
-                          : "Active Tours"}
+                          : nav === "drivers"
+                            ? "Drivers & Guides"
+                            : "Active Tours"}
               </h1>
               <p className="text-sm text-muted-foreground">
                 {nav === "agents"
@@ -586,7 +589,9 @@ function Console() {
                         ? "Analytics and performance reports"
                         : nav === "settings"
                           ? "Manage your account, preferences, and system settings"
-                          : "Live overview of tourists currently on tour"}
+                          : nav === "drivers"
+                            ? "Manage your drivers, guides and vehicle assignments"
+                            : "Live overview of tourists currently on tour"}
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -828,8 +833,8 @@ function Console() {
           }}
         />
 
-        {/* Right sidebar */}
-        {!isDetailOpen && (
+        {/* Right sidebar — only show on tours/leads pages */}
+        {!isDetailOpen && (nav === "tours" || nav === "leads") && (
           <aside className="hidden w-80 shrink-0 flex-col border-l border-border bg-sidebar xl:flex">
             <div className="px-5 py-4">
               <h3 className="text-sm font-semibold">Today</h3>
