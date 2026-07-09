@@ -1079,9 +1079,10 @@ function ToursWorkspace({
             </Select>
             <Select value={driverFilter} onValueChange={setDriverFilter}>
               <SelectTrigger className="h-9 w-[180px]">
-                <SelectValue placeholder="Driver" />
+                <SelectValue placeholder="Driver/Guide" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="All Drivers">Driver/Guide</SelectItem>
                 {drivers.map((d: any) => (
                   <SelectItem key={d.id} value={d.name}>
                     {d.name}
