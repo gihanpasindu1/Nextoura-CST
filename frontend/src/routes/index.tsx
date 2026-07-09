@@ -14,6 +14,7 @@ import {
   Sun,
   Moon,
   ChevronDown,
+  ChevronRight,
   MapPin,
   Calendar,
   Phone,
@@ -34,6 +35,8 @@ import {
   Car,
   XCircle,
   Navigation,
+  LogOut,
+  Shield,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -104,15 +107,38 @@ const WhatsAppIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
-const NAV: { key: NavKey; label: string; icon: typeof LayoutDashboard }[] = [
-  { key: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { key: "tours", label: "Active Tours", icon: Plane },
-  { key: "leads", label: "Inquiries", icon: Users },
-  { key: "agents", label: "Agent Management", icon: Briefcase },
-  { key: "drivers", label: "Drivers & Guides", icon: Users },
-  { key: "reports", label: "Reports", icon: BarChart3 },
-  { key: "settings", label: "Settings", icon: Settings },
+type NavSection = {
+  title: string;
+  items: { key: NavKey; label: string; icon: typeof LayoutDashboard }[];
+};
+
+const NAV_SECTIONS: NavSection[] = [
+  {
+    title: "Main",
+    items: [
+      { key: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+      { key: "tours", label: "Active Tours", icon: Plane },
+      { key: "leads", label: "Inquiries", icon: MessageCircle },
+    ],
+  },
+  {
+    title: "Management",
+    items: [
+      { key: "agents", label: "Agent Management", icon: Briefcase },
+      { key: "drivers", label: "Drivers & Guides", icon: Car },
+    ],
+  },
+  {
+    title: "System",
+    items: [
+      { key: "reports", label: "Reports", icon: BarChart3 },
+      { key: "settings", label: "Settings", icon: Settings },
+    ],
+  },
 ];
+
+// Flat NAV for header lookups (preserving existing references)
+const NAV = NAV_SECTIONS.flatMap((s) => s.items);
 
 function Console() {
   const [nav, setNav] = useState<NavKey>("tours");
@@ -370,28 +396,40 @@ function Console() {
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-background text-foreground">
-      {/* Left sidebar */}
-      <aside className="flex w-64 shrink-0 flex-col border-r border-border bg-sidebar">
-        <div className="flex items-center gap-3.5 px-6 py-7">
-          <div className="grid h-11 w-11 shrink-0 place-items-center rounded-[14px] bg-gradient-to-b from-[#1166e4] to-[#094dc1] text-white shadow-[0_6px_16px_rgba(17,102,228,0.25)] ring-1 ring-[#1166e4]/20">
-            <MapPinned className="h-[22px] w-[22px]" strokeWidth={2.2} />
-          </div>
-          <div className="min-w-0 pt-0.5">
-            <div className="text-[21px] font-[800] tracking-tight text-slate-900 dark:text-slate-50 flex items-baseline gap-1.5 leading-none mb-1.5">
-              Horizon <span className="font-medium text-[#1166e4] dark:text-[#3b82f6]">Travel</span>
+      {/* Left sidebar — premium dark design */}
+      <aside className="flex w-72 shrink-0 flex-col overflow-hidden" style={{
+        background: 'linear-gradient(180deg, #0f172a 0%, #1e293b 100%)',
+        borderRight: '1px solid rgba(255,255,255,0.06)',
+      }}>
+        {/* ── Brand header ── */}
+        <div className="relative px-6 pb-5 pt-7">
+          {/* Subtle top-glow decoration */}
+          <div className="pointer-events-none absolute -top-24 left-1/2 h-48 w-48 -translate-x-1/2 rounded-full" style={{ background: 'radial-gradient(circle, rgba(59,130,246,0.12) 0%, transparent 70%)' }} />
+          <div className="relative flex items-center gap-3.5">
+            <div className="grid h-11 w-11 shrink-0 place-items-center rounded-[13px] shadow-lg" style={{
+              background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
+              boxShadow: '0 8px 24px rgba(59,130,246,0.3), inset 0 1px 0 rgba(255,255,255,0.15)',
+            }}>
+              <MapPinned className="h-[21px] w-[21px] text-white" strokeWidth={2.2} />
             </div>
-            <div className="text-[9.5px] font-bold uppercase tracking-[0.22em] text-[#556987] dark:text-slate-400 leading-none">
-              Operations Console
+            <div className="min-w-0">
+              <div className="flex items-baseline gap-1 text-[20px] font-extrabold leading-none tracking-tight text-white">
+                Horizon <span className="font-medium text-blue-400">Travel</span>
+              </div>
+              <div className="mt-1.5 text-[9px] font-semibold uppercase tracking-[0.25em] text-slate-400">
+                Operations Console
+              </div>
             </div>
           </div>
         </div>
 
-        <div className="px-4 pb-3">
-          <Label className="mb-1.5 block text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+        {/* ── Agent filter ── */}
+        <div className="px-5 pb-4">
+          <Label className="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
             Agent View
           </Label>
           <Select value={agentFilter} onValueChange={setAgentFilter}>
-            <SelectTrigger className="h-9 w-full bg-card">
+            <SelectTrigger className="h-9 w-full border-slate-700/60 bg-slate-800/60 text-slate-200 hover:bg-slate-800 focus:ring-blue-500/40">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -404,51 +442,92 @@ function Console() {
           </Select>
         </div>
 
-        <Separator />
+        {/* ── Divider ── */}
+        <div className="mx-5 h-px bg-gradient-to-r from-transparent via-slate-700/60 to-transparent" />
 
-        <nav className="flex-1 px-3 py-3">
-          {NAV.map((item) => {
-            const Icon = item.icon;
-            const active = nav === item.key;
-            return (
-              <button
-                key={item.key}
-                onClick={() => {
-                  setNav(item.key);
-                  setSelectedId("");
-                  setIsDetailOpen(false);
-                }}
-                className={cn(
-                  "mb-0.5 flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-sm transition-colors",
-                  active
-                    ? "bg-sidebar-accent font-medium text-sidebar-accent-foreground"
-                    : "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground",
-                )}
-              >
-                <Icon className="h-4 w-4 shrink-0" />
-                <span className="truncate">{item.label}</span>
-              </button>
-            );
-          })}
+        {/* ── Navigation sections ── */}
+        <nav className="flex-1 space-y-5 overflow-y-auto px-4 py-5" style={{ scrollbarWidth: 'thin', scrollbarColor: '#334155 transparent' }}>
+          {NAV_SECTIONS.map((section) => (
+            <div key={section.title}>
+              <div className="mb-1.5 px-3 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">
+                {section.title}
+              </div>
+              <div className="space-y-0.5">
+                {section.items.map((item) => {
+                  const Icon = item.icon;
+                  const active = nav === item.key;
+                  return (
+                    <button
+                      key={item.key}
+                      onClick={() => {
+                        setNav(item.key);
+                        setSelectedId("");
+                        setIsDetailOpen(false);
+                      }}
+                      className={cn(
+                        "group relative flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-[13.5px] font-medium transition-all duration-200",
+                        active
+                          ? "text-white"
+                          : "text-slate-400 hover:text-slate-200",
+                      )}
+                      style={active ? {
+                        background: 'linear-gradient(135deg, rgba(59,130,246,0.18) 0%, rgba(59,130,246,0.08) 100%)',
+                        boxShadow: 'inset 0 0 0 1px rgba(59,130,246,0.2), 0 0 20px -4px rgba(59,130,246,0.15)',
+                      } : undefined}
+                    >
+                      {/* Active left accent bar */}
+                      {active && (
+                        <span className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-blue-400" style={{
+                          boxShadow: '0 0 8px 1px rgba(96,165,250,0.5)',
+                        }} />
+                      )}
+                      {/* Hover background */}
+                      {!active && (
+                        <span className="pointer-events-none absolute inset-0 rounded-lg bg-white/[0.03] opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
+                      )}
+                      <Icon className={cn(
+                        "relative h-[18px] w-[18px] shrink-0 transition-colors duration-200",
+                        active ? "text-blue-400" : "text-slate-500 group-hover:text-slate-300",
+                      )} strokeWidth={active ? 2.2 : 1.8} />
+                      <span className="relative truncate">{item.label}</span>
+                      {active && (
+                        <ChevronRight className="relative ml-auto h-3.5 w-3.5 text-blue-400/60" />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
         </nav>
 
-        <div className="border-t border-border p-3 space-y-2">
-          <div className="flex items-center gap-3 rounded-md p-2">
-            <div className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-accent text-xs font-semibold text-accent-foreground">
+        {/* ── Divider ── */}
+        <div className="mx-5 h-px bg-gradient-to-r from-transparent via-slate-700/60 to-transparent" />
+
+        {/* ── User profile & Sign out ── */}
+        <div className="p-4 space-y-3">
+          <div className="flex items-center gap-3 rounded-xl p-2.5 transition-colors hover:bg-white/[0.04]">
+            <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full font-semibold text-[11px] text-white" style={{
+              background: 'linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)',
+              boxShadow: '0 4px 12px rgba(99,102,241,0.25)',
+            }}>
               {session?.user?.email?.substring(0, 2).toUpperCase() || "CP"}
             </div>
             <div className="min-w-0 flex-1">
-              <div className="truncate text-sm font-medium">{session?.user?.email || "Company Profile"}</div>
-              <div className="truncate text-xs text-muted-foreground">Authorized Access</div>
+              <div className="truncate text-[13px] font-medium text-slate-200">{session?.user?.email || "Company Profile"}</div>
+              <div className="mt-0.5 flex items-center gap-1 text-[11px] text-slate-500">
+                <Shield className="h-3 w-3" />
+                <span>Authorized</span>
+              </div>
             </div>
           </div>
 
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button variant="outline" className="w-full justify-start text-sm font-medium h-9 text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200">
-                <Building2 className="mr-2 h-4 w-4" />
-                Sign Out
-              </Button>
+              <button className="group flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-[13px] font-medium text-slate-500 transition-all duration-200 hover:bg-red-500/10 hover:text-red-400">
+                <LogOut className="h-4 w-4 transition-transform duration-200 group-hover:-translate-x-0.5" />
+                <span>Sign Out</span>
+              </button>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
