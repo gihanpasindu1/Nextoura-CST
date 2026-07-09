@@ -377,7 +377,7 @@ function Console() {
     return results;
   }, [agentFilter, statusFilter, driverFilter, query, alertCounts, nav, touristsList]);
 
-  const selected = touristsList.find((t) => t.id === selectedId) ?? filtered[0] ?? touristsList[0];
+  const selected = filtered.find((t) => t.id === selectedId) ?? filtered[0] ?? touristsList[0];
 
   const stats = useMemo(() => {
     const active = touristsList.filter((t) => t.status === "Active").length;
@@ -433,6 +433,7 @@ function Console() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="all">All Agents</SelectItem>
               {agents.map((a) => (
                 <SelectItem key={a.id} value={a.id}>
                   {a.agent_name || a.name}
@@ -554,20 +555,20 @@ function Console() {
       <div className="flex min-w-0 flex-1">
         <main className="flex min-w-0 flex-1 flex-col">
           {/* Top bar */}
-          <header className="flex h-16 shrink-0 items-center justify-between border-b border-border bg-card px-7">
-            <div className="flex items-center gap-3.5">
-              {/* Icon with subtle tinted background */}
-              <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-primary/10">
-                {nav === "agents" ? <Users className="h-[18px] w-[18px] text-primary" /> :
-                  nav === "leads" ? <MessageCircle className="h-[18px] w-[18px] text-primary" /> :
-                    nav === "dashboard" ? <LayoutDashboard className="h-[18px] w-[18px] text-primary" /> :
-                      nav === "reports" ? <BarChart3 className="h-[18px] w-[18px] text-primary" /> :
-                        nav === "settings" ? <Settings className="h-[18px] w-[18px] text-primary" /> :
-                          nav === "drivers" ? <Car className="h-[18px] w-[18px] text-primary" /> :
-                            <Plane className="h-[18px] w-[18px] text-primary" />}
+          <header className="flex h-16 shrink-0 items-center justify-between border-b border-border bg-card/80 backdrop-blur-md px-7">
+            <div className="flex items-center gap-4">
+              {/* Icon with subtle tinted background and soft shadow */}
+              <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-primary/10 bg-primary/5 shadow-sm text-primary">
+                {nav === "agents" ? <Users className="h-5 w-5" /> :
+                  nav === "leads" ? <MessageCircle className="h-5 w-5" /> :
+                    nav === "dashboard" ? <LayoutDashboard className="h-5 w-5" /> :
+                      nav === "reports" ? <BarChart3 className="h-5 w-5" /> :
+                        nav === "settings" ? <Settings className="h-5 w-5" /> :
+                          nav === "drivers" ? <Car className="h-5 w-5" /> :
+                            <Plane className="h-5 w-5" />}
               </div>
               <div>
-                <h1 className="text-lg font-semibold tracking-tight leading-tight">
+                <h1 className="text-[17px] font-bold tracking-tight text-foreground leading-none">
                   {nav === "agents"
                     ? "Agent Management"
                     : nav === "leads"
@@ -582,7 +583,7 @@ function Console() {
                               ? "Drivers & Guides"
                               : "Active Tours"}
                 </h1>
-                <p className="text-[13px] text-muted-foreground mt-0.5">
+                <p className="text-[12.5px] text-muted-foreground mt-1 font-medium tracking-wide opacity-90">
                   {nav === "agents"
                     ? "Manage your operations team and their assignments"
                     : nav === "leads"
@@ -599,19 +600,20 @@ function Console() {
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-2">
               <Button
                 variant="ghost"
                 size="icon"
                 aria-label="Toggle theme"
                 onClick={toggle}
-                className="h-9 w-9 rounded-lg text-muted-foreground hover:text-foreground"
+                className="h-9 w-9 rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
               >
-                {theme === "light" ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+                {theme === "light" ? <Moon className="h-4.5 w-4.5" /> : <Sun className="h-4.5 w-4.5" />}
               </Button>
-              <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg text-muted-foreground hover:text-foreground relative">
-                <Bell className="h-4 w-4" />
-                <span className="absolute right-1.5 top-1.5 flex h-2 w-2">
+              <div className="h-4 w-px bg-border mx-1" />
+              <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground transition-colors relative">
+                <Bell className="h-4.5 w-4.5" />
+                <span className="absolute right-2 top-2 flex h-2 w-2">
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-destructive opacity-75" />
                   <span className="relative inline-flex h-2 w-2 rounded-full bg-destructive" />
                 </span>
