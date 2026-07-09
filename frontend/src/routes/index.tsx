@@ -1426,7 +1426,7 @@ function AgentManagement({ agents, onAddAgent, onEditAgent, onDeleteAgent }: {
           <DialogTrigger asChild>
             <Button size="sm" className="gap-1.5">
               <UserPlus className="h-4 w-4" />
-              Add agent
+              Add Agent
             </Button>
           </DialogTrigger>
           <DialogContent>
