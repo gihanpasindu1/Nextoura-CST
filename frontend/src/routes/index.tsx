@@ -6,7 +6,7 @@ import {
   Plane,
   Users,
   BarChart3,
-  Compass,
+  MapPinned,
   Settings,
   Settings2,
   Search,
@@ -358,7 +358,7 @@ function Console() {
       <aside className="flex w-64 shrink-0 flex-col border-r border-border bg-sidebar">
         <div className="flex items-center gap-3 px-5 py-6">
           <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-primary to-blue-600 text-primary-foreground shadow-md shadow-primary/20">
-            <Compass className="h-5 w-5" />
+            <MapPinned className="h-5 w-5" />
           </div>
           <div className="min-w-0">
             <div className="text-[17px] font-bold tracking-tight text-foreground flex items-center gap-1.5">
