@@ -428,23 +428,35 @@ function Console() {
           <Label className="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
             Agent View
           </Label>
-          <Select value={agentFilter} onValueChange={(val) => {
-            setAgentFilter(val);
-            setIsDetailOpen(false);
-            setSelectedId("");
-          }}>
-            <SelectTrigger className="h-9 w-full border-slate-700/60 bg-slate-800/60 text-slate-200 hover:bg-slate-800 focus:ring-blue-500/40">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Agents</SelectItem>
-              {agents.map((a) => (
-                <SelectItem key={a.id} value={a.id}>
-                  {a.agent_name || a.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="flex gap-2">
+            <Select value={agentFilter} onValueChange={(val) => {
+              setAgentFilter(val);
+              setIsDetailOpen(false);
+              setSelectedId("");
+            }}>
+              <SelectTrigger className="h-9 flex-1 border-slate-700/60 bg-slate-800/60 text-slate-200 hover:bg-slate-800 focus:ring-blue-500/40">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Agents</SelectItem>
+                {agents.map((a) => (
+                  <SelectItem key={a.id} value={a.id}>
+                    {a.agent_name || a.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <button
+              onClick={() => {
+                setAgentFilter("all");
+                setIsDetailOpen(false);
+                setSelectedId("");
+              }}
+              className="h-9 rounded-md border border-slate-700/60 bg-slate-800/60 px-3 text-xs font-medium text-slate-300 transition-colors hover:bg-slate-700 hover:text-white"
+            >
+              All Agents
+            </button>
+          </div>
         </div>
 
         {/* ── Divider ── */}
