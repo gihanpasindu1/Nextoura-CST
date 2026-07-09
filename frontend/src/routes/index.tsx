@@ -31,6 +31,7 @@ import {
   Trash2,
   Copy,
   Clock,
+  Car,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -1170,11 +1171,13 @@ function TouristDetail({
           </TabsList>
 
           <TabsContent value="contact" className="mt-5">
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid gap-4 sm:grid-cols-2">
               <InfoField icon={Users} label="Full Name" value={t.name} />
-              <InfoField icon={CreditCard} label="Passport Number" value={t.passport} />
-              <InfoField icon={Phone} label="Phone" value={t.phone} />
-              <InfoField icon={Mail} label="Email" value={t.email} />
+              <InfoField icon={CreditCard} label="Passport Number" value={t.passport || "N/A"} />
+              <InfoField icon={Phone} label="Phone" value={t.phone || "N/A"} />
+              <InfoField icon={Mail} label="Email" value={t.email || "N/A"} />
+              <InfoField icon={Briefcase} label="Assigned Agent" value={t.agent && t.agent !== "All Agents" ? t.agent : "Unassigned"} />
+              <InfoField icon={Car} label="Assigned Driver" value={t.driver && t.driver !== "All Drivers" ? t.driver : "Unassigned"} />
             </div>
           </TabsContent>
 
@@ -1357,12 +1360,12 @@ function InfoField({
   value: string;
 }) {
   return (
-    <div className="rounded-md border border-border bg-card p-3.5">
-      <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-wider text-muted-foreground">
-        <Icon className="h-3 w-3" />
+    <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-[0_2px_10px_rgb(0,0,0,0.02)] transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:border-blue-200 dark:bg-card dark:border-slate-800 flex flex-col gap-1.5">
+      <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+        <Icon className="h-3.5 w-3.5 text-blue-500" />
         {label}
       </div>
-      <div className="mt-1 break-words text-sm font-medium">{value}</div>
+      <div className="break-words text-[15px] font-semibold text-slate-900 dark:text-slate-100">{value}</div>
     </div>
   );
 }
