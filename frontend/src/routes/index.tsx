@@ -954,6 +954,7 @@ function ToursWorkspace({
                     return (order[a.status] ?? 4) - (order[b.status] ?? 4);
                   }).map((t) => {
                     const hasAlerts = (alertCounts[t.id] || 0) > 0;
+                    const isEngaged = t.status === "Active" || t.status === "On Tour";
                     return (
                       <li
                         key={t.id}
@@ -965,7 +966,8 @@ function ToursWorkspace({
                           "group cursor-pointer border-b px-6 py-4 transition-all duration-500 relative",
                           hasAlerts
                             ? "animate-[alert-glow_3s_ease-in-out_infinite] z-10 hover:brightness-110"
-                            : "border-border hover:bg-accent/30"
+                            : "border-border hover:bg-accent/30",
+                          isEngaged && !hasAlerts && "border-l-[3px] border-l-teal-500 bg-teal-50/30 dark:bg-teal-950/10"
                         )}
                       >
                         <div className="flex items-center justify-between gap-4">
