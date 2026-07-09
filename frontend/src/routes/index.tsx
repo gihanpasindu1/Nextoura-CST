@@ -428,7 +428,11 @@ function Console() {
           <Label className="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
             Agent View
           </Label>
-          <Select value={agentFilter} onValueChange={setAgentFilter}>
+          <Select value={agentFilter} onValueChange={(val) => {
+            setAgentFilter(val);
+            setIsDetailOpen(false);
+            setSelectedId("");
+          }}>
             <SelectTrigger className="h-9 w-full border-slate-700/60 bg-slate-800/60 text-slate-200 hover:bg-slate-800 focus:ring-blue-500/40">
               <SelectValue />
             </SelectTrigger>
