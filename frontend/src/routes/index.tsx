@@ -451,8 +451,8 @@ function Console() {
         <main className="flex min-w-0 flex-1 flex-col">
           {/* Top bar */}
           <header className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-card px-6">
-            <div>
-              <h1 className="text-base font-semibold tracking-tight">
+            <div className="flex flex-col gap-0.5">
+              <h1 className="text-xl font-semibold tracking-tight">
                 {nav === "agents"
                   ? "Agent Management"
                   : nav === "leads"
@@ -465,11 +465,17 @@ function Console() {
                         ? "Settings"
                         : "Active Tours"}
               </h1>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-sm text-muted-foreground">
                 {nav === "agents"
-                  ? "Manage your operations team"
+                  ? "Manage your operations team and their assignments"
                   : nav === "leads"
-                    ? "Unconfirmed inquiries and requested itineraries"
+                    ? "Review and process unconfirmed inquiries and requested itineraries"
+                  : nav === "dashboard"
+                    ? "Overview of your business metrics and recent activity"
+                  : nav === "reports"
+                    ? "Analytics and performance reports"
+                  : nav === "settings"
+                    ? "Manage your account, preferences, and system settings"
                   : "Live overview of tourists currently on tour"}
               </p>
             </div>
