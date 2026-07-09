@@ -554,59 +554,67 @@ function Console() {
       <div className="flex min-w-0 flex-1">
         <main className="flex min-w-0 flex-1 flex-col">
           {/* Top bar */}
-          <header className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-card px-6">
-            <div className="flex flex-col gap-0.5">
-              <h1 className="text-xl font-semibold tracking-tight flex items-center gap-2">
-                {nav === "agents" ? <Users className="h-5 w-5 text-primary" /> :
-                  nav === "leads" ? <MessageCircle className="h-5 w-5 text-primary" /> :
-                    nav === "dashboard" ? <LayoutDashboard className="h-5 w-5 text-primary" /> :
-                      nav === "reports" ? <BarChart3 className="h-5 w-5 text-primary" /> :
-                        nav === "settings" ? <Settings className="h-5 w-5 text-primary" /> :
-                          nav === "drivers" ? <Car className="h-5 w-5 text-primary" /> :
-                            <Plane className="h-5 w-5 text-primary" />}
-                {nav === "agents"
-                  ? "Agent Management"
-                  : nav === "leads"
-                    ? "Inquiries & Leads"
-                    : nav === "dashboard"
-                      ? "Dashboard"
-                      : nav === "reports"
-                        ? "Reports"
-                        : nav === "settings"
-                          ? "Settings"
-                          : nav === "drivers"
-                            ? "Drivers & Guides"
-                            : "Active Tours"}
-              </h1>
-              <p className="text-sm text-muted-foreground">
-                {nav === "agents"
-                  ? "Manage your operations team and their assignments"
-                  : nav === "leads"
-                    ? "Review and process unconfirmed inquiries and requested itineraries"
-                    : nav === "dashboard"
-                      ? "Overview of your business metrics and recent activity"
-                      : nav === "reports"
-                        ? "Analytics and performance reports"
-                        : nav === "settings"
-                          ? "Manage your account, preferences, and system settings"
-                          : nav === "drivers"
-                            ? "Manage your drivers, guides and vehicle assignments"
-                            : "Live overview of tourists currently on tour"}
-              </p>
+          <header className="flex h-16 shrink-0 items-center justify-between border-b border-border bg-card px-7">
+            <div className="flex items-center gap-3.5">
+              {/* Icon with subtle tinted background */}
+              <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-primary/10">
+                {nav === "agents" ? <Users className="h-[18px] w-[18px] text-primary" /> :
+                  nav === "leads" ? <MessageCircle className="h-[18px] w-[18px] text-primary" /> :
+                    nav === "dashboard" ? <LayoutDashboard className="h-[18px] w-[18px] text-primary" /> :
+                      nav === "reports" ? <BarChart3 className="h-[18px] w-[18px] text-primary" /> :
+                        nav === "settings" ? <Settings className="h-[18px] w-[18px] text-primary" /> :
+                          nav === "drivers" ? <Car className="h-[18px] w-[18px] text-primary" /> :
+                            <Plane className="h-[18px] w-[18px] text-primary" />}
+              </div>
+              <div>
+                <h1 className="text-lg font-semibold tracking-tight leading-tight">
+                  {nav === "agents"
+                    ? "Agent Management"
+                    : nav === "leads"
+                      ? "Inquiries & Leads"
+                      : nav === "dashboard"
+                        ? "Dashboard"
+                        : nav === "reports"
+                          ? "Reports"
+                          : nav === "settings"
+                            ? "Settings"
+                            : nav === "drivers"
+                              ? "Drivers & Guides"
+                              : "Active Tours"}
+                </h1>
+                <p className="text-[13px] text-muted-foreground mt-0.5">
+                  {nav === "agents"
+                    ? "Manage your operations team and their assignments"
+                    : nav === "leads"
+                      ? "Review and process unconfirmed inquiries and requested itineraries"
+                      : nav === "dashboard"
+                        ? "Overview of your business metrics and recent activity"
+                        : nav === "reports"
+                          ? "Analytics and performance reports"
+                          : nav === "settings"
+                            ? "Manage your account, preferences, and system settings"
+                            : nav === "drivers"
+                              ? "Manage your drivers, guides and vehicle assignments"
+                              : "Live overview of tourists currently on tour"}
+                </p>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
               <Button
                 variant="ghost"
                 size="icon"
                 aria-label="Toggle theme"
                 onClick={toggle}
-                className="h-9 w-9"
+                className="h-9 w-9 rounded-lg text-muted-foreground hover:text-foreground"
               >
                 {theme === "light" ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
               </Button>
-              <Button variant="ghost" size="icon" className="h-9 w-9 relative">
+              <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg text-muted-foreground hover:text-foreground relative">
                 <Bell className="h-4 w-4" />
-                <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-destructive" />
+                <span className="absolute right-1.5 top-1.5 flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-destructive opacity-75" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-destructive" />
+                </span>
               </Button>
             </div>
           </header>
