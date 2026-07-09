@@ -6,6 +6,7 @@ import {
   Plane,
   Users,
   BarChart3,
+  Compass,
   Settings,
   Settings2,
   Search,
@@ -355,13 +356,17 @@ function Console() {
     <div className="flex h-screen w-full overflow-hidden bg-background text-foreground">
       {/* Left sidebar */}
       <aside className="flex w-64 shrink-0 flex-col border-r border-border bg-sidebar">
-        <div className="flex items-center gap-2 px-5 py-5">
-          <div className="grid h-9 w-9 place-items-center rounded-md bg-primary text-primary-foreground">
-            <Plane className="h-4 w-4" />
+        <div className="flex items-center gap-3 px-5 py-6">
+          <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-primary to-blue-600 text-primary-foreground shadow-md shadow-primary/20">
+            <Compass className="h-5 w-5" />
           </div>
           <div className="min-w-0">
-            <div className="text-sm font-semibold tracking-tight">Horizon Travel</div>
-            <div className="text-[11px] text-muted-foreground">Operations Console</div>
+            <div className="text-[17px] font-bold tracking-tight text-foreground flex items-center gap-1.5">
+              Horizon <span className="font-medium text-primary">Travel</span>
+            </div>
+            <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mt-0.5">
+              Operations Console
+            </div>
           </div>
         </div>
 
