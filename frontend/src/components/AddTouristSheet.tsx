@@ -158,7 +158,7 @@ export function AddTouristSheet({
       if (!formData.departure) newErrors.departure = "Departure date is required";
       if (!formData.duration) newErrors.duration = "Duration is required";
       if (formData.agent === "All Agents") newErrors.agent = "Agent is required";
-      if (formData.status === "Active" && formData.driver === "All Drivers") newErrors.driver = "Driver is required for active tours";
+      if (formData.driver === "All Drivers") newErrors.driver = "Driver is required";
 
       if (formData.pax > 1) {
         for (let i = 0; i < formData.pax - 1; i++) {
@@ -280,7 +280,7 @@ export function AddTouristSheet({
                   {errors.agent && <div className="text-[10px] text-destructive flex items-center gap-1"><AlertCircle className="h-3 w-3" /> {errors.agent}</div>}
                 </div>
                 <div className="space-y-2">
-                  <Label className={cn(errors.driver && "text-destructive")}>Driver / Guide {formData.status === "Active" && "*"}</Label>
+                  <Label className={cn(errors.driver && "text-destructive")}>Driver / Guide {mode === "confirmed" && "*"}</Label>
                   <Select value={formData.driver} onValueChange={v => { setFormData({...formData, driver: v}); if (errors.driver) setErrors({...errors, driver: ""}); }}>
                     <SelectTrigger className={cn(errors.driver && "border-destructive focus:ring-destructive")}><SelectValue placeholder="Select Driver" /></SelectTrigger>
                     <SelectContent>
