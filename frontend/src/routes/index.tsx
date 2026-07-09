@@ -1680,7 +1680,7 @@ function DriverManagement({
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Add new driver</DialogTitle>
+              <DialogTitle>Add new driver / guide</DialogTitle>
               <DialogDescription>Create a profile for a driver or guide.</DialogDescription>
             </DialogHeader>
             <div className="space-y-3">
