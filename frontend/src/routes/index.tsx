@@ -1003,18 +1003,31 @@ function ToursWorkspace({
 }
 
 function StatusPill({ status }: { status: TourStatus }) {
-  const map: Record<TourStatus, string> = {
-    Active: "bg-success/15 text-success border-success/30",
-    Upcoming: "bg-primary/10 text-primary border-primary/25",
-    Completed: "bg-muted text-muted-foreground border-border",
+  const config: Record<TourStatus, { color: string; icon: any }> = {
+    Active: {
+      color: "bg-blue-600 text-white border-blue-700 dark:bg-blue-600 dark:border-blue-700",
+      icon: Plane,
+    },
+    Upcoming: {
+      color: "bg-amber-500 text-white border-amber-600 dark:bg-amber-600 dark:border-amber-700",
+      icon: Clock,
+    },
+    Completed: {
+      color: "bg-emerald-600 text-white border-emerald-700 dark:bg-emerald-600 dark:border-emerald-700",
+      icon: CheckCircle2,
+    },
   };
+
+  const { color, icon: Icon } = config[status] || { color: "bg-slate-500 text-white border-slate-600", icon: Clock };
+
   return (
     <span
       className={cn(
-        "inline-flex h-4 items-center rounded-full border px-1.5 text-[10px] font-medium",
-        map[status],
+        "inline-flex h-6 items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[11px] font-semibold tracking-wide shadow-sm",
+        color
       )}
     >
+      <Icon className="h-3 w-3" strokeWidth={2.5} />
       {status}
     </span>
   );
