@@ -12,6 +12,39 @@ import { Loader2, Plus, UploadCloud, FileText, Settings2, Trash2, X, Users, Aler
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 
+const validateTouristData = (data: any, mode: string) => {
+  const newErrors: Record<string, string> = {};
+
+  if (!data.name || !data.name.trim() || data.name === "Unknown") {
+    newErrors.name = "Name is required";
+  }
+
+  if (mode === "confirmed") {
+    if (!data.country || data.country === "TBD" || data.country === "Unknown") newErrors.country = "Country is required";
+    if (!data.countryCode || data.countryCode === "UN") newErrors.countryCode = "Code is required";
+    if (!data.passport || data.passport === "N/A" || !data.passport.trim()) newErrors.passport = "Passport is required";
+    if (!data.phone || data.phone === "N/A" || !data.phone.trim()) newErrors.phone = "Phone is required";
+    if (!data.email || data.email === "N/A" || !data.email.trim()) newErrors.email = "Email is required";
+    if (!data.arrival || data.arrival === "TBD") newErrors.arrival = "Arrival date is required";
+    if (!data.departure) newErrors.departure = "Departure date is required";
+    if (!data.duration || data.duration === "TBD") newErrors.duration = "Duration is required";
+    if (data.agent === "All Agents") newErrors.agent = "Agent is required";
+
+    if (data.pax > 1 && data.group) {
+      for (let i = 0; i < data.pax - 1; i++) {
+        const member = data.group[i];
+        if (!member || !member.name || !member.name.trim() || member.name === "Unknown") {
+          newErrors[`group_${i}_name`] = "Name is required";
+        }
+        if (!member || !member.passport || !member.passport.trim() || member.passport === "N/A") {
+          newErrors[`group_${i}_passport`] = "Passport is required";
+        }
+      }
+    }
+  }
+  return newErrors;
+};
+
 export function AddTouristSheet({ 
   open, 
   onOpenChange, 
@@ -53,7 +86,7 @@ export function AddTouristSheet({
   useEffect(() => {
     if (open) {
       if (initialData) {
-        setFormData({
+        const initForm = {
           name: initialData.name || "",
           country: initialData.country || "",
           countryCode: initialData.countryCode || "",
@@ -64,12 +97,19 @@ export function AddTouristSheet({
           arrival: initialData.arrival || "",
           departure: (initialData as any).departure || "",
           duration: initialData.duration || "",
-          status: initialData.status || "Upcoming",
+          status: (mode === "confirmed" && initialData.isLead) ? "Active" : (initialData.status || "Upcoming"),
           agent: initialData.agent || "All Agents",
           driver: initialData.driver || "All Drivers",
           group: initialData.group || [],
-        });
+        };
+        setFormData(initForm);
         setItinerary(initialData.itinerary || []);
+        
+        if (mode === "confirmed" && initialData.isLead) {
+          setErrors(validateTouristData(initForm, mode));
+        } else {
+          setErrors({});
+        }
       } else {
         setFormData({
           name: "",
@@ -88,10 +128,10 @@ export function AddTouristSheet({
           group: [],
         });
         setItinerary([]);
+        setErrors({});
       }
-      setErrors({});
     }
-  }, [open, initialData]);
+  }, [open, initialData, mode]);
 
 
   useEffect(() => {
@@ -142,35 +182,7 @@ export function AddTouristSheet({
   };
 
   const handleSave = () => {
-    const newErrors: Record<string, string> = {};
-
-    if (!formData.name.trim()) {
-      newErrors.name = "Name is required";
-    }
-
-    if (mode === "confirmed") {
-      if (!formData.country) newErrors.country = "Country is required";
-      if (!formData.countryCode) newErrors.countryCode = "Code is required";
-      if (!formData.passport) newErrors.passport = "Passport is required";
-      if (!formData.phone) newErrors.phone = "Phone is required";
-      if (!formData.email) newErrors.email = "Email is required";
-      if (!formData.arrival) newErrors.arrival = "Arrival date is required";
-      if (!formData.departure) newErrors.departure = "Departure date is required";
-      if (!formData.duration) newErrors.duration = "Duration is required";
-      if (formData.agent === "All Agents") newErrors.agent = "Agent is required";
-
-      if (formData.pax > 1) {
-        for (let i = 0; i < formData.pax - 1; i++) {
-          const member = formData.group[i];
-          if (!member || !member.name.trim()) {
-            newErrors[`group_${i}_name`] = "Name is required";
-          }
-          if (!member || !member.passport.trim()) {
-            newErrors[`group_${i}_passport`] = "Passport is required";
-          }
-        }
-      }
-    }
+    const newErrors = validateTouristData(formData, mode);
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);

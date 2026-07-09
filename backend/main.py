@@ -190,7 +190,7 @@ def create_driver(driver: schemas.DriverCreate, db: Session = Depends(get_db)):
         except Exception as e:
             print("Auth user creation failed (might already exist):", e)
             
-    db_driver = models.Driver(**driver.dict())
+    db_driver = models.Driver(**driver.model_dump(exclude={"password"}))
 
     db.add(db_driver)
     db.commit()
@@ -277,69 +277,7 @@ def delete_agent(agent_id: uuid.UUID, db: Session = Depends(get_db)):
     return {"message": "Agent deleted successfully"}
 
 
-# ==================== DRIVERS ====================
-@app.get("/api/drivers", response_model=List[schemas.Driver])
-def read_drivers(company_id: uuid.UUID, skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    drivers = db.query(models.Driver).filter(models.Driver.company_id == company_id).offset(skip).limit(limit).all()
-    return drivers
 
-@app.post("/api/drivers", response_model=schemas.Driver)
-def create_driver(driver: schemas.DriverCreate, db: Session = Depends(get_db)):
-
-    if supabase_admin and driver.email:
-        try:
-            # Check if user already exists
-            existing_users = supabase_admin.auth.admin.list_users()
-            # Note: list_users is paginated in real apps, but for this small app it works or we just try-except
-            # Or better, just try creating and catch the error if it exists.
-            
-
-            auth_payload = {
-                "email": driver.email,
-                "email_confirm": True,
-                "app_metadata": {"role": "guide"},
-                "user_metadata": {"name": driver.name}
-            }
-            if driver.password:
-                auth_payload["password"] = driver.password
-
-            supabase_admin.auth.admin.create_user(auth_payload)
-
-        except Exception as e:
-            print("Auth user creation failed (might already exist):", e)
-            
-    db_driver = models.Driver(**driver.dict(exclude={"password"}))
-
-    db.add(db_driver)
-    db.commit()
-    db.refresh(db_driver)
-    return db_driver
-
-@app.delete("/api/drivers/{driver_id}")
-def delete_driver(driver_id: uuid.UUID, db: Session = Depends(get_db)):
-    db_driver = db.query(models.Driver).filter(models.Driver.id == driver_id).first()
-    if not db_driver:
-        raise HTTPException(status_code=404, detail="Driver not found")
-    db.delete(db_driver)
-    db.commit()
-    return {"message": "Driver deleted successfully"}
-
-@app.get("/api/drivers/verify")
-def verify_driver(email: str, db: Session = Depends(get_db)):
-    db_driver = db.query(models.Driver).filter(models.Driver.email == email).first()
-    if db_driver:
-        return {
-            "is_authorized": True,
-            "driver_id": str(db_driver.id),
-            "company_id": str(db_driver.company_id),
-            "name": db_driver.name
-        }
-    return {"is_authorized": False}
-
-@app.get("/api/drivers/{driver_id}/tours", response_model=List[schemas.Tourist])
-def get_driver_tours(driver_id: uuid.UUID, db: Session = Depends(get_db)):
-    tours = db.query(models.ForeignTourist).filter(models.ForeignTourist.driver_id == driver_id).all()
-    return tours
 
 
 

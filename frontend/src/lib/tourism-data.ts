@@ -20,6 +20,7 @@ export interface ItineraryDay {
   hotelEmail: string;
   location?: string;
   destinations?: ItineraryDestination[];
+  status?: "Pending" | "Completed";
 }
 
 export interface Tourist {
