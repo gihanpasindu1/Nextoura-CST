@@ -118,6 +118,7 @@ function Console() {
   const [hotels, setHotels] = useState<any[]>([]);
   const [session, setSession] = useState<any>(null);
   const [companyId, setCompanyId] = useState<string | null>(null);
+  const [companyName, setCompanyName] = useState<string>("Ceylon Signature");
   const [isLoadingAuth, setIsLoadingAuth] = useState(true);
   const router = useRouter();
 
@@ -130,6 +131,7 @@ function Console() {
         } else if (res.ok) {
           const data = await res.json();
           setCompanyId(data.id);
+          setCompanyName(data.company_name || "Ceylon Signature");
           loadData(data.id);
         } else {
           console.error("Failed to fetch company profile");
@@ -361,10 +363,10 @@ function Console() {
             <MapPinned className="h-5 w-5" />
           </div>
           <div className="min-w-0">
-            <div className="text-[17px] font-bold tracking-tight text-foreground flex items-center gap-1.5">
-              Horizon <span className="font-medium text-primary">Travel</span>
+            <div className="text-[15px] font-bold tracking-tight text-foreground flex flex-wrap items-center gap-x-1.5 leading-none mt-1">
+              {companyName.split(" ")[0]} <span className="font-medium text-primary">{companyName.split(" ").slice(1).join(" ")}</span>
             </div>
-            <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mt-0.5">
+            <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mt-1">
               Operations Console
             </div>
           </div>
