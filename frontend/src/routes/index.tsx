@@ -1527,22 +1527,23 @@ function AgentManagement({ agents, onAddAgent, onEditAgent, onDeleteAgent }: {
               .slice(0, 2)
               .join("");
             return (
-              <div key={a.id} className="group relative rounded-lg border border-border bg-card p-5 transition-all hover:shadow-md hover:border-primary/30">
+              <div key={a.id} className="group relative rounded-xl border border-slate-200 bg-white p-5 transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:border-blue-200 dark:bg-card dark:border-slate-800">
+                
                 {/* Hover action buttons */}
-                <div className="absolute right-3 top-3 flex gap-1.5 opacity-0 transition-opacity group-hover:opacity-100">
+                <div className="absolute right-3 top-3 flex items-center gap-0.5 opacity-0 transition-all duration-200 group-hover:opacity-100 bg-white/90 backdrop-blur-sm p-1 rounded-lg shadow-sm border border-slate-100 dark:bg-slate-900/90 dark:border-slate-800">
                   <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-7 w-7 p-0 border-primary/40 text-primary hover:bg-primary/10"
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20"
                     onClick={() => openEdit(a)}
                     title="Edit agent"
                   >
                     <Settings2 className="h-3.5 w-3.5" />
                   </Button>
                   <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-7 w-7 p-0 border-destructive/40 text-destructive hover:bg-destructive/10"
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
                     onClick={() => openDelete(a)}
                     title="Delete agent"
                   >
@@ -1550,24 +1551,36 @@ function AgentManagement({ agents, onAddAgent, onEditAgent, onDeleteAgent }: {
                   </Button>
                 </div>
 
-                <div className="flex items-start gap-3">
-                  <div className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
+                <div className="flex items-start gap-4">
+                  <div className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-blue-50/50 border border-blue-100/50 text-blue-600 font-bold dark:bg-blue-900/20 dark:border-blue-800/30 dark:text-blue-400">
                     {initials}
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm font-semibold">{a.agent_name || a.name}</div>
-                    <div className="truncate text-xs text-muted-foreground">{a.email}</div>
+                  <div className="min-w-0 flex-1 pr-2">
+                    <div className="truncate text-[15px] font-semibold text-slate-900 dark:text-slate-100 mb-0.5">
+                      {a.agent_name || a.name}
+                    </div>
+                    {a.email && (
+                      <div className="flex items-center gap-2 mt-2 text-[13px] text-slate-500 dark:text-slate-400">
+                        <Mail className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+                        <span className="truncate">{a.email}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
-                <Separator className="my-4" />
-                <div className="flex items-center justify-between text-xs">
+                <Separator className="my-5 bg-slate-100 dark:bg-slate-800/50" />
+                <div className="flex items-center justify-between">
                   <div>
-                    <div className="text-muted-foreground">Region</div>
-                    <div className="mt-0.5 font-medium">{a.region}</div>
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Region</div>
+                    <div className="mt-1 flex items-center gap-1.5 text-[13px] font-medium text-slate-700 dark:text-slate-300">
+                      <MapPin className="h-3 w-3 text-slate-400" />
+                      {a.region || "Unassigned"}
+                    </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-muted-foreground">Clients</div>
-                    <div className="mt-0.5 text-base font-semibold">{a.clients}</div>
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Clients</div>
+                    <div className="mt-1 text-base font-bold text-blue-600 dark:text-blue-400">
+                      {a.clients || 0}
+                    </div>
                   </div>
                 </div>
               </div>
