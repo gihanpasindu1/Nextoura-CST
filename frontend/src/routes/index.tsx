@@ -939,7 +939,7 @@ function ToursWorkspace({
                   {tourists.length} {tourists.length === 1 ? "tourist" : "tourists"}
                 </div>
                 <div className="flex items-center gap-4">
-                  <div className="text-[11px] text-muted-foreground">Sorted by arrival</div>
+                  <div className="text-[11px] text-muted-foreground">Sorted by status</div>
                   <Button size="sm" onClick={onAddClient} className="gap-2 h-7 px-3 text-xs">
                     <UserPlus className="h-3.5 w-3.5" />
                     Add Client
@@ -949,7 +949,10 @@ function ToursWorkspace({
 
               <ScrollArea className="flex-1">
                 <ul>
-                  {tourists.map((t) => {
+                  {[...tourists].sort((a, b) => {
+                    const order: Record<string, number> = { Active: 0, "On Tour": 0, Upcoming: 1, Completed: 2, Cancelled: 3 };
+                    return (order[a.status] ?? 4) - (order[b.status] ?? 4);
+                  }).map((t) => {
                     const hasAlerts = (alertCounts[t.id] || 0) > 0;
                     return (
                       <li
