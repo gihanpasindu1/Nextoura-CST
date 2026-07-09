@@ -369,15 +369,15 @@ function Console() {
     <div className="flex h-screen w-full overflow-hidden bg-background text-foreground">
       {/* Left sidebar */}
       <aside className="flex w-64 shrink-0 flex-col border-r border-border bg-sidebar">
-        <div className="flex items-center gap-3 px-5 py-6">
-          <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-primary to-blue-600 text-primary-foreground shadow-md shadow-primary/20">
-            <MapPinned className="h-5 w-5" />
+        <div className="flex items-center gap-3.5 px-6 py-7">
+          <div className="grid h-11 w-11 shrink-0 place-items-center rounded-[14px] bg-gradient-to-b from-[#1166e4] to-[#094dc1] text-white shadow-[0_6px_16px_rgba(17,102,228,0.25)] ring-1 ring-[#1166e4]/20">
+            <MapPinned className="h-[22px] w-[22px]" strokeWidth={2.2} />
           </div>
-          <div className="min-w-0">
-            <div className="text-[17px] font-bold tracking-tight text-foreground flex items-center gap-1.5">
-              Horizon <span className="font-medium text-primary">Travel</span>
+          <div className="min-w-0 pt-0.5">
+            <div className="text-[21px] font-[800] tracking-tight text-slate-900 dark:text-slate-50 flex items-baseline gap-1.5 leading-none mb-1.5">
+              Horizon <span className="font-medium text-[#1166e4] dark:text-[#3b82f6]">Travel</span>
             </div>
-            <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mt-0.5">
+            <div className="text-[9.5px] font-bold uppercase tracking-[0.22em] text-[#556987] dark:text-slate-400 leading-none">
               Operations Console
             </div>
           </div>
