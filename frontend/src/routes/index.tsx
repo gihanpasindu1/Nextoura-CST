@@ -392,7 +392,11 @@ function Console() {
             return (
               <button
                 key={item.key}
-                onClick={() => setNav(item.key)}
+                onClick={() => {
+                  setNav(item.key);
+                  setSelectedId("");
+                  setIsDetailOpen(false);
+                }}
                 className={cn(
                   "mb-0.5 flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-sm transition-colors",
                   active
