@@ -37,6 +37,11 @@ import {
   Navigation,
   LogOut,
   Shield,
+  Activity,
+  Globe2,
+  Users2,
+  CalendarDays,
+  CalendarRange,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -861,18 +866,43 @@ function Console() {
 
         {/* Right sidebar — only show on tours/leads pages */}
         {!isDetailOpen && (nav === "tours" || nav === "leads") && (
-          <aside className="hidden w-80 shrink-0 flex-col border-l border-border bg-sidebar xl:flex">
-            <div className="px-5 py-4">
-              <h3 className="text-sm font-semibold">Today</h3>
-              <p className="text-xs text-muted-foreground">Monday, 22 June 2026</p>
+          <aside className="hidden w-80 shrink-0 flex-col border-l border-border bg-sidebar/40 backdrop-blur-sm xl:flex">
+            <div className="flex items-center gap-3.5 px-6 py-5">
+              <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-primary/10 bg-primary/5 text-primary shadow-sm">
+                <CalendarDays className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Today</h3>
+                <p className="text-[13.5px] font-bold text-foreground mt-0.5">Monday, 22 June 2026</p>
+              </div>
             </div>
             <Separator />
 
-            <div className="grid grid-cols-2 gap-3 p-4">
-              <StatTile label="Active" value={stats.active} tone="success" />
-              <StatTile label="Upcoming" value={stats.upcoming} tone="info" />
-              <StatTile label="Pax on tour" value={stats.pax} tone="default" />
-              <StatTile label="Countries" value={stats.countries} tone="default" />
+            <div className="grid grid-cols-2 gap-3.5 p-5">
+              <StatTile 
+                label="Active" 
+                value={stats.active} 
+                tone="success" 
+                icon={Activity} 
+              />
+              <StatTile 
+                label="Upcoming" 
+                value={stats.upcoming} 
+                tone="info" 
+                icon={CalendarRange} 
+              />
+              <StatTile 
+                label="Pax on tour" 
+                value={stats.pax} 
+                tone="default" 
+                icon={Users2} 
+              />
+              <StatTile 
+                label="Countries" 
+                value={stats.countries} 
+                tone="default" 
+                icon={Globe2} 
+              />
             </div>
           </aside>
         )}
@@ -887,24 +917,44 @@ function StatTile({
   label,
   value,
   tone,
+  icon: Icon,
 }: {
   label: string;
   value: number;
   tone: "success" | "info" | "default";
+  icon: typeof Activity;
 }) {
+  const iconColor = 
+    tone === "success" 
+      ? "text-emerald-500 bg-emerald-500/10 border-emerald-500/20" 
+      : tone === "info" 
+        ? "text-blue-500 bg-blue-500/10 border-blue-500/20" 
+        : "text-slate-500 bg-slate-500/10 border-slate-500/20";
+
   return (
-    <div className="rounded-md border border-border bg-card p-3">
-      <div className="text-[11px] uppercase tracking-wider text-muted-foreground">{label}</div>
-      <div className="mt-0.5 flex items-baseline gap-1.5">
-        <span className="text-xl font-semibold tracking-tight">{value}</span>
-        <span
-          className={cn(
-            "h-1.5 w-1.5 rounded-full",
-            tone === "success" && "bg-success",
-            tone === "info" && "bg-primary",
-            tone === "default" && "bg-muted-foreground/40",
-          )}
-        />
+    <div className="group rounded-xl border border-border bg-card p-4 transition-all duration-300 hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700 relative overflow-hidden">
+      {/* Subtle background tone glow on hover */}
+      <div className={cn(
+        "absolute -right-6 -bottom-6 h-16 w-16 rounded-full blur-2xl opacity-0 group-hover:opacity-30 transition-opacity duration-300",
+        tone === "success" && "bg-emerald-500",
+        tone === "info" && "bg-blue-500",
+        tone === "default" && "bg-slate-500"
+      )} />
+
+      <div className="flex items-center justify-between gap-2">
+        <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground/80">{label}</div>
+        <div className={cn("grid h-7 w-7 place-items-center rounded-lg border text-xs", iconColor)}>
+          <Icon className="h-4 w-4" />
+        </div>
+      </div>
+      <div className="mt-2.5 flex items-baseline gap-2">
+        <span className="text-2xl font-extrabold tracking-tight text-foreground leading-none">{value}</span>
+        <span className={cn(
+          "h-1.5 w-1.5 rounded-full",
+          tone === "success" && "bg-emerald-500",
+          tone === "info" && "bg-blue-500",
+          tone === "default" && "bg-slate-400"
+        )} />
       </div>
     </div>
   );
