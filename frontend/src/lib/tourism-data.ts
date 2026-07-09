@@ -1,4 +1,4 @@
-export type TourStatus = "Active" | "Upcoming" | "Completed";
+export type TourStatus = "Active" | "Upcoming" | "Completed" | "On Tour" | "Cancelled";
 
 export interface GroupMember {
   name: string;

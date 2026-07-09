@@ -32,6 +32,8 @@ import {
   Copy,
   Clock,
   Car,
+  XCircle,
+  Navigation,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -1015,6 +1017,14 @@ function StatusPill({ status }: { status: TourStatus }) {
     Completed: {
       color: "bg-slate-400 text-white border-slate-500",
       icon: CheckCircle2,
+    },
+    "On Tour": {
+      color: "bg-violet-500 text-white border-violet-600",
+      icon: Navigation,
+    },
+    Cancelled: {
+      color: "bg-orange-400 text-white border-orange-500",
+      icon: XCircle,
     },
   };
 
