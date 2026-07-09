@@ -209,18 +209,18 @@ function Console() {
         let loc = "Not Started";
         for (const i of sortedItinerary) {
           if (i.driver_status === 'Completed') {
-             loc = i.location_name || i.day_title || "TBD";
+            loc = i.location_name || i.day_title || "TBD";
           }
           if (i.destinations && i.destinations.length > 0) {
             const sortedDests = [...i.destinations].sort((a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
             for (const d of sortedDests) {
-               if (d.driver_status === 'Completed') {
-                 loc = d.location_name;
-               }
+              if (d.driver_status === 'Completed') {
+                loc = d.location_name;
+              }
             }
           }
           if (i.hotel_driver_status === 'Completed' && i.hotel?.hotel_name) {
-             loc = i.hotel.hotel_name;
+            loc = i.hotel.hotel_name;
           }
         }
 
@@ -253,7 +253,7 @@ function Console() {
         };
       });
       setTouristsList(mappedTourists);
-      
+
       const mappedNotifs = notifsData.map((n: any) => ({
         id: n.id,
         touristId: n.tourist_id,
@@ -270,7 +270,7 @@ function Console() {
   };
   useEffect(() => {
     if (!companyId) return;
-    
+
     // Subscribe to realtime updates for itineraries (when a driver marks a stop as completed)
     const channel1 = supabase.channel('itineraries_updates')
       .on(
@@ -293,7 +293,7 @@ function Console() {
         }
       )
       .subscribe();
-      
+
     return () => {
       supabase.removeChannel(channel1);
       supabase.removeChannel(channel2);
@@ -439,7 +439,7 @@ function Console() {
               <div className="truncate text-xs text-muted-foreground">Authorized Access</div>
             </div>
           </div>
-          
+
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button variant="outline" className="w-full justify-start text-sm font-medium h-9 text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200">
@@ -475,36 +475,36 @@ function Console() {
           <header className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-card px-6">
             <div className="flex flex-col gap-0.5">
               <h1 className="text-xl font-semibold tracking-tight flex items-center gap-2">
-                {nav === "agents" ? <Users className="h-5 w-5 text-primary" /> : 
-                 nav === "leads" ? <MessageCircle className="h-5 w-5 text-primary" /> : 
-                 nav === "dashboard" ? <LayoutDashboard className="h-5 w-5 text-primary" /> : 
-                 nav === "reports" ? <BarChart3 className="h-5 w-5 text-primary" /> : 
-                 nav === "settings" ? <Settings className="h-5 w-5 text-primary" /> : 
-                 <Plane className="h-5 w-5 text-primary" />}
+                {nav === "agents" ? <Users className="h-5 w-5 text-primary" /> :
+                  nav === "leads" ? <MessageCircle className="h-5 w-5 text-primary" /> :
+                    nav === "dashboard" ? <LayoutDashboard className="h-5 w-5 text-primary" /> :
+                      nav === "reports" ? <BarChart3 className="h-5 w-5 text-primary" /> :
+                        nav === "settings" ? <Settings className="h-5 w-5 text-primary" /> :
+                          <Plane className="h-5 w-5 text-primary" />}
                 {nav === "agents"
                   ? "Agent Management"
                   : nav === "leads"
                     ? "Inquiries & Leads"
-                  : nav === "dashboard"
-                    ? "Dashboard"
-                    : nav === "reports"
-                      ? "Reports"
-                      : nav === "settings"
-                        ? "Settings"
-                        : "Active Tours"}
+                    : nav === "dashboard"
+                      ? "Dashboard"
+                      : nav === "reports"
+                        ? "Reports"
+                        : nav === "settings"
+                          ? "Settings"
+                          : "Active Tours"}
               </h1>
               <p className="text-sm text-muted-foreground">
                 {nav === "agents"
                   ? "Manage your operations team and their assignments"
                   : nav === "leads"
                     ? "Review and process unconfirmed inquiries and requested itineraries"
-                  : nav === "dashboard"
-                    ? "Overview of your business metrics and recent activity"
-                  : nav === "reports"
-                    ? "Analytics and performance reports"
-                  : nav === "settings"
-                    ? "Manage your account, preferences, and system settings"
-                  : "Live overview of tourists currently on tour"}
+                    : nav === "dashboard"
+                      ? "Overview of your business metrics and recent activity"
+                      : nav === "reports"
+                        ? "Analytics and performance reports"
+                        : nav === "settings"
+                          ? "Manage your account, preferences, and system settings"
+                          : "Live overview of tourists currently on tour"}
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -540,31 +540,31 @@ function Console() {
                 console.error(e);
               }
             }}
-            onEditAgent={async (agent: any, form: any) => {
-              try {
-                const res = await fetch(`http://localhost:8000/api/agents/${agent.id}`, {
-                  method: "PUT",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ agent_name: form.name, email: form.email, region: form.region, company_id: companyId })
-                });
-                if (res.ok) {
-                  const updated = await res.json();
-                  setAgents((prev: any[]) => prev.map((a: any) => a.id === updated.id ? updated : a));
+              onEditAgent={async (agent: any, form: any) => {
+                try {
+                  const res = await fetch(`http://localhost:8000/api/agents/${agent.id}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ agent_name: form.name, email: form.email, region: form.region, company_id: companyId })
+                  });
+                  if (res.ok) {
+                    const updated = await res.json();
+                    setAgents((prev: any[]) => prev.map((a: any) => a.id === updated.id ? updated : a));
+                  }
+                } catch (e) {
+                  console.error(e);
                 }
-              } catch (e) {
-                console.error(e);
-              }
-            }}
-            onDeleteAgent={async (agentId: string) => {
-              try {
-                const res = await fetch(`http://localhost:8000/api/agents/${agentId}`, { method: "DELETE" });
-                if (res.ok) {
-                  setAgents((prev: any[]) => prev.filter((a: any) => a.id !== agentId));
+              }}
+              onDeleteAgent={async (agentId: string) => {
+                try {
+                  const res = await fetch(`http://localhost:8000/api/agents/${agentId}`, { method: "DELETE" });
+                  if (res.ok) {
+                    setAgents((prev: any[]) => prev.filter((a: any) => a.id !== agentId));
+                  }
+                } catch (e) {
+                  console.error(e);
                 }
-              } catch (e) {
-                console.error(e);
-              }
-            }}
+              }}
             />
           ) : nav === "drivers" ? (
             <DriverManagement drivers={drivers} onAddDriver={async (form) => {
@@ -582,31 +582,31 @@ function Console() {
                 throw new Error(err.detail || "Server error");
               }
             }}
-            onUpdateDriver={async (driverId: string, form) => {
-              try {
-                const res = await fetch(`http://localhost:8000/api/drivers/${driverId}`, {
-                  method: "PUT",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ name: form.name, phone: form.phone, email: form.email, password: form.password, company_id: companyId })
-                });
-                if (res.ok) {
-                  const updated = await res.json();
-                  setDrivers((prev: any[]) => prev.map((d: any) => d.id === updated.id ? updated : d));
+              onUpdateDriver={async (driverId: string, form) => {
+                try {
+                  const res = await fetch(`http://localhost:8000/api/drivers/${driverId}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ name: form.name, phone: form.phone, email: form.email, password: form.password, company_id: companyId })
+                  });
+                  if (res.ok) {
+                    const updated = await res.json();
+                    setDrivers((prev: any[]) => prev.map((d: any) => d.id === updated.id ? updated : d));
+                  }
+                } catch (e) {
+                  console.error(e);
                 }
-              } catch (e) {
-                console.error(e);
-              }
-            }}
-            onDeleteDriver={async (driverId: string) => {
-              try {
-                const res = await fetch(`http://localhost:8000/api/drivers/${driverId}`, { method: "DELETE" });
-                if (res.ok) {
-                  setDrivers((prev: any[]) => prev.filter((d: any) => d.id !== driverId));
+              }}
+              onDeleteDriver={async (driverId: string) => {
+                try {
+                  const res = await fetch(`http://localhost:8000/api/drivers/${driverId}`, { method: "DELETE" });
+                  if (res.ok) {
+                    setDrivers((prev: any[]) => prev.filter((d: any) => d.id !== driverId));
+                  }
+                } catch (e) {
+                  console.error(e);
                 }
-              } catch (e) {
-                console.error(e);
-              }
-            }}
+              }}
             />
           ) : nav === "dashboard" || nav === "reports" || nav === "settings" ? (
             <DashboardOverview stats={stats} navLabel={nav} />
@@ -664,9 +664,9 @@ function Console() {
           )}
         </main>
 
-        <AddTouristSheet 
-          open={isAddClientOpen} 
-          onOpenChange={setIsAddClientOpen} 
+        <AddTouristSheet
+          open={isAddClientOpen}
+          onOpenChange={setIsAddClientOpen}
           mode={addClientMode}
           initialData={editingTourist}
           agents={agents}
@@ -684,13 +684,13 @@ function Console() {
             try {
               const matchedAgent = agents.find((a: any) => (a.agent_name || a.name) === newTourist.agent);
               const matchedDriver = drivers.find((d: any) => d.name === newTourist.driver);
-              
+
               let arrivalStr = new Date().toISOString().split('T')[0];
               if (newTourist.arrival && newTourist.arrival !== 'TBD') {
-                 const parsed = new Date(newTourist.arrival);
-                 if (!isNaN(parsed.getTime())) {
-                    arrivalStr = parsed.toISOString().split('T')[0];
-                 }
+                const parsed = new Date(newTourist.arrival);
+                if (!isNaN(parsed.getTime())) {
+                  arrivalStr = parsed.toISOString().split('T')[0];
+                }
               }
 
               const payload = {
@@ -730,8 +730,8 @@ function Console() {
                   }))
                 }))
               };
-              
-              const url = editingTourist 
+
+              const url = editingTourist
                 ? `http://localhost:8000/api/tourists/${editingTourist.id}`
                 : 'http://localhost:8000/api/tourists';
               const method = editingTourist ? 'PUT' : 'POST';
@@ -743,24 +743,24 @@ function Console() {
             } catch (e) {
               console.error('Failed to save to db', e);
             }
-          }} 
+          }}
         />
 
         {/* Right sidebar */}
         {!isDetailOpen && (
           <aside className="hidden w-80 shrink-0 flex-col border-l border-border bg-sidebar xl:flex">
             <div className="px-5 py-4">
-            <h3 className="text-sm font-semibold">Today</h3>
-            <p className="text-xs text-muted-foreground">Monday, 22 June 2026</p>
-          </div>
-          <Separator />
+              <h3 className="text-sm font-semibold">Today</h3>
+              <p className="text-xs text-muted-foreground">Monday, 22 June 2026</p>
+            </div>
+            <Separator />
 
-          <div className="grid grid-cols-2 gap-3 p-4">
-            <StatTile label="Active" value={stats.active} tone="success" />
-            <StatTile label="Upcoming" value={stats.upcoming} tone="info" />
-            <StatTile label="Pax on tour" value={stats.pax} tone="default" />
-            <StatTile label="Countries" value={stats.countries} tone="default" />
-          </div>
+            <div className="grid grid-cols-2 gap-3 p-4">
+              <StatTile label="Active" value={stats.active} tone="success" />
+              <StatTile label="Upcoming" value={stats.upcoming} tone="info" />
+              <StatTile label="Pax on tour" value={stats.pax} tone="default" />
+              <StatTile label="Countries" value={stats.countries} tone="default" />
+            </div>
           </aside>
         )}
       </div>
@@ -880,9 +880,9 @@ function ToursWorkspace({
     <div className="flex min-h-0 flex-1 flex-col">
       {isDetailOpen ? (
         <div className="flex-1 bg-background overflow-hidden">
-          <TouristDetail 
-            t={selected} 
-            onBack={() => setIsDetailOpen(false)} 
+          <TouristDetail
+            t={selected}
+            onBack={() => setIsDetailOpen(false)}
             notifications={notifications}
             onResolveAlert={onResolveAlert}
             onConfirmTour={() => onConfirmTour(selected)}
@@ -943,8 +943,8 @@ function ToursWorkspace({
                   </Button>
                 </div>
               </div>
-        
-      <ScrollArea className="flex-1">
+
+              <ScrollArea className="flex-1">
                 <ul>
                   {tourists.map((t) => {
                     const hasAlerts = (alertCounts[t.id] || 0) > 0;
@@ -957,8 +957,8 @@ function ToursWorkspace({
                         }}
                         className={cn(
                           "group cursor-pointer border-b px-6 py-4 transition-all duration-500 relative",
-                          hasAlerts 
-                            ? "animate-[alert-glow_3s_ease-in-out_infinite] z-10 hover:brightness-110" 
+                          hasAlerts
+                            ? "animate-[alert-glow_3s_ease-in-out_infinite] z-10 hover:brightness-110"
                             : "border-border hover:bg-accent/30"
                         )}
                       >
@@ -1019,18 +1019,18 @@ function StatusPill({ status }: { status: TourStatus }) {
   );
 }
 
-function TouristDetail({ 
-  t, 
-  onBack, 
-  notifications, 
-  onResolveAlert, 
+function TouristDetail({
+  t,
+  onBack,
+  notifications,
+  onResolveAlert,
   onConfirmTour,
   onEditClient,
   onDeleteClient
-}: { 
-  t: Tourist; 
-  onBack?: () => void; 
-  notifications: any[]; 
+}: {
+  t: Tourist;
+  onBack?: () => void;
+  notifications: any[];
   onResolveAlert: (id: string) => void;
   onConfirmTour: () => void;
   onEditClient?: () => void;
@@ -1239,7 +1239,7 @@ function TouristDetail({
                         )}
                       </div>
                     </div>
-                    
+
                     {d.destinations && d.destinations.length > 0 ? (
                       <div className="mt-4 space-y-4">
                         {d.destinations.map((dest, i) => (
@@ -1260,7 +1260,7 @@ function TouristDetail({
                         ))}
                       </ul>
                     )}
-                    
+
                     <div className="mt-4 grid gap-2 rounded-md bg-muted/40 p-3 sm:grid-cols-[1fr_1fr_auto] items-center">
                       <div className="flex items-center gap-2 text-xs">
                         <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
@@ -1293,7 +1293,7 @@ function TouristDetail({
                             </div>
                             <div className="grid gap-2">
                               <Label htmlFor="message">Message</Label>
-                              <textarea 
+                              <textarea
                                 id="message"
                                 className="flex min-h-[160px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                                 defaultValue={`Dear Reservation Team at ${d.hotel},\n\nWe would like to confirm the booking for our client, ${t.name} (Group Size: ${t.pax}), arriving for Day ${d.day} of their tour.\n\nPlease let us know if everything is confirmed on your end and provide any relevant reservation numbers.\n\nBest regards,\nCeylon Signature Travels`}
@@ -1659,7 +1659,7 @@ function DriverManagement({
           <DialogTrigger asChild>
             <Button size="sm" className="gap-1.5">
               <UserPlus className="h-4 w-4" />
-              Add driver / guide
+              Add Driver / Guide
             </Button>
           </DialogTrigger>
           <DialogContent>
@@ -1736,7 +1736,7 @@ function DriverManagement({
               .join("");
             return (
               <div key={d.id} className="group relative rounded-lg border border-border bg-card p-5 overflow-hidden transition-all hover:shadow-md hover:border-primary/20">
-                
+
                 {/* Hover Actions */}
                 <div className="absolute right-2 top-2 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
                   {d.password && (
