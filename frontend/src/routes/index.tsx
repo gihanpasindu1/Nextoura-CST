@@ -422,27 +422,43 @@ function Console() {
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-background text-foreground">
-      {/* Left sidebar — premium dark design */}
-      <aside className="flex w-72 shrink-0 flex-col overflow-hidden" style={{
-        background: 'linear-gradient(180deg, #0f172a 0%, #1e293b 100%)',
-        borderRight: '1px solid rgba(255,255,255,0.06)',
+      {/* Left sidebar — theme-aware premium design */}
+      <aside className="flex w-72 shrink-0 flex-col overflow-hidden transition-all duration-300" style={{
+        background: theme === "light"
+          ? 'linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%)'
+          : 'linear-gradient(180deg, #0f172a 0%, #1e293b 100%)',
+        borderRight: theme === "light"
+          ? '1px solid rgba(0,0,0,0.08)'
+          : '1px solid rgba(255,255,255,0.06)',
       }}>
         {/* ── Brand header ── */}
         <div className="relative px-6 pb-5 pt-7">
           {/* Subtle top-glow decoration */}
-          <div className="pointer-events-none absolute -top-24 left-1/2 h-48 w-48 -translate-x-1/2 rounded-full" style={{ background: 'radial-gradient(circle, rgba(59,130,246,0.12) 0%, transparent 70%)' }} />
+          <div className="pointer-events-none absolute -top-24 left-1/2 h-48 w-48 -translate-x-1/2 rounded-full transition-opacity duration-300" style={{
+            background: theme === "light"
+              ? 'radial-gradient(circle, rgba(59,130,246,0.06) 0%, transparent 70%)'
+              : 'radial-gradient(circle, rgba(59,130,246,0.12) 0%, transparent 70%)'
+          }} />
           <div className="relative flex items-center gap-3.5">
             <div className="grid h-11 w-11 shrink-0 place-items-center rounded-[13px] shadow-lg" style={{
               background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
-              boxShadow: '0 8px 24px rgba(59,130,246,0.3), inset 0 1px 0 rgba(255,255,255,0.15)',
+              boxShadow: theme === "light"
+                ? '0 6px 16px rgba(59,130,246,0.2), inset 0 1px 0 rgba(255,255,255,0.2)'
+                : '0 8px 24px rgba(59,130,246,0.3), inset 0 1px 0 rgba(255,255,255,0.15)',
             }}>
               <MapPinned className="h-[21px] w-[21px] text-white" strokeWidth={2.2} />
             </div>
             <div className="min-w-0">
-              <div className="flex items-baseline gap-1 text-[20px] font-extrabold leading-none tracking-tight text-white">
-                Horizon <span className="font-medium text-blue-400">Travel</span>
+              <div className={cn(
+                "flex items-baseline gap-1 text-[20px] font-extrabold leading-none tracking-tight transition-colors duration-300",
+                theme === "light" ? "text-slate-900" : "text-white"
+              )}>
+                Horizon <span className={cn("font-medium transition-colors", theme === "light" ? "text-blue-600" : "text-blue-400")}>Travel</span>
               </div>
-              <div className="mt-1.5 text-[9px] font-semibold uppercase tracking-[0.25em] text-slate-400">
+              <div className={cn(
+                "mt-1.5 text-[9px] font-semibold uppercase tracking-[0.25em] transition-colors",
+                theme === "light" ? "text-slate-500" : "text-slate-400"
+              )}>
                 Operations Console
               </div>
             </div>
@@ -451,7 +467,10 @@ function Console() {
 
         {/* ── Agent filter ── */}
         <div className="px-5 pb-4">
-          <Label className="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+          <Label className={cn(
+            "mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.18em] transition-colors",
+            theme === "light" ? "text-slate-500/80" : "text-slate-500"
+          )}>
             Agent View
           </Label>
           <div className="flex gap-2">
@@ -460,7 +479,12 @@ function Console() {
               setIsDetailOpen(false);
               setSelectedId("");
             }}>
-              <SelectTrigger className="h-9 flex-1 border-slate-700/60 bg-slate-800/60 text-slate-200 hover:bg-slate-800 focus:ring-blue-500/40">
+              <SelectTrigger className={cn(
+                "h-9 flex-1 transition-all duration-200 focus:ring-blue-500/40",
+                theme === "light"
+                  ? "border-slate-300 bg-white text-slate-800 hover:bg-slate-50"
+                  : "border-slate-700/60 bg-slate-800/60 text-slate-200 hover:bg-slate-800"
+              )}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -478,7 +502,12 @@ function Console() {
                 setIsDetailOpen(false);
                 setSelectedId("");
               }}
-              className="h-9 rounded-md border border-slate-700/60 bg-slate-800/60 px-3 text-xs font-medium text-slate-300 transition-colors hover:bg-slate-700 hover:text-white"
+              className={cn(
+                "h-9 rounded-md border px-3 text-xs font-medium transition-all duration-200",
+                theme === "light"
+                  ? "border-slate-300 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                  : "border-slate-700/60 bg-slate-800/60 text-slate-300 hover:bg-slate-700 hover:text-white"
+              )}
             >
               All Agents
             </button>
@@ -486,10 +515,16 @@ function Console() {
         </div>
 
         {/* ── Divider ── */}
-        <div className="mx-5 h-px bg-gradient-to-r from-transparent via-slate-700/60 to-transparent" />
+        <div className={cn(
+          "mx-5 h-px bg-gradient-to-r from-transparent to-transparent transition-all",
+          theme === "light" ? "via-slate-300" : "via-slate-700/60"
+        )} />
 
         {/* ── Navigation sections ── */}
-        <nav className="flex-1 space-y-5 overflow-y-auto px-4 py-5" style={{ scrollbarWidth: 'thin', scrollbarColor: '#334155 transparent' }}>
+        <nav className="flex-1 space-y-5 overflow-y-auto px-4 py-5" style={{
+          scrollbarWidth: 'thin',
+          scrollbarColor: theme === "light" ? '#cbd5e1 transparent' : '#334155 transparent'
+        }}>
           {NAV_SECTIONS.map((section) => (
             <div key={section.title}>
               <div className="mb-1.5 px-3 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">
@@ -510,31 +545,48 @@ function Console() {
                       className={cn(
                         "group relative flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-[13.5px] font-medium transition-all duration-200",
                         active
-                          ? "text-white"
-                          : "text-slate-400 hover:text-slate-200",
+                          ? (theme === "light" ? "text-blue-600 font-semibold" : "text-white")
+                          : (theme === "light" ? "text-slate-600 hover:text-slate-900" : "text-slate-400 hover:text-slate-200"),
                       )}
                       style={active ? {
-                        background: 'linear-gradient(135deg, rgba(59,130,246,0.18) 0%, rgba(59,130,246,0.08) 100%)',
-                        boxShadow: 'inset 0 0 0 1px rgba(59,130,246,0.2), 0 0 20px -4px rgba(59,130,246,0.15)',
+                        background: theme === "light"
+                          ? 'linear-gradient(135deg, rgba(59,130,246,0.12) 0%, rgba(59,130,246,0.04) 100%)'
+                          : 'linear-gradient(135deg, rgba(59,130,246,0.18) 0%, rgba(59,130,246,0.08) 100%)',
+                        boxShadow: theme === "light"
+                          ? 'inset 0 0 0 1px rgba(59,130,246,0.15), 0 0 15px -4px rgba(59,130,246,0.08)'
+                          : 'inset 0 0 0 1px rgba(59,130,246,0.2), 0 0 20px -4px rgba(59,130,246,0.15)',
                       } : undefined}
                     >
                       {/* Active left accent bar */}
                       {active && (
-                        <span className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-blue-400" style={{
-                          boxShadow: '0 0 8px 1px rgba(96,165,250,0.5)',
+                        <span className={cn(
+                          "absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full",
+                          theme === "light" ? "bg-blue-600" : "bg-blue-400"
+                        )} style={{
+                          boxShadow: theme === "light"
+                            ? '0 0 6px 1px rgba(37,99,235,0.4)'
+                            : '0 0 8px 1px rgba(96,165,250,0.5)',
                         }} />
                       )}
                       {/* Hover background */}
                       {!active && (
-                        <span className="pointer-events-none absolute inset-0 rounded-lg bg-white/[0.03] opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
+                        <span className={cn(
+                          "pointer-events-none absolute inset-0 rounded-lg opacity-0 transition-opacity duration-200 group-hover:opacity-100",
+                          theme === "light" ? "bg-slate-200/50" : "bg-white/[0.03]"
+                        )} />
                       )}
                       <Icon className={cn(
                         "relative h-[18px] w-[18px] shrink-0 transition-colors duration-200",
-                        active ? "text-blue-400" : "text-slate-500 group-hover:text-slate-300",
+                        active
+                          ? (theme === "light" ? "text-blue-600" : "text-blue-400")
+                          : (theme === "light" ? "text-slate-500 group-hover:text-slate-800" : "text-slate-500 group-hover:text-slate-300"),
                       )} strokeWidth={active ? 2.2 : 1.8} />
                       <span className="relative truncate">{item.label}</span>
                       {active && (
-                        <ChevronRight className="relative ml-auto h-3.5 w-3.5 text-blue-400/60" />
+                        <ChevronRight className={cn(
+                          "relative ml-auto h-3.5 w-3.5",
+                          theme === "light" ? "text-blue-600/60" : "text-blue-400/60"
+                        )} />
                       )}
                     </button>
                   );
@@ -545,11 +597,17 @@ function Console() {
         </nav>
 
         {/* ── Divider ── */}
-        <div className="mx-5 h-px bg-gradient-to-r from-transparent via-slate-700/60 to-transparent" />
+        <div className={cn(
+          "mx-5 h-px bg-gradient-to-r from-transparent to-transparent transition-all",
+          theme === "light" ? "via-slate-300" : "via-slate-700/60"
+        )} />
 
         {/* ── User profile & Sign out ── */}
         <div className="p-4 space-y-3">
-          <div className="flex items-center gap-3 rounded-xl p-2.5 transition-colors hover:bg-white/[0.04]">
+          <div className={cn(
+            "flex items-center gap-3 rounded-xl p-2.5 transition-colors",
+            theme === "light" ? "hover:bg-slate-200/50" : "hover:bg-white/[0.04]"
+          )}>
             <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full font-semibold text-[11px] text-white" style={{
               background: 'linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)',
               boxShadow: '0 4px 12px rgba(99,102,241,0.25)',
@@ -557,7 +615,10 @@ function Console() {
               {session?.user?.email?.substring(0, 2).toUpperCase() || "CP"}
             </div>
             <div className="min-w-0 flex-1">
-              <div className="truncate text-[13px] font-medium text-slate-200">{session?.user?.email || "Company Profile"}</div>
+              <div className={cn(
+                "truncate text-[13px] font-medium transition-colors",
+                theme === "light" ? "text-slate-800" : "text-slate-200"
+              )}>{session?.user?.email || "Company Profile"}</div>
               <div className="mt-0.5 flex items-center gap-1 text-[11px] text-slate-500">
                 <Shield className="h-3 w-3" />
                 <span>Authorized</span>
@@ -567,7 +628,12 @@ function Console() {
 
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <button className="group flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-[13px] font-medium text-slate-500 transition-all duration-200 hover:bg-red-500/10 hover:text-red-400">
+              <button className={cn(
+                "group flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-[13px] font-medium transition-all duration-200",
+                theme === "light"
+                  ? "text-slate-500 hover:bg-red-50 hover:text-red-600"
+                  : "text-slate-500 hover:bg-red-500/10 hover:text-red-400"
+              )}>
                 <LogOut className="h-4 w-4 transition-transform duration-200 group-hover:-translate-x-0.5" />
                 <span>Sign Out</span>
               </button>
