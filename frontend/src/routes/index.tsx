@@ -886,7 +886,7 @@ function Console() {
 
             <div className="grid grid-cols-2 gap-3.5 p-5">
               <StatTile 
-                label="On Tour" 
+                label="Active" 
                 value={stats.active} 
                 tone="success" 
                 icon={Activity} 
@@ -1094,7 +1094,7 @@ function ToursWorkspace({
             <div className="flex bg-muted/60 p-0.5 rounded-lg border border-border/80 gap-0.5">
               {[
                 { key: "all", label: "All Statuses" },
-                { key: "Active", label: "On Tour" },
+                { key: "Active", label: "Active" },
                 { key: "Upcoming", label: "Upcoming" },
                 { key: "Completed", label: "Completed" },
                 { key: "Cancelled", label: "Cancelled" },
@@ -1195,7 +1195,7 @@ function ToursWorkspace({
 }
 
 function StatusPill({ status }: { status: TourStatus }) {
-  const displayStatus = status === "Active" ? "On Tour" : status;
+  const displayStatus = status === "On Tour" ? "Active" : status;
   const config: Record<TourStatus, { color: string; icon: any }> = {
     Active: {
       color: "bg-teal-500 text-white border-teal-600",
