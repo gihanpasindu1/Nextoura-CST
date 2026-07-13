@@ -42,6 +42,7 @@ import {
   Users2,
   CalendarDays,
   CalendarRange,
+  Layers,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -1093,26 +1094,30 @@ function ToursWorkspace({
           <div className="flex items-center border-b border-border bg-card px-6 py-2.5">
             <div className="flex bg-muted/60 p-0.5 rounded-lg border border-border/80 gap-0.5">
               {[
-                { key: "all", label: "All Statuses" },
-                { key: "Active", label: "Active" },
-                { key: "Upcoming", label: "Upcoming" },
-                { key: "Completed", label: "Completed" },
-                { key: "Cancelled", label: "Cancelled" },
-              ].map((tab) => (
-                <button
-                  key={tab.key}
-                  type="button"
-                  onClick={() => setStatusFilter(tab.key as any)}
-                  className={cn(
-                    "px-3.5 py-1.5 text-xs font-semibold rounded-md transition-all duration-200 cursor-pointer",
-                    statusFilter === tab.key
-                      ? "bg-card text-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground hover:bg-card/20"
-                  )}
-                >
-                  {tab.label}
-                </button>
-              ))}
+                { key: "all", label: "All Statuses", icon: Layers },
+                { key: "Active", label: "Active", icon: Plane },
+                { key: "Upcoming", label: "Upcoming", icon: Clock },
+                { key: "Completed", label: "Completed", icon: CheckCircle2 },
+                { key: "Cancelled", label: "Cancelled", icon: XCircle },
+              ].map((tab) => {
+                const Icon = tab.icon;
+                return (
+                  <button
+                    key={tab.key}
+                    type="button"
+                    onClick={() => setStatusFilter(tab.key as any)}
+                    className={cn(
+                      "flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md transition-all duration-200 cursor-pointer",
+                      statusFilter === tab.key
+                        ? "bg-card text-foreground shadow-sm animate-in fade-in zoom-in-95 duration-150"
+                        : "text-muted-foreground hover:text-foreground hover:bg-card/20"
+                    )}
+                  >
+                    <Icon className="h-3.5 w-3.5 shrink-0" />
+                    <span>{tab.label}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
