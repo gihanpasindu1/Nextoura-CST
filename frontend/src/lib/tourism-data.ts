@@ -13,6 +13,7 @@ export interface ItineraryDestination {
 }
 
 export interface ItineraryDay {
+  status: string;
   day: number;
   title: string;
   activities?: string[];
