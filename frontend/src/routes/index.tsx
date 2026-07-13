@@ -359,7 +359,13 @@ function Console() {
         const agent = agents.find((a) => a.id === agentFilter);
         if (agent && t.agent !== (agent.agent_name || agent.name)) return false;
       }
-      if (statusFilter !== "all" && t.status !== statusFilter) return false;
+      if (statusFilter !== "all") {
+        if (statusFilter === "Active") {
+          if (t.status !== "Active" && t.status !== "On Tour") return false;
+        } else {
+          if (t.status !== statusFilter) return false;
+        }
+      }
       if (driverFilter !== "All Drivers" && t.driver !== driverFilter) return false;
       if (query.trim()) {
         const q = query.toLowerCase();
@@ -1066,17 +1072,29 @@ function ToursWorkspace({
                 className="h-9 pl-9"
               />
             </div>
-            <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as any)}>
-              <SelectTrigger className="h-9 w-[160px]">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="Active">Active</SelectItem>
-                <SelectItem value="Upcoming">Upcoming</SelectItem>
-                <SelectItem value="Completed">Completed</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="flex bg-muted/60 p-0.5 rounded-lg border border-border/80 gap-0.5">
+              {[
+                { key: "all", label: "All Statuses" },
+                { key: "Active", label: "Active" },
+                { key: "Upcoming", label: "Upcoming" },
+                { key: "Completed", label: "Completed" },
+                { key: "Cancelled", label: "Cancelled" },
+              ].map((tab) => (
+                <button
+                  key={tab.key}
+                  type="button"
+                  onClick={() => setStatusFilter(tab.key as any)}
+                  className={cn(
+                    "px-3.5 py-1.5 text-xs font-semibold rounded-md transition-all duration-200 cursor-pointer",
+                    statusFilter === tab.key
+                      ? "bg-card text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground hover:bg-card/20"
+                  )}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
             <Select value={driverFilter} onValueChange={setDriverFilter}>
               <SelectTrigger className="h-9 w-[180px]">
                 <SelectValue>
