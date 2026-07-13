@@ -1072,6 +1072,25 @@ function ToursWorkspace({
                 className="h-9 pl-9"
               />
             </div>
+            <Select value={driverFilter} onValueChange={setDriverFilter}>
+              <SelectTrigger className="h-9 w-[180px]">
+                <SelectValue>
+                  {driverFilter === "All Drivers" ? "Driver/Guide" : driverFilter}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="All Drivers">All Drivers</SelectItem>
+                {drivers.map((d: any) => (
+                  <SelectItem key={d.id} value={d.name}>
+                    {d.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Status bar */}
+          <div className="flex items-center border-b border-border bg-card px-6 py-2.5">
             <div className="flex bg-muted/60 p-0.5 rounded-lg border border-border/80 gap-0.5">
               {[
                 { key: "all", label: "All Statuses" },
@@ -1095,21 +1114,6 @@ function ToursWorkspace({
                 </button>
               ))}
             </div>
-            <Select value={driverFilter} onValueChange={setDriverFilter}>
-              <SelectTrigger className="h-9 w-[180px]">
-                <SelectValue>
-                  {driverFilter === "All Drivers" ? "Driver/Guide" : driverFilter}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="All Drivers">All Drivers</SelectItem>
-                {drivers.map((d: any) => (
-                  <SelectItem key={d.id} value={d.name}>
-                    {d.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
           </div>
 
           {/* List Full Width */}
