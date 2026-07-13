@@ -347,6 +347,20 @@ function Console() {
     return counts;
   }, [notifications]);
 
+  const statusAlertCounts = useMemo(() => {
+    const counts: Record<string, number> = { Active: 0, Upcoming: 0, Completed: 0, Cancelled: 0 };
+    for (const n of notifications) {
+      if (!n.resolved && n.touristId && n.touristId !== "all" && (n.type === "alert" || n.type === "warn")) {
+        const tourist = touristsList.find((t) => t.id === n.touristId);
+        if (tourist) {
+          const key = (tourist.status === "Active" || tourist.status === "On Tour") ? "Active" : tourist.status;
+          counts[key] = (counts[key] || 0) + 1;
+        }
+      }
+    }
+    return counts;
+  }, [notifications, touristsList]);
+
   const filtered = useMemo(() => {
     const results = touristsList.filter((t) => {
       // Filter by nav section: leads show isLead=true, tours show isLead=falsy
@@ -750,6 +764,7 @@ function Console() {
               isDetailOpen={isDetailOpen}
               setIsDetailOpen={setIsDetailOpen}
               alertCounts={alertCounts}
+              statusAlertCounts={statusAlertCounts}
               notifications={notifications}
               onResolveAlert={async (id) => {
                 try {
@@ -1021,6 +1036,7 @@ function ToursWorkspace({
   isDetailOpen,
   setIsDetailOpen,
   alertCounts,
+  statusAlertCounts,
   notifications,
   onResolveAlert,
   onAddClient,
@@ -1040,6 +1056,7 @@ function ToursWorkspace({
   isDetailOpen: boolean;
   setIsDetailOpen: (v: boolean) => void;
   alertCounts: Record<string, number>;
+  statusAlertCounts: Record<string, number>;
   notifications: any[];
   onResolveAlert: (id: string) => void;
   onAddClient: () => void;
@@ -1101,6 +1118,7 @@ function ToursWorkspace({
                 { key: "Cancelled", label: "Cancelled", icon: XCircle },
               ].map((tab) => {
                 const Icon = tab.icon;
+                const hasAlert = (tab.key === "Active" || tab.key === "Upcoming") && statusAlertCounts[tab.key] > 0;
                 return (
                   <button
                     key={tab.key}
@@ -1113,7 +1131,15 @@ function ToursWorkspace({
                         : "text-muted-foreground hover:text-foreground hover:bg-card/20"
                     )}
                   >
-                    <Icon className="h-3.5 w-3.5 shrink-0" />
+                    <div className="relative flex items-center justify-center">
+                      <Icon className="h-3.5 w-3.5 shrink-0" />
+                      {hasAlert && (
+                        <span className="absolute -top-0.5 -right-0.5 flex h-1.5 w-1.5">
+                          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-destructive opacity-75" />
+                          <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-destructive" />
+                        </span>
+                      )}
+                    </div>
                     <span>{tab.label}</span>
                   </button>
                 );
