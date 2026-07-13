@@ -1177,13 +1177,44 @@ function ToursWorkspace({
           <div className="flex items-center border-b border-border bg-card px-6 py-2.5">
             <div className="flex bg-muted/60 p-0.5 rounded-lg border border-border/80 gap-0.5">
               {[
-                { key: "all", label: "All Statuses", icon: Layers },
-                { key: "Active", label: "Active", icon: Plane },
-                { key: "Upcoming", label: "Upcoming", icon: Clock },
-                { key: "Completed", label: "Completed", icon: CheckCircle2 },
-                { key: "Cancelled", label: "Cancelled", icon: XCircle },
+                { 
+                  key: "all", 
+                  label: "All Statuses", 
+                  icon: Layers,
+                  activeClass: "bg-slate-200/60 text-slate-900 border-slate-300 dark:bg-slate-800 dark:text-slate-100 dark:border-slate-700 shadow-sm",
+                  iconClass: "text-slate-600 dark:text-slate-400"
+                },
+                { 
+                  key: "Active", 
+                  label: "Active", 
+                  icon: Plane,
+                  activeClass: "bg-teal-100/70 text-teal-900 border-teal-200 dark:bg-teal-950/40 dark:text-teal-400 dark:border-teal-900/60 shadow-sm",
+                  iconClass: "text-teal-700 dark:text-teal-400"
+                },
+                { 
+                  key: "Upcoming", 
+                  label: "Upcoming", 
+                  icon: Clock,
+                  activeClass: "bg-indigo-100/70 text-indigo-900 border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-400 dark:border-indigo-900/60 shadow-sm",
+                  iconClass: "text-indigo-700 dark:text-indigo-400"
+                },
+                { 
+                  key: "Completed", 
+                  label: "Completed", 
+                  icon: CheckCircle2,
+                  activeClass: "bg-slate-200/60 text-slate-900 border-slate-300 dark:bg-slate-800/60 dark:text-slate-300 dark:border-slate-700/60 shadow-sm",
+                  iconClass: "text-slate-600 dark:text-slate-400"
+                },
+                { 
+                  key: "Cancelled", 
+                  label: "Cancelled", 
+                  icon: XCircle,
+                  activeClass: "bg-orange-100/70 text-orange-900 border-orange-200 dark:bg-orange-950/40 dark:text-orange-400 dark:border-orange-900/60 shadow-sm",
+                  iconClass: "text-orange-700 dark:text-orange-400"
+                },
               ].map((tab) => {
                 const Icon = tab.icon;
+                const active = statusFilter === tab.key;
                 const hasAlert = (tab.key === "Active" || tab.key === "Upcoming") && statusAlertCounts[tab.key] > 0;
                 return (
                   <button
@@ -1191,14 +1222,14 @@ function ToursWorkspace({
                     type="button"
                     onClick={() => setStatusFilter(tab.key as any)}
                     className={cn(
-                      "flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md transition-all duration-200 cursor-pointer",
-                      statusFilter === tab.key
-                        ? "bg-card text-foreground shadow-sm animate-in fade-in zoom-in-95 duration-150"
-                        : "text-muted-foreground hover:text-foreground hover:bg-card/20"
+                      "flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md transition-all duration-200 cursor-pointer border border-transparent",
+                      active
+                        ? tab.activeClass
+                        : "text-muted-foreground hover:text-foreground hover:bg-card/40"
                     )}
                   >
                     <div className="relative flex items-center justify-center">
-                      <Icon className="h-3.5 w-3.5 shrink-0" />
+                      <Icon className={cn("h-3.5 w-3.5 shrink-0", active ? tab.iconClass : "text-muted-foreground/75")} />
                       {hasAlert && (
                         <span className="absolute -top-0.5 -right-0.5 flex h-1.5 w-1.5">
                           <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-destructive opacity-75" />
