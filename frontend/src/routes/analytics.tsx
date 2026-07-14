@@ -245,7 +245,7 @@ function AnalyticsPage() {
       </header>
 
       <ScrollArea className="flex-1">
-        <div className="mx-auto max-w-6xl space-y-10 p-6 pb-16">
+        <div id="analytics-report-content" className="mx-auto max-w-6xl space-y-10 p-6 pb-16">
 
           {/* ══ 1. Tour Status ══ */}
           <section id="analytics-status">
@@ -436,6 +436,58 @@ function AnalyticsPage() {
             )}
           </section>
 
+          {/* ── PDF Download Button ── */}
+          <div className="flex justify-center pt-4">
+            <Button
+              id="download-pdf-btn"
+              onClick={async () => {
+                const toast = (await import("sonner")).toast;
+                toast.loading("Generating professional PDF report...", { id: "pdf-gen" });
+                try {
+                  const html2canvas = (await import("html2canvas")).default;
+                  const { jsPDF } = await import("jspdf");
+
+                  const element = document.getElementById("analytics-report-content");
+                  if (!element) {
+                    toast.error("Report content element not found", { id: "pdf-gen" });
+                    return;
+                  }
+
+                  // Force background colors to be rendered during capture
+                  const canvas = await html2canvas(element, {
+                    scale: 2, // High resolution
+                    useCORS: true,
+                    allowTaint: true,
+                    backgroundColor: theme === "light" ? "#f8fafc" : "#0b0f19",
+                  });
+
+                  const imgData = canvas.toDataURL("image/jpeg", 0.95);
+                  const pdf = new jsPDF({
+                    orientation: "portrait",
+                    unit: "px",
+                    format: [canvas.width / 2, canvas.height / 2],
+                  });
+
+                  const pdfWidth = pdf.internal.pageSize.getWidth();
+                  const pdfHeight = pdf.internal.pageSize.getHeight();
+
+                  pdf.addImage(imgData, "JPEG", 0, 0, pdfWidth, pdfHeight, undefined, "FAST");
+                  pdf.save("Horizon_Travel_Analytics_Report.pdf");
+
+                  toast.success("PDF report downloaded successfully!", { id: "pdf-gen" });
+                } catch (error) {
+                  console.error("PDF generation failed:", error);
+                  toast.error("Failed to generate PDF. Please try again.", { id: "pdf-gen" });
+                }
+              }}
+              className="gap-2 px-6 py-5 text-sm font-semibold shadow-md bg-primary text-primary-foreground hover:bg-primary/95 transition-all duration-200"
+            >
+              <TrendingUp className="h-4 w-4" />
+              Download PDF Report
+            </Button>
+          </div>
+
+          <div className="h-8" />
         </div>
       </ScrollArea>
     </div>
