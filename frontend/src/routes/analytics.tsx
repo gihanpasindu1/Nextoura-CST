@@ -244,8 +244,9 @@ function AnalyticsPage() {
         </div>
       </header>
 
-      <ScrollArea className="flex-1">
-        <div id="analytics-report-content" className="mx-auto max-w-6xl space-y-10 p-6 pb-16">
+      <div className="flex-1 min-h-0 flex flex-col">
+        <ScrollArea className="flex-1">
+          <div id="analytics-report-content" className="mx-auto max-w-6xl space-y-10 p-6 pb-16">
 
           {/* ══ 1. Tour Status ══ */}
           <section id="analytics-status">
@@ -443,6 +444,7 @@ function AnalyticsPage() {
               onClick={async () => {
                 const toast = (await import("sonner")).toast;
                 toast.loading("Generating professional PDF report...", { id: "pdf-gen" });
+                let cleanupHooks = () => {};
                 try {
                   const html2canvas = (await import("html2canvas")).default;
                   const { jsPDF } = await import("jspdf");
@@ -451,6 +453,69 @@ function AnalyticsPage() {
                   if (!element) {
                     toast.error("Report content element not found", { id: "pdf-gen" });
                     return;
+                  }
+
+                  // Temporarily hook the parent window's getPropertyValue to sanitize oklch colors during html2canvas parsing
+                  try {
+                    const proto = window.CSSStyleDeclaration.prototype;
+                    const originalGetPropertyValue = proto.getPropertyValue;
+                    
+                    const colorProps = ["backgroundColor", "color", "borderColor", "fill", "stroke"];
+                    const originalGetters: Record<string, any> = {};
+                    
+                    // Simple static map of common oklch variables to fallback standard CSS values
+                    const translateOklch = (val: string) => {
+                      if (!val || !val.includes("oklch")) return val;
+                      if (val.includes("0.71") || val.includes("14b8a6")) return "rgb(20, 184, 166)";
+                      if (val.includes("0.59") || val.includes("6366f1")) return "rgb(99, 102, 241)";
+                      if (val.includes("0.62") || val.includes("8b5cf6")) return "rgb(139, 92, 246)";
+                      if (val.includes("0.47") || val.includes("64748b")) return "rgb(100, 116, 139)";
+                      if (val.includes("0.65") || val.includes("f97316")) return "rgb(249, 115, 22)";
+                      return theme === "light" ? "rgb(255, 255, 255)" : "rgb(17, 24, 39)";
+                    };
+
+                    proto.getPropertyValue = function (property: string) {
+                      const val = originalGetPropertyValue.call(this, property);
+                      if (typeof val === "string" && val.includes("oklch")) {
+                        return translateOklch(val);
+                      }
+                      return val;
+                    };
+
+                    colorProps.forEach((prop) => {
+                      const descriptor = Object.getOwnPropertyDescriptor(proto, prop);
+                      if (descriptor) {
+                        originalGetters[prop] = descriptor;
+                        const kebab = prop.replace(/([A-Z])/g, "-$1").toLowerCase();
+                        Object.defineProperty(proto, prop, {
+                          get() {
+                            const val = this.getPropertyValue(kebab);
+                            if (typeof val === "string" && val.includes("oklch")) {
+                              return translateOklch(val);
+                            }
+                            return val;
+                          },
+                          set(v) {
+                            this.setProperty(kebab, v);
+                          },
+                          configurable: true,
+                          enumerable: true
+                        });
+                      }
+                    });
+
+                    cleanupHooks = () => {
+                      proto.getPropertyValue = originalGetPropertyValue;
+                      colorProps.forEach((prop) => {
+                        if (originalGetters[prop]) {
+                          Object.defineProperty(proto, prop, originalGetters[prop]);
+                        } else {
+                          delete (proto as any)[prop];
+                        }
+                      });
+                    };
+                  } catch (err) {
+                    console.warn("Failed to apply parent window style hooks:", err);
                   }
 
                   // Force background colors to be rendered during capture
@@ -514,10 +579,78 @@ function AnalyticsPage() {
                             if (typeof value === "string" && value.includes("oklch")) {
                               return sanitizeOklchValue(value);
                             }
+                            if (typeof value === "function" && prop === "getPropertyValue") {
+                              return function (property: string) {
+                                const val = target.getPropertyValue(property);
+                                if (typeof val === "string" && val.includes("oklch")) {
+                                  return sanitizeOklchValue(val);
+                                }
+                                return val;
+                              };
+                            }
                             return value;
                           }
                         });
                       };
+
+                      // Override getters directly on CSSStyleDeclaration.prototype for maximum compatibility
+                      try {
+                        const proto = clonedWindow.CSSStyleDeclaration.prototype;
+                        
+                        // Patch getPropertyValue
+                        const originalGetPropertyValue = proto.getPropertyValue;
+                        proto.getPropertyValue = function (property: string) {
+                          const val = originalGetPropertyValue.call(this, property);
+                          if (typeof val === "string" && val.includes("oklch")) {
+                            return sanitizeOklchValue(val);
+                          }
+                          return val;
+                        };
+
+                        // Patch direct property getters (e.g. style.backgroundColor)
+                        const colorProps = ["backgroundColor", "color", "borderColor", "fill", "stroke"];
+                        colorProps.forEach((prop) => {
+                          const kebab = prop.replace(/([A-Z])/g, "-$1").toLowerCase();
+                          Object.defineProperty(proto, prop, {
+                            get() {
+                              const val = this.getPropertyValue(kebab);
+                              if (typeof val === "string" && val.includes("oklch")) {
+                                return sanitizeOklchValue(val);
+                              }
+                              return val;
+                            },
+                            set(v) {
+                              this.setProperty(kebab, v);
+                            },
+                            configurable: true,
+                            enumerable: true
+                          });
+                        });
+                      } catch (e) {
+                        console.warn("Failed to patch CSSStyleDeclaration prototype:", e);
+                      }
+
+                      // Sanitize stylesheets in the cloned document to remove any rule containing "oklch"
+                      try {
+                        const sheets = clonedDoc.styleSheets;
+                        for (let i = 0; i < sheets.length; i++) {
+                          try {
+                            const sheet = sheets[i];
+                            const rules = sheet.cssRules || sheet.rules;
+                            if (!rules) continue;
+                            for (let j = rules.length - 1; j >= 0; j--) {
+                              const rule = rules[j];
+                              if (rule.cssText && rule.cssText.includes("oklch")) {
+                                sheet.deleteRule(j);
+                              }
+                            }
+                          } catch (innerErr) {
+                            // Cross-origin sheets might throw, ignore them
+                          }
+                        }
+                      } catch (e) {
+                        console.warn("Failed to sanitize cloned stylesheets:", e);
+                      }
 
                       // Clean up attributes directly on SVGs and paths too
                       const allElements = clonedDoc.getElementsByTagName("*");
@@ -554,6 +687,8 @@ function AnalyticsPage() {
                 } catch (error) {
                   console.error("PDF generation failed:", error);
                   toast.error("Failed to generate PDF. Please try again.", { id: "pdf-gen" });
+                } finally {
+                  cleanupHooks();
                 }
               }}
               className="gap-2 px-6 py-5 text-sm font-semibold shadow-md bg-primary text-primary-foreground hover:bg-primary/95 transition-all duration-200"
@@ -565,7 +700,8 @@ function AnalyticsPage() {
 
           <div className="h-8" />
         </div>
-      </ScrollArea>
+        </ScrollArea>
+      </div>
     </div>
   );
 }
