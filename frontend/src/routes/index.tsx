@@ -1,4 +1,4 @@
-﻿import { createFileRoute, useRouter } from "@tanstack/react-router";
+import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { supabase } from "@/lib/supabase";
 import { useMemo, useState, useEffect } from "react";
 import {
@@ -818,8 +818,6 @@ function Console() {
           ) : (
             <ToursWorkspace
               drivers={drivers}
-              agents={agents}
-              allTourists={touristsList}
               query={query}
               setQuery={setQuery}
               statusFilter={statusFilter}
@@ -1092,8 +1090,6 @@ function NotificationItem({
 
 function ToursWorkspace({
   drivers,
-  agents,
-  allTourists,
   query,
   setQuery,
   statusFilter,
@@ -1114,8 +1110,6 @@ function ToursWorkspace({
   onDeleteClient,
 }: {
   drivers: any[];
-  agents: any[];
-  allTourists: Tourist[];
   query: string;
   setQuery: (v: string) => void;
   statusFilter: "all" | TourStatus;
@@ -1263,10 +1257,9 @@ function ToursWorkspace({
             </button>
           </div>
 
-          {/* List + Summary Panel */}
+          {/* Tourist List */}
           <div className="flex min-h-0 flex-1">
-            {/* Tourist list column */}
-            <div className="flex flex-col" style={{ flex: "1 1 0", minWidth: 0 }}>
+            <div className="flex w-full flex-col">
               <div className="flex items-center justify-between border-b border-border bg-card px-5 py-2.5">
                 <div className="flex items-center gap-4 text-xs font-medium text-muted-foreground">
                   {tourists.length} {tourists.length === 1 ? "tourist" : "tourists"}
@@ -1335,13 +1328,6 @@ function ToursWorkspace({
                 </ul>
               </ScrollArea>
             </div>
-
-            {/* Summary / Analytics panel */}
-            <ToursSummaryPanel
-              allTourists={allTourists}
-              agents={agents}
-              drivers={drivers}
-            />
           </div>
         </>
       )}
@@ -1386,211 +1372,6 @@ function StatusPill({ status }: { status: TourStatus }) {
       <Icon className="h-2.5 w-2.5" strokeWidth={2.5} />
       {displayStatus}
     </span>
-  );
-}
-
-/* ---------- Tours Summary Panel ---------- */
-
-function ToursSummaryPanel({
-  allTourists,
-  agents,
-  drivers,
-}: {
-  allTourists: Tourist[];
-  agents: any[];
-  drivers: any[];
-}) {
-  // ── Status counts (excluding leads) ──
-  const confirmed = allTourists.filter((t) => !t.isLead);
-  const statusGroups = [
-    { key: "Active",    label: "Active",    color: "#14b8a6", bg: "rgba(20,184,166,0.12)" },
-    { key: "Upcoming",  label: "Upcoming",  color: "#6366f1", bg: "rgba(99,102,241,0.12)" },
-    { key: "Completed", label: "Completed", color: "#64748b", bg: "rgba(100,116,139,0.12)" },
-    { key: "Cancelled", label: "Cancelled", color: "#f97316", bg: "rgba(249,115,22,0.12)" },
-  ];
-  const statusCounts = statusGroups.map((g) => ({
-    ...g,
-    count: confirmed.filter((t) => t.status === g.key || (g.key === "Active" && t.status === "On Tour")).length,
-  }));
-  const maxStatus = Math.max(...statusCounts.map((s) => s.count), 1);
-
-  // ── Agent breakdown ──
-  const agentStats = agents.map((a: any) => {
-    const name = a.agent_name || a.name || "Unknown";
-    const count = confirmed.filter((t) => t.agent === name).length;
-    return { id: a.id, name, count, region: a.region || "—" };
-  }).sort((a, b) => b.count - a.count);
-
-  // ── Driver workload ──
-  const driverStats = drivers.map((d: any) => {
-    const count = confirmed.filter(
-      (t) => t.driver === d.name && (t.status === "Active" || t.status === "On Tour" || t.status === "Upcoming")
-    ).length;
-    const initials = (d.name || "?").split(" ").map((p: string) => p[0]).slice(0, 2).join("");
-    return { id: d.id, name: d.name, phone: d.phone, email: d.email, count, initials };
-  }).sort((a, b) => b.count - a.count);
-
-  return (
-    <aside
-      className="hidden xl:flex flex-col shrink-0 border-l border-border bg-card/50"
-      style={{ width: 300 }}
-    >
-      <ScrollArea className="flex-1">
-        <div className="p-5 space-y-6">
-
-          {/* ── Status distribution chart ── */}
-          <div>
-            <div className="mb-3 flex items-center gap-2">
-              <BarChart3 className="h-3.5 w-3.5 text-muted-foreground" />
-              <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
-                Tour Status
-              </span>
-            </div>
-            <div className="space-y-2.5">
-              {statusCounts.map((s) => (
-                <div key={s.key}>
-                  <div className="mb-1 flex items-center justify-between">
-                    <span className="text-[11px] font-medium text-foreground">{s.label}</span>
-                    <span
-                      className="text-[11px] font-bold tabular-nums"
-                      style={{ color: s.color }}
-                    >
-                      {s.count}
-                    </span>
-                  </div>
-                  <div className="h-2 w-full overflow-hidden rounded-full bg-muted/60">
-                    <div
-                      className="h-full rounded-full transition-all duration-700"
-                      style={{
-                        width: `${(s.count / maxStatus) * 100}%`,
-                        background: `linear-gradient(90deg, ${s.color}cc, ${s.color})`,
-                        minWidth: s.count > 0 ? 6 : 0,
-                      }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-            {/* Tiny total callout */}
-            <div className="mt-3 flex items-center justify-between rounded-md border border-border bg-muted/30 px-3 py-2">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Total Tours</span>
-              <span className="text-sm font-bold text-foreground">{confirmed.length}</span>
-            </div>
-          </div>
-
-          <div className="h-px bg-border" />
-
-          {/* ── Agent breakdown ── */}
-          <div>
-            <div className="mb-3 flex items-center gap-2">
-              <Briefcase className="h-3.5 w-3.5 text-muted-foreground" />
-              <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
-                Agent Activity
-              </span>
-            </div>
-            {agentStats.length === 0 ? (
-              <p className="text-[11px] text-muted-foreground italic">No agents yet</p>
-            ) : (
-              <div className="space-y-1.5">
-                {agentStats.map((a) => (
-                  <div
-                    key={a.id}
-                    className="flex items-center justify-between rounded-md border border-border bg-card px-3 py-2 transition-colors hover:bg-accent/30"
-                  >
-                    <div className="min-w-0 flex-1">
-                      <div className="truncate text-[12px] font-semibold text-foreground">{a.name}</div>
-                      <div className="text-[10px] text-muted-foreground">{a.region}</div>
-                    </div>
-                    <div
-                      className="ml-2 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[10px] font-bold"
-                      style={{
-                        background: a.count > 0 ? "rgba(59,130,246,0.12)" : "rgba(100,116,139,0.08)",
-                        color: a.count > 0 ? "#3b82f6" : "#94a3b8",
-                        border: `1px solid ${a.count > 0 ? "rgba(59,130,246,0.25)" : "rgba(100,116,139,0.15)"}`,
-                      }}
-                    >
-                      {a.count}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div className="h-px bg-border" />
-
-          {/* ── Driver details section ── */}
-          <div>
-            <div className="mb-3 flex items-center gap-2">
-              <Car className="h-3.5 w-3.5 text-muted-foreground" />
-              <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
-                Driver Details
-              </span>
-            </div>
-            {driverStats.length === 0 ? (
-              <p className="text-[11px] text-muted-foreground italic">No drivers registered</p>
-            ) : (
-              <div className="space-y-2">
-                {driverStats.map((d) => (
-                  <div
-                    key={d.id}
-                    className="rounded-lg border border-border bg-card p-3 transition-all hover:shadow-sm hover:border-blue-200/60 dark:hover:border-blue-800/40"
-                  >
-                    <div className="flex items-center gap-2.5">
-                      {/* Avatar */}
-                      <div
-                        className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-[11px] font-bold"
-                        style={{
-                          background: d.count > 0
-                            ? "linear-gradient(135deg, rgba(20,184,166,0.15), rgba(20,184,166,0.05))"
-                            : "rgba(100,116,139,0.08)",
-                          color: d.count > 0 ? "#0d9488" : "#94a3b8",
-                          border: `1px solid ${d.count > 0 ? "rgba(20,184,166,0.3)" : "rgba(100,116,139,0.15)"}`,
-                        }}
-                      >
-                        {d.initials}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="truncate text-[12px] font-semibold text-foreground">{d.name}</div>
-                        {/* Active tours badge */}
-                        <div className="mt-0.5 flex items-center gap-1">
-                          <span
-                            className="inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[9px] font-semibold"
-                            style={{
-                              background: d.count > 0 ? "rgba(20,184,166,0.12)" : "rgba(100,116,139,0.08)",
-                              color: d.count > 0 ? "#0d9488" : "#94a3b8",
-                            }}
-                          >
-                            <Car className="h-2.5 w-2.5" />
-                            {d.count} active {d.count === 1 ? "tour" : "tours"}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    {/* Contact row */}
-                    <div className="mt-2.5 space-y-1">
-                      {d.phone && (
-                        <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                          <Phone className="h-3 w-3 shrink-0" />
-                          <span className="truncate">{d.phone}</span>
-                        </div>
-                      )}
-                      {d.email && (
-                        <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                          <Mail className="h-3 w-3 shrink-0" />
-                          <span className="truncate">{d.email}</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-        </div>
-      </ScrollArea>
-    </aside>
   );
 }
 
