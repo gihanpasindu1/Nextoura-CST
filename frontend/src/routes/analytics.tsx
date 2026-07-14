@@ -460,39 +460,78 @@ function AnalyticsPage() {
                     allowTaint: true,
                     backgroundColor: theme === "light" ? "#f8fafc" : "#0b0f19",
                     onclone: (clonedDoc) => {
-                      const elements = clonedDoc.getElementsByTagName("*");
-                      for (let i = 0; i < elements.length; i++) {
-                        const el = elements[i] as HTMLElement;
+                      const clonedWindow = clonedDoc.defaultView;
+                      if (!clonedWindow) return;
+
+                      // Helper to convert oklch strings to rgb using browser's built-in CSS parser if possible
+                      const sanitizeOklchValue = (val: string): string => {
+                        if (!val || !val.includes("oklch")) return val;
                         
-                        // Sanitize Computed Styles
-                        const style = window.getComputedStyle(el);
-                        if (style.backgroundColor && style.backgroundColor.includes("oklch")) {
-                          el.style.backgroundColor = theme === "light" ? "#ffffff" : "#111827";
-                        }
-                        if (style.color && style.color.includes("oklch")) {
-                          el.style.color = theme === "light" ? "#1f2937" : "#f9fafb";
-                        }
-                        if (style.borderColor && style.borderColor.includes("oklch")) {
-                          el.style.borderColor = theme === "light" ? "#e5e7eb" : "#374151";
-                        }
-
-                        // Sanitize SVG Specific styles (fill, stroke)
-                        const fillStyle = el.style.fill || el.getAttribute("fill") || "";
-                        if (fillStyle.includes("oklch")) {
-                          // Replace with corresponding chart color defaults or fallback
-                          if (fillStyle.includes("20%")) {
-                            el.style.fill = "#14b8a6"; // Default active/teal fallback
-                            el.setAttribute("fill", "#14b8a6");
-                          } else {
-                            el.style.fill = "currentColor";
-                            el.setAttribute("fill", "currentColor");
+                        try {
+                          // Create temporary element to let browser parse the oklch color to rgb
+                          const tempEl = clonedDoc.createElement("div");
+                          tempEl.style.color = val;
+                          clonedDoc.body.appendChild(tempEl);
+                          const computedColor = clonedWindow.getComputedStyle(tempEl).color;
+                          clonedDoc.body.removeChild(tempEl);
+                          
+                          // If computed color is rgb/rgba, return it!
+                          if (computedColor && !computedColor.includes("oklch")) {
+                            return computedColor;
                           }
+                        } catch (e) {
+                          console.warn("Failed to parse oklch color dynamically:", e);
                         }
 
-                        const strokeStyle = el.style.stroke || el.getAttribute("stroke") || "";
-                        if (strokeStyle.includes("oklch")) {
-                          el.style.stroke = "currentColor";
-                          el.setAttribute("stroke", "currentColor");
+                        // Static fallbacks in case dynamic translation isn't computed correctly
+                        if (val.includes("0.71") || val.includes("14b8a6") || val.includes("0.144")) {
+                          return "rgb(20, 184, 166)"; // Teal
+                        }
+                        if (val.includes("0.59") || val.includes("6366f1") || val.includes("0.13")) {
+                          return "rgb(99, 102, 241)"; // Indigo
+                        }
+                        if (val.includes("0.62") || val.includes("8b5cf6") || val.includes("0.15")) {
+                          return "rgb(139, 92, 246)"; // Purple
+                        }
+                        if (val.includes("0.47") || val.includes("64748b") || val.includes("0.08")) {
+                          return "rgb(100, 116, 139)"; // Slate
+                        }
+                        if (val.includes("0.65") || val.includes("f97316") || val.includes("0.17")) {
+                          return "rgb(249, 115, 22)"; // Orange
+                        }
+                        return theme === "light" ? "rgb(31, 41, 55)" : "rgb(249, 250, 251)";
+                      };
+
+                      // Proxy getComputedStyle of cloned window to intercept oklch retrievals
+                      const originalGetComputedStyle = clonedWindow.getComputedStyle;
+                      clonedWindow.getComputedStyle = function (el, pseudoElt) {
+                        const style = originalGetComputedStyle.call(clonedWindow, el, pseudoElt);
+                        
+                        // Proxy object to override specific style property access
+                        return new Proxy(style, {
+                          get(target, prop) {
+                            const value = Reflect.get(target, prop);
+                            if (typeof value === "string" && value.includes("oklch")) {
+                              return sanitizeOklchValue(value);
+                            }
+                            return value;
+                          }
+                        });
+                      };
+
+                      // Clean up attributes directly on SVGs and paths too
+                      const allElements = clonedDoc.getElementsByTagName("*");
+                      for (let i = 0; i < allElements.length; i++) {
+                        const el = allElements[i] as HTMLElement;
+                        
+                        // Override attributes
+                        const fillAttr = el.getAttribute("fill");
+                        if (fillAttr && fillAttr.includes("oklch")) {
+                          el.setAttribute("fill", sanitizeOklchValue(fillAttr));
+                        }
+                        const strokeAttr = el.getAttribute("stroke");
+                        if (strokeAttr && strokeAttr.includes("oklch")) {
+                          el.setAttribute("stroke", sanitizeOklchValue(strokeAttr));
                         }
                       }
                     }
