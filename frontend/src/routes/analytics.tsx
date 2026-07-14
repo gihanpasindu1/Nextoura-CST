@@ -160,7 +160,7 @@ function AnalyticsPage() {
   }, []);
 
   const confirmed    = useMemo(() => tourists.filter((t) => !t.is_lead), [tourists]);
-  const statusCounts = useMemo(() => STATUS_CFG.map((s) => ({ ...s, count: confirmed.filter((t) => t.status === s.key).length })), [confirmed]);
+  const statusCounts = useMemo(() => STATUS_CFG.map((s) => ({ ...s, count: confirmed.filter((t) => s.keys.includes(t.status)).length })), [confirmed]);
   const statusTotal  = statusCounts.reduce((s, x) => s + x.count, 0);
   const maxStatus    = Math.max(...statusCounts.map((s) => s.count), 1);
 
