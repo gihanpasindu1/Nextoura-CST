@@ -1874,7 +1874,7 @@ function AgentManagement({ agents, onAddAgent, onEditAgent, onDeleteAgent }: {
 
 
       <ScrollArea className="flex-1">
-        <div className="grid gap-3 p-6 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-4 p-6 sm:grid-cols-2 xl:grid-cols-3">
           {agents.map((a: any) => {
             const initials = (a.agent_name || a.name || "?")
               .split(" ")
@@ -1882,14 +1882,19 @@ function AgentManagement({ agents, onAddAgent, onEditAgent, onDeleteAgent }: {
               .slice(0, 2)
               .join("");
             return (
-              <div key={a.id} className="group relative rounded-xl border border-slate-200 bg-white p-5 transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:border-blue-200 dark:bg-card dark:border-slate-800">
-                
+              <div
+                key={a.id}
+                className="group relative overflow-hidden rounded-xl border border-border bg-card p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md hover:border-primary/20"
+              >
+                {/* Visual accent left line */}
+                <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary/40 transition-colors group-hover:bg-primary" />
+
                 {/* Hover action buttons */}
-                <div className="absolute right-3 top-3 flex items-center gap-0.5 opacity-0 transition-all duration-200 group-hover:opacity-100 bg-white/90 backdrop-blur-sm p-1 rounded-lg shadow-sm border border-slate-100 dark:bg-slate-900/90 dark:border-slate-800">
+                <div className="absolute right-3 top-3 flex items-center gap-1 opacity-0 transition-all duration-200 group-hover:opacity-100 bg-background/95 backdrop-blur-sm p-1 rounded-lg border border-border shadow-sm">
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-7 w-7 text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                    className="h-7 w-7 text-muted-foreground hover:text-primary hover:bg-primary/5"
                     onClick={() => openEdit(a)}
                     title="Edit agent"
                   >
@@ -1898,7 +1903,7 @@ function AgentManagement({ agents, onAddAgent, onEditAgent, onDeleteAgent }: {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-7 w-7 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                    className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/5"
                     onClick={() => openDelete(a)}
                     title="Delete agent"
                   >
@@ -1907,33 +1912,36 @@ function AgentManagement({ agents, onAddAgent, onEditAgent, onDeleteAgent }: {
                 </div>
 
                 <div className="flex items-start gap-4">
-                  <div className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-blue-50/50 border border-blue-100/50 text-blue-600 font-bold dark:bg-blue-900/20 dark:border-blue-800/30 dark:text-blue-400">
+                  {/* Initial Badge with slate styling */}
+                  <div className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-primary/5 border border-primary/10 text-primary font-bold text-sm">
                     {initials}
                   </div>
                   <div className="min-w-0 flex-1 pr-2">
-                    <div className="truncate text-[15px] font-semibold text-slate-900 dark:text-slate-100 mb-0.5">
+                    <div className="truncate text-sm font-bold text-foreground mb-0.5">
                       {a.agent_name || a.name}
                     </div>
                     {a.email && (
-                      <div className="flex items-center gap-2 mt-2 text-[13px] text-slate-500 dark:text-slate-400">
-                        <Mail className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+                      <div className="flex items-center gap-1.5 mt-1.5 text-xs text-muted-foreground">
+                        <Mail className="h-3.5 w-3.5 shrink-0 text-muted-foreground/60" />
                         <span className="truncate">{a.email}</span>
                       </div>
                     )}
                   </div>
                 </div>
-                <Separator className="my-5 bg-slate-100 dark:bg-slate-800/50" />
-                <div className="flex items-center justify-between">
+
+                <Separator className="my-4 bg-border/60" />
+                
+                <div className="flex items-center justify-between text-xs">
                   <div>
-                    <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Region</div>
-                    <div className="mt-1 flex items-center gap-1.5 text-[13px] font-medium text-slate-700 dark:text-slate-300">
-                      <MapPin className="h-3 w-3 text-slate-400" />
-                      {a.region || "Unassigned"}
+                    <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Region</div>
+                    <div className="mt-1 flex items-center gap-1 font-semibold text-foreground">
+                      <MapPin className="h-3.5 w-3.5 text-primary/70 shrink-0" />
+                      <span>{a.region || "Unassigned"}</span>
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Clients</div>
-                    <div className="mt-1 text-base font-bold text-blue-600 dark:text-blue-400">
+                    <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Clients</div>
+                    <div className="mt-1 font-bold text-sm text-primary">
                       {a.clients || 0}
                     </div>
                   </div>
@@ -2098,7 +2106,7 @@ function DriverManagement({
 
 
       <ScrollArea className="flex-1">
-        <div className="grid gap-3 p-6 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-4 p-6 sm:grid-cols-2 xl:grid-cols-3">
           {drivers.map((d: any) => {
             const initials = (d.name || "?")
               .split(" ")
@@ -2106,42 +2114,64 @@ function DriverManagement({
               .slice(0, 2)
               .join("");
             return (
-              <div key={d.id} className="group relative rounded-xl border border-slate-200 bg-white p-5 transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:border-blue-200 dark:bg-card dark:border-slate-800">
-                
+              <div
+                key={d.id}
+                className="group relative overflow-hidden rounded-xl border border-border bg-card p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md hover:border-primary/20"
+              >
+                {/* Visual accent left line */}
+                <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary/40 transition-colors group-hover:bg-primary" />
+
                 {/* Actions (visible on hover) */}
-                <div className="absolute right-3 top-3 flex items-center gap-0.5 opacity-0 transition-all duration-200 group-hover:opacity-100 bg-white/90 backdrop-blur-sm p-1 rounded-lg shadow-sm border border-slate-100 dark:bg-slate-900/90 dark:border-slate-800">
+                <div className="absolute right-3 top-3 flex items-center gap-1 opacity-0 transition-all duration-200 group-hover:opacity-100 bg-background/95 backdrop-blur-sm p-1 rounded-lg border border-border shadow-sm">
                   {d.password && (
-                    <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20" onClick={() => {
-                      navigator.clipboard.writeText(`Email: ${d.email}\nPassword: ${d.password}`);
-                      toast.success("Credentials copied!");
-                    }} title="Copy Credentials">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-muted-foreground hover:text-primary hover:bg-primary/5"
+                      onClick={() => {
+                        navigator.clipboard.writeText(`Email: ${d.email}\nPassword: ${d.password}`);
+                        toast.success("Credentials copied!");
+                      }}
+                      title="Copy Credentials"
+                    >
                       <Copy className="h-3.5 w-3.5" />
                     </Button>
                   )}
-                  <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20" onClick={() => openEdit(d)}>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 text-muted-foreground hover:text-primary hover:bg-primary/5"
+                    onClick={() => openEdit(d)}
+                  >
                     <Settings2 className="h-3.5 w-3.5" />
                   </Button>
-                  <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20" onClick={() => openDelete(d)}>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/5"
+                    onClick={() => openDelete(d)}
+                  >
                     <Trash2 className="h-3.5 w-3.5" />
                   </Button>
                 </div>
 
                 <div className="flex items-start gap-4">
-                  <div className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-blue-50/50 border border-blue-100/50 text-blue-600 font-bold dark:bg-blue-900/20 dark:border-blue-800/30 dark:text-blue-400">
+                  {/* Avatar Initials Badge */}
+                  <div className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-primary/5 border border-primary/10 text-primary font-bold text-sm">
                     {initials}
                   </div>
                   <div className="min-w-0 flex-1 pr-2">
-                    <div className="truncate text-[15px] font-semibold text-slate-900 dark:text-slate-100 mb-0.5">
+                    <div className="truncate text-sm font-bold text-foreground mb-0.5">
                       {d.name}
                     </div>
                     <div className="flex flex-col gap-1.5 mt-2">
-                      <div className="flex items-center gap-2 text-[13px] text-slate-500 dark:text-slate-400">
-                        <Phone className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <Phone className="h-3.5 w-3.5 shrink-0 text-muted-foreground/60" />
                         <span className="truncate">{d.phone}</span>
                       </div>
                       {d.email && (
-                        <div className="flex items-center gap-2 text-[13px] text-slate-500 dark:text-slate-400">
-                          <Mail className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                          <Mail className="h-3.5 w-3.5 shrink-0 text-muted-foreground/60" />
                           <span className="truncate">{d.email}</span>
                         </div>
                       )}
