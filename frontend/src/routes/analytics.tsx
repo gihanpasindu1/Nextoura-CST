@@ -1,10 +1,11 @@
-﻿import { createFileRoute, useRouter } from "@tanstack/react-router";
+import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useEffect, useState, useMemo } from "react";
 import { supabase } from "@/lib/supabase";
 import { useTheme } from "@/lib/theme";
 import {
   ArrowLeft, BarChart3, Car, Briefcase, TrendingUp,
   MapPin, Phone, Mail, CheckCircle2, Clock, Plane, XCircle, Navigation,
+  Moon, Sun,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -131,7 +132,7 @@ const STATUS_CFG = [
 
 function AnalyticsPage() {
   const router = useRouter();
-  const { theme } = useTheme();
+  const { theme, toggle } = useTheme();
   const [tourists, setTourists] = useState<any[]>([]);
   const [agents,   setAgents]   = useState<any[]>([]);
   const [drivers,  setDrivers]  = useState<any[]>([]);
@@ -222,9 +223,25 @@ function AnalyticsPage() {
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-          <TrendingUp className="h-3.5 w-3.5" />
-          <span>{confirmed.length} confirmed tours</span>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+            <TrendingUp className="h-3.5 w-3.5" />
+            <span>{confirmed.length} confirmed tours</span>
+          </div>
+          {/* Theme toggle */}
+          <button
+            id="analytics-theme-toggle"
+            type="button"
+            title={theme === "light" ? "Switch to dark mode" : "Switch to light mode"}
+            onClick={toggle}
+            className="flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-card text-muted-foreground transition-all duration-200 hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
+          >
+            {theme === "light" ? (
+              <Moon className="h-4 w-4" />
+            ) : (
+              <Sun className="h-4 w-4" />
+            )}
+          </button>
         </div>
       </header>
 
