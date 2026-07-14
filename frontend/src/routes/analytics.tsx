@@ -459,6 +459,25 @@ function AnalyticsPage() {
                     useCORS: true,
                     allowTaint: true,
                     backgroundColor: theme === "light" ? "#f8fafc" : "#0b0f19",
+                    onclone: (clonedDoc) => {
+                      // Find all elements in the cloned document and rewrite oklch colors
+                      const elements = clonedDoc.getElementsByTagName("*");
+                      for (let i = 0; i < elements.length; i++) {
+                        const el = elements[i] as HTMLElement;
+                        const style = window.getComputedStyle(el);
+                        
+                        // If color or background-color uses oklch, override it with standard fallback
+                        if (style.backgroundColor && style.backgroundColor.includes("oklch")) {
+                          el.style.backgroundColor = theme === "light" ? "#ffffff" : "#111827";
+                        }
+                        if (style.color && style.color.includes("oklch")) {
+                          el.style.color = theme === "light" ? "#1f2937" : "#f9fafb";
+                        }
+                        if (style.borderColor && style.borderColor.includes("oklch")) {
+                          el.style.borderColor = theme === "light" ? "#e5e7eb" : "#374151";
+                        }
+                      }
+                    }
                   });
 
                   const imgData = canvas.toDataURL("image/jpeg", 0.95);
