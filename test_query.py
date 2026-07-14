@@ -14,10 +14,14 @@ engine = create_engine(SQLALCHEMY_DATABASE_URL)
 SessionLocal = sessionmaker(bind=engine)
 db = SessionLocal()
 
-print("--- DRIVERS ---")
+print("--- COMPANIES ---")
+for c in db.query(models.Company).all():
+    print(f"Company ID: {c.id} | Name: {c.company_name} | Email: {c.email}")
+
+print("\n--- DRIVERS ---")
 for d in db.query(models.Driver).all():
-    print(f"ID: {d.id} | Name: {d.name} | Phone: {d.phone}")
+    print(f"ID: {d.id} | Name: {d.name} | Company ID: {d.company_id}")
 
 print("\n--- TOURISTS ---")
 for t in db.query(models.ForeignTourist).all():
-    print(f"ID: {t.id} | Name: {t.name} | Driver ID: {t.driver_id} | Status: {t.status} | is_lead: {t.is_lead}")
+    print(f"ID: {t.id} | Name: {t.name} | Driver ID: {t.driver_id} | Company ID: {t.company_id} | Status: {t.status} | is_lead: {t.is_lead}")
