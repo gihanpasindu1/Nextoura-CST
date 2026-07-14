@@ -119,11 +119,10 @@ function EmptyState({ message }: { message: string }) {
 const AGENT_COLORS = ["#3b82f6","#8b5cf6","#ec4899","#f59e0b","#10b981","#06b6d4","#f97316","#6366f1"];
 
 const STATUS_CFG = [
-  { key: "Active",    label: "Active",    color: "#14b8a6", icon: Plane        },
-  { key: "On Tour",   label: "On Tour",   color: "#8b5cf6", icon: Navigation   },
-  { key: "Upcoming",  label: "Upcoming",  color: "#6366f1", icon: Clock        },
-  { key: "Completed", label: "Completed", color: "#64748b", icon: CheckCircle2 },
-  { key: "Cancelled", label: "Cancelled", color: "#f97316", icon: XCircle      },
+  { key: "Active",    label: "Active",    color: "#14b8a6", icon: Plane,         keys: ["Active", "On Tour"] },
+  { key: "Upcoming",  label: "Upcoming",  color: "#6366f1", icon: Clock,         keys: ["Upcoming"]          },
+  { key: "Completed", label: "Completed", color: "#64748b", icon: CheckCircle2,  keys: ["Completed"]         },
+  { key: "Cancelled", label: "Cancelled", color: "#f97316", icon: XCircle,       keys: ["Cancelled"]         },
 ];
 
 /* ─────────────────────────────────────────────
