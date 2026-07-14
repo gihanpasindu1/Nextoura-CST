@@ -1,4 +1,4 @@
-import { createFileRoute, useRouter } from "@tanstack/react-router";
+﻿import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { supabase } from "@/lib/supabase";
 import { useMemo, useState, useEffect } from "react";
 import {
@@ -1135,6 +1135,7 @@ function ToursWorkspace({
   onConfirmTour: (t: Tourist) => void;
   onDeleteClient: (id: string) => void;
 }) {
+  const wsRouter = useRouter();
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       {isDetailOpen ? (
@@ -1180,7 +1181,7 @@ function ToursWorkspace({
           </div>
 
           {/* Status bar */}
-          <div className="flex items-center border-b border-border bg-card px-6 py-2.5">
+          <div className="flex items-center justify-between border-b border-border bg-card px-6 py-2.5">
             <div className="flex bg-muted/60 p-0.5 rounded-lg border border-border/80 gap-0.5">
               {[
                 { 
@@ -1248,6 +1249,18 @@ function ToursWorkspace({
                 );
               })}
             </div>
+
+            {/* View Graphs icon button */}
+            <button
+              id="view-graphs-btn"
+              type="button"
+              title="View Analytics Graphs"
+              onClick={() => wsRouter.navigate({ to: "/analytics" })}
+              className="ml-auto flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-[11px] font-semibold text-muted-foreground transition-all duration-200 hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
+            >
+              <BarChart3 className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">View Graphs</span>
+            </button>
           </div>
 
           {/* List + Summary Panel */}
