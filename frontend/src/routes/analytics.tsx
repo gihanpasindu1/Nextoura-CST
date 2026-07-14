@@ -444,251 +444,243 @@ function AnalyticsPage() {
               onClick={async () => {
                 const toast = (await import("sonner")).toast;
                 toast.loading("Generating professional PDF report...", { id: "pdf-gen" });
-                let cleanupHooks = () => {};
                 try {
-                  const html2canvas = (await import("html2canvas")).default;
                   const { jsPDF } = await import("jspdf");
 
-                  const element = document.getElementById("analytics-report-content");
-                  if (!element) {
-                    toast.error("Report content element not found", { id: "pdf-gen" });
-                    return;
-                  }
-
-                  // Temporarily hook the parent window's getPropertyValue to sanitize oklch colors during html2canvas parsing
-                  try {
-                    const proto = window.CSSStyleDeclaration.prototype;
-                    const originalGetPropertyValue = proto.getPropertyValue;
-                    
-                    const colorProps = ["backgroundColor", "color", "borderColor", "fill", "stroke"];
-                    const originalGetters: Record<string, any> = {};
-                    
-                    // Simple static map of common oklch variables to fallback standard CSS values
-                    const translateOklch = (val: string) => {
-                      if (!val || !val.includes("oklch")) return val;
-                      if (val.includes("0.71") || val.includes("14b8a6")) return "rgb(20, 184, 166)";
-                      if (val.includes("0.59") || val.includes("6366f1")) return "rgb(99, 102, 241)";
-                      if (val.includes("0.62") || val.includes("8b5cf6")) return "rgb(139, 92, 246)";
-                      if (val.includes("0.47") || val.includes("64748b")) return "rgb(100, 116, 139)";
-                      if (val.includes("0.65") || val.includes("f97316")) return "rgb(249, 115, 22)";
-                      return theme === "light" ? "rgb(255, 255, 255)" : "rgb(17, 24, 39)";
-                    };
-
-                    proto.getPropertyValue = function (property: string) {
-                      const val = originalGetPropertyValue.call(this, property);
-                      if (typeof val === "string" && val.includes("oklch")) {
-                        return translateOklch(val);
-                      }
-                      return val;
-                    };
-
-                    colorProps.forEach((prop) => {
-                      const descriptor = Object.getOwnPropertyDescriptor(proto, prop);
-                      if (descriptor) {
-                        originalGetters[prop] = descriptor;
-                        const kebab = prop.replace(/([A-Z])/g, "-$1").toLowerCase();
-                        Object.defineProperty(proto, prop, {
-                          get() {
-                            const val = this.getPropertyValue(kebab);
-                            if (typeof val === "string" && val.includes("oklch")) {
-                              return translateOklch(val);
-                            }
-                            return val;
-                          },
-                          set(v) {
-                            this.setProperty(kebab, v);
-                          },
-                          configurable: true,
-                          enumerable: true
-                        });
-                      }
-                    });
-
-                    cleanupHooks = () => {
-                      proto.getPropertyValue = originalGetPropertyValue;
-                      colorProps.forEach((prop) => {
-                        if (originalGetters[prop]) {
-                          Object.defineProperty(proto, prop, originalGetters[prop]);
-                        } else {
-                          delete (proto as any)[prop];
-                        }
-                      });
-                    };
-                  } catch (err) {
-                    console.warn("Failed to apply parent window style hooks:", err);
-                  }
-
-                  // Force background colors to be rendered during capture
-                  const canvas = await html2canvas(element, {
-                    scale: 2, // High resolution
-                    useCORS: true,
-                    allowTaint: true,
-                    backgroundColor: theme === "light" ? "#f8fafc" : "#0b0f19",
-                    onclone: (clonedDoc) => {
-                      const clonedWindow = clonedDoc.defaultView;
-                      if (!clonedWindow) return;
-
-                      // Helper to convert oklch strings to rgb using browser's built-in CSS parser if possible
-                      const sanitizeOklchValue = (val: string): string => {
-                        if (!val || !val.includes("oklch")) return val;
-                        
-                        try {
-                          // Create temporary element to let browser parse the oklch color to rgb
-                          const tempEl = clonedDoc.createElement("div");
-                          tempEl.style.color = val;
-                          clonedDoc.body.appendChild(tempEl);
-                          const computedColor = clonedWindow.getComputedStyle(tempEl).color;
-                          clonedDoc.body.removeChild(tempEl);
-                          
-                          // If computed color is rgb/rgba, return it!
-                          if (computedColor && !computedColor.includes("oklch")) {
-                            return computedColor;
-                          }
-                        } catch (e) {
-                          console.warn("Failed to parse oklch color dynamically:", e);
-                        }
-
-                        // Static fallbacks in case dynamic translation isn't computed correctly
-                        if (val.includes("0.71") || val.includes("14b8a6") || val.includes("0.144")) {
-                          return "rgb(20, 184, 166)"; // Teal
-                        }
-                        if (val.includes("0.59") || val.includes("6366f1") || val.includes("0.13")) {
-                          return "rgb(99, 102, 241)"; // Indigo
-                        }
-                        if (val.includes("0.62") || val.includes("8b5cf6") || val.includes("0.15")) {
-                          return "rgb(139, 92, 246)"; // Purple
-                        }
-                        if (val.includes("0.47") || val.includes("64748b") || val.includes("0.08")) {
-                          return "rgb(100, 116, 139)"; // Slate
-                        }
-                        if (val.includes("0.65") || val.includes("f97316") || val.includes("0.17")) {
-                          return "rgb(249, 115, 22)"; // Orange
-                        }
-                        return theme === "light" ? "rgb(31, 41, 55)" : "rgb(249, 250, 251)";
-                      };
-
-                      // Proxy getComputedStyle of cloned window to intercept oklch retrievals
-                      const originalGetComputedStyle = clonedWindow.getComputedStyle;
-                      clonedWindow.getComputedStyle = function (el, pseudoElt) {
-                        const style = originalGetComputedStyle.call(clonedWindow, el, pseudoElt);
-                        
-                        // Proxy object to override specific style property access
-                        return new Proxy(style, {
-                          get(target, prop) {
-                            const value = Reflect.get(target, prop);
-                            if (typeof value === "string" && value.includes("oklch")) {
-                              return sanitizeOklchValue(value);
-                            }
-                            if (typeof value === "function" && prop === "getPropertyValue") {
-                              return function (property: string) {
-                                const val = target.getPropertyValue(property);
-                                if (typeof val === "string" && val.includes("oklch")) {
-                                  return sanitizeOklchValue(val);
-                                }
-                                return val;
-                              };
-                            }
-                            return value;
-                          }
-                        });
-                      };
-
-                      // Override getters directly on CSSStyleDeclaration.prototype for maximum compatibility
-                      try {
-                        const proto = clonedWindow.CSSStyleDeclaration.prototype;
-                        
-                        // Patch getPropertyValue
-                        const originalGetPropertyValue = proto.getPropertyValue;
-                        proto.getPropertyValue = function (property: string) {
-                          const val = originalGetPropertyValue.call(this, property);
-                          if (typeof val === "string" && val.includes("oklch")) {
-                            return sanitizeOklchValue(val);
-                          }
-                          return val;
-                        };
-
-                        // Patch direct property getters (e.g. style.backgroundColor)
-                        const colorProps = ["backgroundColor", "color", "borderColor", "fill", "stroke"];
-                        colorProps.forEach((prop) => {
-                          const kebab = prop.replace(/([A-Z])/g, "-$1").toLowerCase();
-                          Object.defineProperty(proto, prop, {
-                            get() {
-                              const val = this.getPropertyValue(kebab);
-                              if (typeof val === "string" && val.includes("oklch")) {
-                                return sanitizeOklchValue(val);
-                              }
-                              return val;
-                            },
-                            set(v) {
-                              this.setProperty(kebab, v);
-                            },
-                            configurable: true,
-                            enumerable: true
-                          });
-                        });
-                      } catch (e) {
-                        console.warn("Failed to patch CSSStyleDeclaration prototype:", e);
-                      }
-
-                      // Sanitize stylesheets in the cloned document to remove any rule containing "oklch"
-                      try {
-                        const sheets = clonedDoc.styleSheets;
-                        for (let i = 0; i < sheets.length; i++) {
-                          try {
-                            const sheet = sheets[i];
-                            const rules = sheet.cssRules || sheet.rules;
-                            if (!rules) continue;
-                            for (let j = rules.length - 1; j >= 0; j--) {
-                              const rule = rules[j];
-                              if (rule.cssText && rule.cssText.includes("oklch")) {
-                                sheet.deleteRule(j);
-                              }
-                            }
-                          } catch (innerErr) {
-                            // Cross-origin sheets might throw, ignore them
-                          }
-                        }
-                      } catch (e) {
-                        console.warn("Failed to sanitize cloned stylesheets:", e);
-                      }
-
-                      // Clean up attributes directly on SVGs and paths too
-                      const allElements = clonedDoc.getElementsByTagName("*");
-                      for (let i = 0; i < allElements.length; i++) {
-                        const el = allElements[i] as HTMLElement;
-                        
-                        // Override attributes
-                        const fillAttr = el.getAttribute("fill");
-                        if (fillAttr && fillAttr.includes("oklch")) {
-                          el.setAttribute("fill", sanitizeOklchValue(fillAttr));
-                        }
-                        const strokeAttr = el.getAttribute("stroke");
-                        if (strokeAttr && strokeAttr.includes("oklch")) {
-                          el.setAttribute("stroke", sanitizeOklchValue(strokeAttr));
-                        }
-                      }
-                    }
-                  });
-
-                  const imgData = canvas.toDataURL("image/jpeg", 0.95);
                   const pdf = new jsPDF({
                     orientation: "portrait",
-                    unit: "px",
-                    format: [canvas.width / 2, canvas.height / 2],
+                    unit: "pt",
+                    format: "a4",
                   });
 
-                  const pdfWidth = pdf.internal.pageSize.getWidth();
-                  const pdfHeight = pdf.internal.pageSize.getHeight();
+                  const pageWidth = pdf.internal.pageSize.getWidth();
+                  const pageHeight = pdf.internal.pageSize.getHeight();
+                  const margin = 40;
+                  const contentWidth = pageWidth - margin * 2;
 
-                  pdf.addImage(imgData, "JPEG", 0, 0, pdfWidth, pdfHeight, undefined, "FAST");
+                  // Color Scheme constants
+                  const primaryColor = [15, 23, 42]; // Slate 900
+                  const accentColor = [20, 184, 166]; // Teal 500
+                  const textColor = [51, 65, 85]; // Slate 700
+                  const lightGrey = [241, 245, 249]; // Slate 100
+                  const borderGrey = [226, 232, 240]; // Slate 200
+
+                  // Helper: Draw Header on each page
+                  const drawHeader = (title: string, pageNum: number) => {
+                    // Header background banner
+                    pdf.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+                    pdf.rect(0, 0, pageWidth, 80, "F");
+
+                    // Brand Title
+                    pdf.setTextColor(255, 255, 255);
+                    pdf.setFont("helvetica", "bold");
+                    pdf.setFontSize(16);
+                    pdf.text("HORIZON TRAVEL", margin, 35);
+                    
+                    pdf.setFont("helvetica", "normal");
+                    pdf.setFontSize(10);
+                    pdf.text("Operations Console · Analytics Report", margin, 52);
+
+                    // Section Title on right
+                    pdf.setFont("helvetica", "bold");
+                    pdf.setFontSize(12);
+                    pdf.text(title, pageWidth - margin, 45, { align: "right" });
+
+                    // Page number footer
+                    pdf.setFont("helvetica", "normal");
+                    pdf.setFontSize(9);
+                    pdf.setTextColor(148, 163, 184);
+                    pdf.text(`Page ${pageNum}`, pageWidth / 2, pageHeight - 20, { align: "center" });
+                    pdf.text(new Date().toLocaleDateString(), margin, pageHeight - 20);
+                    pdf.text("Confidential Operations Data", pageWidth - margin, pageHeight - 20, { align: "right" });
+                  };
+
+                  // ── PAGE 1: TOUR STATUS DISTRIBUTION ──
+                  drawHeader("TOUR STATUS", 1);
+                  let y = 120;
+
+                  // Section Title
+                  pdf.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+                  pdf.setFont("helvetica", "bold");
+                  pdf.setFontSize(14);
+                  pdf.text("Tour Status Distribution", margin, y);
+                  y += 10;
+                  
+                  // Decorative underline
+                  pdf.setDrawColor(accentColor[0], accentColor[1], accentColor[2]);
+                  pdf.setLineWidth(2);
+                  pdf.line(margin, y, margin + 80, y);
+                  y += 25;
+
+                  // KPI Summary Block
+                  pdf.setFillColor(lightGrey[0], lightGrey[1], lightGrey[2]);
+                  pdf.rect(margin, y, contentWidth, 50, "F");
+                  pdf.setDrawColor(borderGrey[0], borderGrey[1], borderGrey[2]);
+                  pdf.setLineWidth(1);
+                  pdf.rect(margin, y, contentWidth, 50, "S");
+
+                  pdf.setTextColor(textColor[0], textColor[1], textColor[2]);
+                  pdf.setFont("helvetica", "bold");
+                  pdf.setFontSize(10);
+                  pdf.text("TOTAL CONFIRMED TOURS", margin + 20, y + 22);
+                  pdf.setFont("helvetica", "bold");
+                  pdf.setFontSize(20);
+                  pdf.setTextColor(accentColor[0], accentColor[1], accentColor[2]);
+                  pdf.text(`${statusTotal}`, margin + 20, y + 42);
+
+                  pdf.setFont("helvetica", "normal");
+                  pdf.setFontSize(9);
+                  pdf.setTextColor(100, 116, 139);
+                  pdf.text(`Report Generated: ${new Date().toLocaleString()}`, pageWidth - margin - 20, y + 30, { align: "right" });
+                  y += 80;
+
+                  // Table Header
+                  pdf.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+                  pdf.rect(margin, y, contentWidth, 25, "F");
+                  pdf.setTextColor(255, 255, 255);
+                  pdf.setFont("helvetica", "bold");
+                  pdf.setFontSize(10);
+                  pdf.text("STATUS", margin + 15, y + 16);
+                  pdf.text("TOUR COUNT", margin + 220, y + 16);
+                  pdf.text("PERCENTAGE", margin + 380, y + 16);
+                  y += 25;
+
+                  // Table Rows
+                  pdf.setFont("helvetica", "normal");
+                  statusCounts.forEach((s, idx) => {
+                    // Alternate row background
+                    if (idx % 2 === 1) {
+                      pdf.setFillColor(lightGrey[0], lightGrey[1], lightGrey[2]);
+                      pdf.rect(margin, y, contentWidth, 25, "F");
+                    }
+                    
+                    pdf.setTextColor(textColor[0], textColor[1], textColor[2]);
+                    pdf.text(s.label, margin + 15, y + 16);
+                    
+                    pdf.setFont("helvetica", "bold");
+                    pdf.text(`${s.count}`, margin + 220, y + 16);
+                    
+                    const pct = statusTotal > 0 ? Math.round((s.count / statusTotal) * 100) : 0;
+                    pdf.setFont("helvetica", "normal");
+                    pdf.text(`${pct}%`, margin + 380, y + 16);
+                    y += 25;
+                  });
+
+                  // ── PAGE 2: AGENT ACTIVITY ──
+                  pdf.addPage();
+                  drawHeader("AGENT PERFORMANCE", 2);
+                  y = 120;
+
+                  pdf.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+                  pdf.setFont("helvetica", "bold");
+                  pdf.setFontSize(14);
+                  pdf.text("Agent Performance & Distribution", margin, y);
+                  y += 10;
+                  
+                  pdf.setDrawColor(accentColor[0], accentColor[1], accentColor[2]);
+                  pdf.setLineWidth(2);
+                  pdf.line(margin, y, margin + 80, y);
+                  y += 30;
+
+                  if (agentStats.length === 0) {
+                    pdf.setFont("helvetica", "italic");
+                    pdf.setFontSize(10);
+                    pdf.setTextColor(148, 163, 184);
+                    pdf.text("No agents registered in the system.", margin, y);
+                  } else {
+                    // Table Header
+                    pdf.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+                    pdf.rect(margin, y, contentWidth, 25, "F");
+                    pdf.setTextColor(255, 255, 255);
+                    pdf.setFont("helvetica", "bold");
+                    pdf.setFontSize(10);
+                    pdf.text("AGENT NAME", margin + 15, y + 16);
+                    pdf.text("ASSIGNED REGION", margin + 220, y + 16);
+                    pdf.text("TOUR COUNT", margin + 380, y + 16);
+                    y += 25;
+
+                    pdf.setFont("helvetica", "normal");
+                    agentStats.forEach((a, idx) => {
+                      if (idx % 2 === 1) {
+                        pdf.setFillColor(lightGrey[0], lightGrey[1], lightGrey[2]);
+                        pdf.rect(margin, y, contentWidth, 25, "F");
+                      }
+                      pdf.setTextColor(textColor[0], textColor[1], textColor[2]);
+                      pdf.text(a.name, margin + 15, y + 16);
+                      pdf.text(a.region, margin + 220, y + 16);
+                      pdf.setFont("helvetica", "bold");
+                      pdf.text(`${a.count}`, margin + 380, y + 16);
+                      pdf.setFont("helvetica", "normal");
+                      y += 25;
+                    });
+                  }
+
+                  // ── PAGE 3: DRIVER & GUIDE WORKLOAD ──
+                  pdf.addPage();
+                  drawHeader("DRIVER WORKLOAD", 3);
+                  y = 120;
+
+                  pdf.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+                  pdf.setFont("helvetica", "bold");
+                  pdf.setFontSize(14);
+                  pdf.text("Driver Workload & Capacity", margin, y);
+                  y += 10;
+                  
+                  pdf.setDrawColor(accentColor[0], accentColor[1], accentColor[2]);
+                  pdf.setLineWidth(2);
+                  pdf.line(margin, y, margin + 80, y);
+                  y += 30;
+
+                  if (driverStats.length === 0) {
+                    pdf.setFont("helvetica", "italic");
+                    pdf.setFontSize(10);
+                    pdf.setTextColor(148, 163, 184);
+                    pdf.text("No drivers registered in the system.", margin, y);
+                  } else {
+                    // Table Header
+                    pdf.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+                    pdf.rect(margin, y, contentWidth, 25, "F");
+                    pdf.setTextColor(255, 255, 255);
+                    pdf.setFont("helvetica", "bold");
+                    pdf.setFontSize(10);
+                    pdf.text("DRIVER / GUIDE NAME", margin + 15, y + 16);
+                    pdf.text("CONTACT DETAILS", margin + 200, y + 16);
+                    pdf.text("ACTIVE / TOTAL", margin + 360, y + 16);
+                    pdf.text("WORKLOAD", margin + 440, y + 16);
+                    y += 25;
+
+                    pdf.setFont("helvetica", "normal");
+                    driverStats.forEach((d, idx) => {
+                      if (idx % 2 === 1) {
+                        pdf.setFillColor(lightGrey[0], lightGrey[1], lightGrey[2]);
+                        pdf.rect(margin, y, contentWidth, 35, "F");
+                      }
+                      
+                      pdf.setTextColor(textColor[0], textColor[1], textColor[2]);
+                      pdf.setFont("helvetica", "bold");
+                      pdf.text(d.name, margin + 15, y + 16);
+                      
+                      pdf.setFont("helvetica", "normal");
+                      pdf.setFontSize(8);
+                      pdf.text(`Phone: ${d.phone || "—"}`, margin + 200, y + 14);
+                      pdf.text(`Email: ${d.email || "—"}`, margin + 200, y + 24);
+                      
+                      pdf.setFontSize(10);
+                      pdf.text(`${d.active} / ${d.total}`, margin + 360, y + 20);
+                      
+                      const workloadPct = d.total > 0 ? Math.round((d.active / d.total) * 100) : 0;
+                      pdf.setFont("helvetica", "bold");
+                      pdf.text(`${workloadPct}%`, margin + 440, y + 20);
+                      
+                      y += 35;
+                    });
+                  }
+
                   pdf.save("Horizon_Travel_Analytics_Report.pdf");
-
                   toast.success("PDF report downloaded successfully!", { id: "pdf-gen" });
                 } catch (error) {
                   console.error("PDF generation failed:", error);
                   toast.error("Failed to generate PDF. Please try again.", { id: "pdf-gen" });
-                } finally {
-                  cleanupHooks();
                 }
               }}
               className="gap-2 px-6 py-5 text-sm font-semibold shadow-md bg-primary text-primary-foreground hover:bg-primary/95 transition-all duration-200"
