@@ -2,7 +2,7 @@ import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useState } from "react";
 import { supabase } from "../lib/supabase";
 import { toast } from "sonner";
-import { Plane } from "lucide-react";
+import { MapPinned } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
@@ -57,8 +57,11 @@ function LoginPage() {
 
       <div className="z-10 w-full max-w-md space-y-8 rounded-2xl border border-slate-200 bg-white p-10 shadow-xl">
         <div className="flex flex-col items-center text-center">
-          <div className="mb-6 grid h-14 w-14 place-items-center rounded-xl bg-blue-600 text-white shadow-md ring-4 ring-blue-600/10">
-            <Plane className="h-7 w-7" />
+          <div className="mb-6 grid h-14 w-14 place-items-center rounded-[14px] shadow-md" style={{
+            background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
+            boxShadow: '0 4px 12px rgba(59,130,246,0.15)',
+          }}>
+            <MapPinned className="h-7 w-7 text-white" strokeWidth={2} />
           </div>
           <h2 className="text-2xl font-bold tracking-tight text-slate-900">
             Horizon Travel
