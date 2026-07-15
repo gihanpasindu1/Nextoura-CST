@@ -1247,8 +1247,8 @@ function ToursWorkspace({
                   key: "Completed", 
                   label: "Completed", 
                   icon: CheckCircle2,
-                  activeClass: "bg-slate-200/60 text-slate-900 border-slate-300 dark:bg-slate-800/60 dark:text-slate-300 dark:border-slate-700/60 shadow-sm",
-                  iconClass: "text-slate-600 dark:text-slate-400"
+                  activeClass: "bg-purple-100/70 text-purple-900 border-purple-200 dark:bg-purple-950/40 dark:text-purple-400 dark:border-purple-900/60 shadow-sm",
+                  iconClass: "text-purple-700 dark:text-purple-400"
                 },
                 { 
                   key: "Cancelled", 
@@ -1379,7 +1379,7 @@ function StatusPill({ status }: { status: TourStatus }) {
       icon: Clock,
     },
     Completed: {
-      color: "bg-slate-400 text-white border-slate-500",
+      color: "bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-950/60 dark:text-purple-300 dark:border-purple-900/60",
       icon: CheckCircle2,
     },
     "On Tour": {
