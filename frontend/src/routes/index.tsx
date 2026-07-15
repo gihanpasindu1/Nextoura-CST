@@ -857,7 +857,7 @@ function Console() {
               }}
             />
           ) : nav === "dashboard" || nav === "reports" || nav === "settings" ? (
-            <DashboardOverview stats={stats} navLabel={nav} />
+            <DashboardOverview stats={stats} navLabel={nav} onNavigate={setNav} />
           ) : (
             <ToursWorkspace
               drivers={drivers}
@@ -2281,9 +2281,11 @@ function DriverManagement({
 function DashboardOverview({
   stats,
   navLabel,
+  onNavigate,
 }: {
   stats: { active: number; upcoming: number; pax: number; countries: number };
   navLabel: NavKey;
+  onNavigate: (key: NavKey) => void;
 }) {
   const tiles = [
     {
@@ -2386,7 +2388,13 @@ function DashboardOverview({
           <h3 className="text-sm font-bold text-foreground">{labelMap[navLabel]}</h3>
           <p className="mt-1.5 text-[13px] text-muted-foreground leading-relaxed">
             Detailed {labelMap[navLabel].toLowerCase()} views are available here. Switch to{" "}
-            <span className="font-semibold text-primary hover:underline cursor-pointer">Active Tours</span> from the left
+            <span 
+              onClick={() => onNavigate("tours")}
+              className="font-semibold text-primary hover:underline cursor-pointer"
+            >
+              Active Tours
+            </span>{" "}
+            from the left
             navigation to manage tourist itineraries, agent performance logs, and real-time coordinator actions.
           </p>
         </div>
