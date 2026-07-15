@@ -236,6 +236,8 @@ export function AddTouristSheet({
   const [isGenerating, setIsGenerating] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [selectedCountry, setSelectedCountry] = useState(() => COUNTRIES.find(c => c.code === "GB") || COUNTRIES[0]);
+  const [popoverOpen, setPopoverOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const [formData, setFormData] = useState({
     name: "",
     country: "",
@@ -305,6 +307,12 @@ export function AddTouristSheet({
       }
     }
   }, [formData.phone]);
+
+  useEffect(() => {
+    if (!popoverOpen) {
+      setSearchQuery("");
+    }
+  }, [popoverOpen]);
 
   useEffect(() => {
     if (formData.arrival && formData.departure) {
@@ -460,6 +468,12 @@ export function AddTouristSheet({
     onOpenChange(false);
   };
 
+  const filteredCountries = COUNTRIES.filter(c => 
+    c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    c.dialCode.includes(searchQuery) ||
+    c.code.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="sm:max-w-[600px] w-full p-0 flex flex-col h-full bg-background border-l border-border">
@@ -510,7 +524,7 @@ export function AddTouristSheet({
                 </div>
                 <div className="space-y-2">
                   <Label className={cn(errors.phone && "text-destructive")}>Phone {mode === "confirmed" && "*"}</Label>
-                  <Popover>
+                  <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
                     <PopoverTrigger asChild>
                       <Input 
                         className={cn(errors.phone && "border-destructive focus-visible:ring-destructive")} 
@@ -519,31 +533,48 @@ export function AddTouristSheet({
                           setFormData({...formData, phone: e.target.value}); 
                           if (errors.phone) setErrors({...errors, phone: ""}); 
                         }} 
-                        placeholder={selectedCountry ? `e.g. ${selectedCountry.dialCode} ${selectedCountry.placeholder}` : "e.g. +44 7700 900077"} 
+                        placeholder={selectedCountry?.dialCode ? `e.g. ${selectedCountry.dialCode} ${selectedCountry.placeholder}` : "e.g. +44 7700 900077"} 
                       />
                     </PopoverTrigger>
-                    <PopoverContent className="p-1 w-[240px] max-h-[250px] overflow-y-auto z-[100]" align="start">
-                      {COUNTRIES.map((c) => (
-                        <button
-                          key={c.code}
-                          type="button"
-                          onClick={() => handleSelectCountry(c)}
-                          className="w-full text-left px-3 py-1.5 text-xs hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2 rounded-sm cursor-pointer"
-                        >
-                          <img
-                            src={`https://flagcdn.com/w20/${c.code.toLowerCase()}.png`}
-                            width="16"
-                            height="12"
-                            alt=""
-                            className="object-contain shrink-0 mr-1"
-                            onError={(e) => {
-                              (e.target as HTMLElement).style.display = "none";
+                    <PopoverContent className="p-1 w-[260px] flex flex-col z-[100] bg-card border border-border rounded-md shadow-md" align="start">
+                      <div className="p-1 border-b border-border">
+                        <Input
+                          placeholder="Search country..."
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          className="h-8 text-xs focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent border-none shadow-none focus-visible:border-none focus-visible:outline-none"
+                          autoFocus
+                        />
+                      </div>
+                      <div className="overflow-y-auto flex-1 max-h-[200px] py-1">
+                        {filteredCountries.map((c) => (
+                          <button
+                            key={c.code}
+                            type="button"
+                            onClick={() => {
+                              handleSelectCountry(c);
+                              setPopoverOpen(false);
                             }}
-                          />
-                          <span className="font-semibold text-slate-700 dark:text-slate-300">{c.dialCode}</span>
-                          <span className="text-slate-500 truncate">{c.name}</span>
-                        </button>
-                      ))}
+                            className="w-full text-left px-3 py-1.5 text-xs hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2 rounded-sm cursor-pointer"
+                          >
+                            <img
+                              src={`https://flagcdn.com/w20/${c.code.toLowerCase()}.png`}
+                              width="16"
+                              height="12"
+                              alt=""
+                              className="object-contain shrink-0 mr-1"
+                              onError={(e) => {
+                                (e.target as HTMLElement).style.display = "none";
+                              }}
+                            />
+                            <span className="font-semibold text-slate-700 dark:text-slate-300">{c.dialCode}</span>
+                            <span className="text-slate-500 truncate">{c.name}</span>
+                          </button>
+                        ))}
+                        {filteredCountries.length === 0 && (
+                          <div className="text-[10px] text-muted-foreground text-center py-2">No countries found</div>
+                        )}
+                      </div>
                     </PopoverContent>
                   </Popover>
                   {errors.phone && <div className="text-[10px] text-destructive flex items-center gap-1"><AlertCircle className="h-3 w-3" /> {errors.phone}</div>}
