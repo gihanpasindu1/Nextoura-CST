@@ -1,4 +1,4 @@
-﻿import { createFileRoute, useRouter } from "@tanstack/react-router";
+import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { supabase } from "@/lib/supabase";
 import { useMemo, useState, useEffect } from "react";
 import {
@@ -1330,7 +1330,7 @@ function ToursWorkspace({
                       >
                         <div className="flex items-center justify-between gap-4">
                           <div className="flex min-w-0 items-center gap-4">
-                            <span className="text-2xl leading-none">{flagEmoji(t.countryCode)}</span>
+                            <img src={`https://flagcdn.com/w40/${t.countryCode.toLowerCase()}.png`} width="28" height="21" alt={t.country} className="object-contain" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                             <div className="min-w-0">
                               <div className="flex items-center gap-3">
                                 <span className="truncate text-base font-semibold">{t.name}</span>
@@ -1447,7 +1447,7 @@ function TouristDetail({
           <div className="flex items-start justify-between gap-4">
             <div className="flex min-w-0 items-start gap-4">
               <div className="grid h-12 w-12 shrink-0 place-items-center rounded-md bg-accent text-xl">
-                {flagEmoji(t.countryCode)}
+                <img src={`https://flagcdn.com/w40/${t.countryCode.toLowerCase()}.png`} width="28" height="21" alt={t.country} className="object-contain" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
               </div>
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">

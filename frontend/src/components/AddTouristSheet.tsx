@@ -299,16 +299,6 @@ export function AddTouristSheet({
   }, [open, initialData]);
 
   useEffect(() => {
-    if (formData.phone) {
-      const clean = formData.phone.replace(/[\s\-\(\)]/g, "");
-      const match = COUNTRIES.find(c => clean.startsWith(c.dialCode));
-      if (match && match.code !== selectedCountry.code) {
-        setSelectedCountry(match);
-      }
-    }
-  }, [formData.phone]);
-
-  useEffect(() => {
     if (!popoverOpen) {
       setSearchQuery("");
     }
@@ -363,20 +353,6 @@ export function AddTouristSheet({
 
   const handleSelectCountry = (country: typeof COUNTRIES[0]) => {
     setSelectedCountry(country);
-    let currentPhone = formData.phone.trim();
-    const foundPrevDialCode = COUNTRIES.find(c => currentPhone.replace(/[\s\-\(\)]/g, "").startsWith(c.dialCode));
-    if (foundPrevDialCode) {
-      const nationalPart = currentPhone.substring(foundPrevDialCode.dialCode.length).trim();
-      setFormData(prev => ({ ...prev, phone: `${country.dialCode} ${nationalPart}` }));
-    } else {
-      if (currentPhone.startsWith("+")) {
-        const parts = currentPhone.split(" ");
-        const nationalPart = parts.slice(1).join(" ").trim();
-        setFormData(prev => ({ ...prev, phone: `${country.dialCode} ${nationalPart}` }));
-      } else {
-        setFormData(prev => ({ ...prev, phone: `${country.dialCode} ${currentPhone}` }));
-      }
-    }
   };
 
   const handleSave = () => {
@@ -393,15 +369,9 @@ export function AddTouristSheet({
       if (!formData.phone) {
         newErrors.phone = "Phone is required";
       } else {
-        const dialCode = selectedCountry.dialCode;
-        const cleanedInput = formData.phone.trim();
-        if (!cleanedInput.startsWith(dialCode)) {
-          newErrors.phone = `Phone must start with ${dialCode}`;
-        } else {
-          const nationalNumber = cleanedInput.substring(dialCode.length).replace(/[\s\-\(\)]/g, "");
-          if (!selectedCountry.pattern.test(nationalNumber)) {
-            newErrors.phone = `Invalid format for ${selectedCountry.name}. Example: ${dialCode} ${selectedCountry.placeholder}`;
-          }
+        const localNumber = formData.phone.replace(/[\s\-\(\)]/g, "");
+        if (!selectedCountry.pattern.test(localNumber)) {
+          newErrors.phone = `Invalid phone for ${selectedCountry.name}. Example: ${selectedCountry.placeholder}`;
         }
       }
       if (!formData.email) newErrors.email = "Email is required";
@@ -424,15 +394,9 @@ export function AddTouristSheet({
       }
     } else {
       if (formData.phone) {
-        const dialCode = selectedCountry.dialCode;
-        const cleanedInput = formData.phone.trim();
-        if (!cleanedInput.startsWith(dialCode)) {
-          newErrors.phone = `Phone must start with ${dialCode}`;
-        } else {
-          const nationalNumber = cleanedInput.substring(dialCode.length).replace(/[\s\-\(\)]/g, "");
-          if (!selectedCountry.pattern.test(nationalNumber)) {
-            newErrors.phone = `Invalid format for ${selectedCountry.name}. Example: ${dialCode} ${selectedCountry.placeholder}`;
-          }
+        const localNumber = formData.phone.replace(/[\s\-\(\)]/g, "");
+        if (!selectedCountry.pattern.test(localNumber)) {
+          newErrors.phone = `Invalid phone for ${selectedCountry.name}. Example: ${selectedCountry.placeholder}`;
         }
       }
     }
@@ -457,7 +421,7 @@ export function AddTouristSheet({
       agent: formData.agent !== "All Agents" ? formData.agent : "Direct",
       driver: formData.driver !== "All Drivers" ? formData.driver : "TBD",
       passport: formData.passport || "N/A",
-      phone: formData.phone || "N/A",
+      phone: formData.phone ? `${selectedCountry.dialCode} ${formData.phone.trim()}` : "N/A",
       email: formData.email || "N/A",
       group: formData.group || [],
       currentLocation: initialData ? initialData.currentLocation : "TBD",
@@ -599,7 +563,7 @@ export function AddTouristSheet({
                         setFormData({...formData, phone: e.target.value}); 
                         if (errors.phone) setErrors({...errors, phone: ""}); 
                       }} 
-                      placeholder={`e.g. ${selectedCountry.dialCode} ${selectedCountry.placeholder}`} 
+                      placeholder={`e.g. ${selectedCountry.placeholder}`} 
                     />
                   </div>
                   {errors.phone && <div className="text-[10px] text-destructive flex items-center gap-1"><AlertCircle className="h-3 w-3" /> {errors.phone}</div>}
