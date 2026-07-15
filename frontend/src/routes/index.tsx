@@ -997,19 +997,20 @@ function Console() {
 
         {/* Right sidebar — show on all pages */}
         {!isDetailOpen && (
-          <aside className="hidden w-80 shrink-0 flex-col border-l border-border bg-sidebar/40 backdrop-blur-sm xl:flex">
-            <div className="flex items-center gap-3.5 px-6 py-5">
-              <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-primary/10 bg-primary/5 text-primary shadow-sm">
-                <CalendarDays className="h-5 w-5" />
+          <aside className="hidden w-[200px] shrink-0 flex-col border-l border-border bg-sidebar/40 backdrop-blur-sm xl:flex">
+            <div className="flex items-start gap-2.5 px-4 py-4">
+              <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg border border-primary/10 bg-primary/5 text-primary shadow-sm mt-0.5">
+                <CalendarDays className="h-4 w-4" />
               </div>
-              <div>
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Today</h3>
+              <div className="min-w-0">
+                <h3 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Today</h3>
                 {currentTime ? (
-                  <p className="text-[13.5px] font-bold text-foreground mt-0.5 tabular-nums">
-                    {formattedDate} <span className="text-primary font-semibold ml-1">{formattedTime}</span>
-                  </p>
+                  <div className="mt-0.5 text-xs font-bold text-foreground leading-snug tabular-nums break-words">
+                    <div>{formattedDate}</div>
+                    <div className="text-primary font-semibold text-[11px] mt-0.5">{formattedTime}</div>
+                  </div>
                 ) : (
-                  <p className="text-[13.5px] font-bold text-foreground mt-0.5 opacity-50">Loading time...</p>
+                  <div className="mt-0.5 text-xs font-bold text-foreground opacity-50">Loading...</div>
                 )}
               </div>
             </div>
