@@ -1379,7 +1379,7 @@ function StatusPill({ status }: { status: TourStatus }) {
       icon: Clock,
     },
     Completed: {
-      color: "bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-950/60 dark:text-purple-300 dark:border-purple-900/60",
+      color: "bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-950/60 dark:text-white dark:border-purple-900/60",
       icon: CheckCircle2,
     },
     "On Tour": {
