@@ -85,6 +85,7 @@ import {
   type Tourist,
   type TourStatus,
 } from "@/lib/tourism-data";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { AddTouristSheet } from "@/components/AddTouristSheet";
 import { toast } from "sonner";
 
@@ -157,6 +158,8 @@ function Console() {
   const [isAddClientOpen, setIsAddClientOpen] = useState(false);
   const [addClientMode, setAddClientMode] = useState<"lead" | "confirmed">("confirmed");
   const [editingTourist, setEditingTourist] = useState<Tourist | undefined>(undefined);
+  const [driverPopoverOpen, setDriverPopoverOpen] = useState(false);
+  const [driverSearchQuery, setDriverSearchQuery] = useState("");
   const { theme, toggle } = useTheme();
 
   const [touristsList, setTouristsList] = useState<Tourist[]>([]);
@@ -240,6 +243,12 @@ function Console() {
 
     return () => subscription.unsubscribe();
   }, [router]);
+
+  useEffect(() => {
+    if (!driverPopoverOpen) {
+      setDriverSearchQuery("");
+    }
+  }, [driverPopoverOpen]);
 
   const loadData = async (compId: string) => {
     if (!compId) return;
@@ -441,6 +450,10 @@ function Console() {
     const pax = touristsList.filter((t) => t.status !== "Completed").reduce((s, t) => s + t.pax, 0);
     return { active, upcoming, pax, countries: new Set(touristsList.map((t) => t.country)).size };
   }, [touristsList]);
+
+  const filteredDriversForFilter = drivers.filter((d: any) =>
+    d.name?.toLowerCase().includes(driverSearchQuery.toLowerCase())
+  );
 
   if (isLoadingAuth) {
     return (
@@ -1201,21 +1214,64 @@ function ToursWorkspace({
                 className="h-9 pl-9"
               />
             </div>
-            <Select value={driverFilter} onValueChange={setDriverFilter}>
-              <SelectTrigger className="h-9 w-[180px]">
-                <SelectValue>
-                  {driverFilter === "All Drivers" ? "Driver/Guide" : driverFilter}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="All Drivers">All Drivers</SelectItem>
-                {drivers.map((d: any) => (
-                  <SelectItem key={d.id} value={d.name}>
-                    {d.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Popover open={driverPopoverOpen} onOpenChange={setDriverPopoverOpen}>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className="flex items-center justify-between h-9 w-[180px] px-3 rounded-md border border-input bg-background text-sm cursor-pointer hover:bg-muted/50 focus:outline-none focus:ring-1 focus:ring-ring"
+                >
+                  <span className="truncate">
+                    {driverFilter === "All Drivers" ? "Driver/Guide" : driverFilter}
+                  </span>
+                  <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0 ml-2" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="p-0 w-[200px] flex flex-col z-[100] bg-card border border-border rounded-md shadow-md" align="start">
+                <div className="p-2 border-b border-border">
+                  <Input
+                    placeholder="Search driver..."
+                    value={driverSearchQuery}
+                    onChange={(e) => setDriverSearchQuery(e.target.value)}
+                    className="h-8 text-xs"
+                    autoFocus
+                  />
+                </div>
+                <div className="overflow-y-auto flex-1 max-h-[200px] py-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDriverFilter("All Drivers");
+                      setDriverPopoverOpen(false);
+                    }}
+                    className={cn(
+                      "w-full text-left px-3 py-1.5 text-xs hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center rounded-sm cursor-pointer",
+                      driverFilter === "All Drivers" && "font-semibold bg-accent/50"
+                    )}
+                  >
+                    All Drivers
+                  </button>
+                  {filteredDriversForFilter.map((d: any) => (
+                    <button
+                      key={d.id}
+                      type="button"
+                      onClick={() => {
+                        setDriverFilter(d.name);
+                        setDriverPopoverOpen(false);
+                      }}
+                      className={cn(
+                        "w-full text-left px-3 py-1.5 text-xs hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center rounded-sm cursor-pointer",
+                        driverFilter === d.name && "font-semibold bg-accent/50"
+                      )}
+                    >
+                      <span className="truncate">{d.name}</span>
+                    </button>
+                  ))}
+                  {filteredDriversForFilter.length === 0 && (
+                    <div className="text-[10px] text-muted-foreground text-center py-2">No drivers found</div>
+                  )}
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
 
           {/* Status bar */}
