@@ -238,6 +238,8 @@ export function AddTouristSheet({
   const [selectedCountry, setSelectedCountry] = useState(() => COUNTRIES.find(c => c.code === "GB") || COUNTRIES[0]);
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [countryPopoverOpen, setCountryPopoverOpen] = useState(false);
+  const [countrySearchQuery, setCountrySearchQuery] = useState("");
   const [formData, setFormData] = useState({
     name: "",
     country: "",
@@ -303,6 +305,12 @@ export function AddTouristSheet({
       setSearchQuery("");
     }
   }, [popoverOpen]);
+
+  useEffect(() => {
+    if (!countryPopoverOpen) {
+      setCountrySearchQuery("");
+    }
+  }, [countryPopoverOpen]);
 
   useEffect(() => {
     if (formData.arrival && formData.departure) {
@@ -438,6 +446,11 @@ export function AddTouristSheet({
     c.code.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const filteredCountryList = COUNTRIES.filter(c => 
+    c.name.toLowerCase().includes(countrySearchQuery.toLowerCase()) ||
+    c.code.toLowerCase().includes(countrySearchQuery.toLowerCase())
+  );
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="sm:max-w-[600px] w-full p-0 flex flex-col h-full bg-background border-l border-border">
@@ -471,15 +484,94 @@ export function AddTouristSheet({
                   <Input className={cn(errors.name && "border-destructive focus-visible:ring-destructive")} value={formData.name} onChange={e => { setFormData({...formData, name: e.target.value}); if (errors.name) setErrors({...errors, name: ""}); }} placeholder="e.g. John Doe" />
                   {errors.name && <div className="text-[10px] text-destructive flex items-center gap-1"><AlertCircle className="h-3 w-3" /> {errors.name}</div>}
                 </div>
-                <div className="space-y-2">
-                  <Label className={cn(errors.country && "text-destructive")}>Country {mode === "confirmed" && "*"}</Label>
-                  <Input className={cn(errors.country && "border-destructive focus-visible:ring-destructive")} value={formData.country} onChange={e => { setFormData({...formData, country: e.target.value}); if (errors.country) setErrors({...errors, country: ""}); }} placeholder="e.g. United Kingdom" />
-                  {errors.country && <div className="text-[10px] text-destructive flex items-center gap-1"><AlertCircle className="h-3 w-3" /> {errors.country}</div>}
-                </div>
-                <div className="space-y-2">
-                  <Label className={cn(errors.countryCode && "text-destructive")}>Country Code (emoji) {mode === "confirmed" && "*"}</Label>
-                  <Input className={cn(errors.countryCode && "border-destructive focus-visible:ring-destructive")} value={formData.countryCode} onChange={e => { setFormData({...formData, countryCode: e.target.value}); if (errors.countryCode) setErrors({...errors, countryCode: ""}); }} placeholder="e.g. GB" />
-                  {errors.countryCode && <div className="text-[10px] text-destructive flex items-center gap-1"><AlertCircle className="h-3 w-3" /> {errors.countryCode}</div>}
+                <div className="space-y-2 col-span-2">
+                  <Label className={cn((errors.country || errors.countryCode) && "text-destructive")}>
+                    Country / Nationality {mode === "confirmed" && "*"}
+                  </Label>
+                  <Popover open={countryPopoverOpen} onOpenChange={setCountryPopoverOpen}>
+                    <PopoverTrigger asChild>
+                      <button
+                        type="button"
+                        className={cn(
+                          "flex items-center justify-between w-full h-9 px-3 rounded-md border border-input bg-background text-sm cursor-pointer hover:bg-muted/50",
+                          (errors.country || errors.countryCode) && "border-destructive focus-visible:ring-destructive"
+                        )}
+                      >
+                        {formData.country ? (
+                          <div className="flex items-center gap-2">
+                            <img
+                              src={`https://flagcdn.com/w20/${formData.countryCode.toLowerCase()}.png`}
+                              width="16"
+                              height="12"
+                              alt=""
+                              className="object-contain shrink-0"
+                              onError={(e) => {
+                                (e.target as HTMLElement).style.display = "none";
+                              }}
+                            />
+                            <span className="font-medium text-foreground">{formData.country} ({formData.countryCode})</span>
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground">Select Country...</span>
+                        )}
+                        <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="p-0 w-[280px] flex flex-col z-[100] bg-card border border-border rounded-md shadow-md" align="start">
+                      <div className="p-2 border-b border-border">
+                        <Input
+                          placeholder="Search country..."
+                          value={countrySearchQuery}
+                          onChange={(e) => setCountrySearchQuery(e.target.value)}
+                          className="h-8 text-xs"
+                          autoFocus
+                        />
+                      </div>
+                      <div className="overflow-y-auto flex-1 max-h-[200px] py-1">
+                        {filteredCountryList.map((c) => (
+                          <button
+                            key={c.code}
+                            type="button"
+                            onClick={() => {
+                              setFormData(prev => ({
+                                ...prev,
+                                country: c.name,
+                                countryCode: c.code
+                              }));
+                              if (!formData.phone) {
+                                setSelectedCountry(c);
+                              }
+                              if (errors.country) setErrors(prev => ({ ...prev, country: "" }));
+                              if (errors.countryCode) setErrors(prev => ({ ...prev, countryCode: "" }));
+                              setCountryPopoverOpen(false);
+                            }}
+                            className="w-full text-left px-3 py-1.5 text-xs hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2 rounded-sm cursor-pointer"
+                          >
+                            <img
+                              src={`https://flagcdn.com/w20/${c.code.toLowerCase()}.png`}
+                              width="16"
+                              height="12"
+                              alt=""
+                              className="object-contain shrink-0"
+                              onError={(e) => {
+                                (e.target as HTMLElement).style.display = "none";
+                              }}
+                            />
+                            <span className="font-semibold text-slate-700 dark:text-slate-300">({c.code})</span>
+                            <span className="text-slate-500 truncate">{c.name}</span>
+                          </button>
+                        ))}
+                        {filteredCountryList.length === 0 && (
+                          <div className="text-[10px] text-muted-foreground text-center py-2">No countries found</div>
+                        )}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                  {(errors.country || errors.countryCode) && (
+                    <div className="text-[10px] text-destructive flex items-center gap-1">
+                      <AlertCircle className="h-3 w-3" /> {errors.country || errors.countryCode}
+                    </div>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label className={cn(errors.passport && "text-destructive")}>Passport Number {mode === "confirmed" && "*"}</Label>
