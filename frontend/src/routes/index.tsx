@@ -998,6 +998,7 @@ function Console() {
         {/* Right sidebar — show on all pages */}
         {!isDetailOpen && (
           <aside className="hidden w-[200px] shrink-0 flex-col border-l border-border bg-sidebar/40 backdrop-blur-sm xl:flex">
+            {/* Top section: Date */}
             <div className="flex items-start gap-2.5 px-4 py-4">
               <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg border border-primary/10 bg-primary/5 text-primary shadow-sm mt-0.5">
                 <CalendarDays className="h-4 w-4" />
@@ -1006,14 +1007,25 @@ function Console() {
                 <h3 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Today</h3>
                 {currentTime ? (
                   <div className="mt-0.5 text-xs font-bold text-foreground leading-snug tabular-nums break-words">
-                    <div>{formattedDate}</div>
-                    <div className="text-primary font-semibold text-[11px] mt-0.5">{formattedTime}</div>
+                    {formattedDate}
                   </div>
                 ) : (
                   <div className="mt-0.5 text-xs font-bold text-foreground opacity-50">Loading...</div>
                 )}
               </div>
             </div>
+
+            {/* Pinned to the bottom of the sidebar: Live Time */}
+            {currentTime && (
+              <div className="mt-auto p-4 border-t border-border bg-card/20">
+                <div className="flex flex-col items-center justify-center p-3 rounded-lg border border-border bg-card/50 shadow-sm">
+                  <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Local Time</span>
+                  <span className="text-sm font-bold tracking-tight text-primary tabular-nums">
+                    {formattedTime}
+                  </span>
+                </div>
+              </div>
+            )}
           </aside>
         )}
       </div>
