@@ -709,6 +709,19 @@ function Console() {
               </div>
             </div>
             <div className="flex items-center gap-2">
+              {nav !== "settings" && (
+                <Button
+                  id="view-graphs-btn"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => router.navigate({ to: "/analytics" })}
+                  className="flex items-center gap-1.5 h-9 rounded-lg border border-border px-3 text-xs font-semibold text-muted-foreground bg-card/50 transition-all hover:bg-accent hover:text-primary hover:border-primary/30 shadow-sm mr-1"
+                >
+                  <BarChart3 className="h-4 w-4 text-primary" />
+                  <span className="hidden sm:inline">View Graphs</span>
+                </Button>
+              )}
+              {nav !== "settings" && <div className="h-4 w-px bg-border mx-1" />}
               <Button
                 variant="ghost"
                 size="icon"
@@ -1243,18 +1256,6 @@ function ToursWorkspace({
                 );
               })}
             </div>
-
-            {/* View Graphs icon button */}
-            <button
-              id="view-graphs-btn"
-              type="button"
-              title="View Analytics Graphs"
-              onClick={() => wsRouter.navigate({ to: "/analytics" })}
-              className="ml-auto flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-[11px] font-semibold text-muted-foreground transition-all duration-200 hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
-            >
-              <BarChart3 className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">View Graphs</span>
-            </button>
           </div>
 
           {/* Tourist List */}
