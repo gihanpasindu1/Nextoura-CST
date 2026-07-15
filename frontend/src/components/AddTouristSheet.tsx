@@ -11,6 +11,23 @@ import { Tourist } from "@/lib/tourism-data";
 import { Loader2, Plus, UploadCloud, FileText, Settings2, Trash2, X, Users, AlertCircle, Send } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+
+const COUNTRIES = [
+  { name: "Sri Lanka", code: "LK", flag: "🇱🇰", dialCode: "+94", pattern: /^[0-9]{9}$/, placeholder: "77 123 4567" },
+  { name: "United Kingdom", code: "GB", flag: "🇬🇧", dialCode: "+44", pattern: /^[0-9]{10}$/, placeholder: "7700 900077" },
+  { name: "Germany", code: "DE", flag: "🇩🇪", dialCode: "+49", pattern: /^[0-9]{10,11}$/, placeholder: "171 2345678" },
+  { name: "France", code: "FR", flag: "🇫🇷", dialCode: "+33", pattern: /^[0-9]{9}$/, placeholder: "6 12 34 56 78" },
+  { name: "Japan", code: "JP", flag: "🇯🇵", dialCode: "+81", pattern: /^[0-9]{9,10}$/, placeholder: "90 1234 5678" },
+  { name: "Australia", code: "AU", flag: "🇦🇺", dialCode: "+61", pattern: /^[0-9]{9}$/, placeholder: "412 998 221" },
+  { name: "India", code: "IN", flag: "🇮🇳", dialCode: "+91", pattern: /^[0-9]{10}$/, placeholder: "98212 44109" },
+  { name: "Spain", code: "ES", flag: "🇪🇸", dialCode: "+34", pattern: /^[0-9]{9}$/, placeholder: "612 887 002" },
+  { name: "Italy", code: "IT", flag: "🇮🇹", dialCode: "+39", pattern: /^[0-9]{9,10}$/, placeholder: "333 421 8870" },
+  { name: "Ireland", code: "IE", flag: "🇮🇪", dialCode: "+353", pattern: /^[0-9]{9}$/, placeholder: "87 661 2003" },
+  { name: "China", code: "CN", flag: "🇨🇳", dialCode: "+86", pattern: /^[0-9]{11}$/, placeholder: "138 0013 8000" },
+  { name: "Sweden", code: "SE", flag: "🇸🇪", dialCode: "+46", pattern: /^[0-9]{9}$/, placeholder: "70 998 4421" },
+  { name: "United Arab Emirates", code: "AE", flag: "🇦🇪", dialCode: "+971", pattern: /^[0-9]{9}$/, placeholder: "50 442 9981" },
+];
 
 export function AddTouristSheet({ 
   open, 
@@ -33,6 +50,7 @@ export function AddTouristSheet({
 }) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [selectedCountry, setSelectedCountry] = useState(COUNTRIES[1]);
   const [formData, setFormData] = useState({
     name: "",
     country: "",
@@ -93,6 +111,15 @@ export function AddTouristSheet({
     }
   }, [open, initialData]);
 
+  useEffect(() => {
+    if (formData.phone) {
+      const clean = formData.phone.replace(/[\s\-\(\)]/g, "");
+      const match = COUNTRIES.find(c => clean.startsWith(c.dialCode));
+      if (match && match.code !== selectedCountry.code) {
+        setSelectedCountry(match);
+      }
+    }
+  }, [formData.phone]);
 
   useEffect(() => {
     if (formData.arrival && formData.departure) {
@@ -141,6 +168,24 @@ export function AddTouristSheet({
     }, 2000);
   };
 
+  const handleSelectCountry = (country: typeof COUNTRIES[0]) => {
+    setSelectedCountry(country);
+    let currentPhone = formData.phone.trim();
+    const foundPrevDialCode = COUNTRIES.find(c => currentPhone.replace(/[\s\-\(\)]/g, "").startsWith(c.dialCode));
+    if (foundPrevDialCode) {
+      const nationalPart = currentPhone.substring(foundPrevDialCode.dialCode.length).trim();
+      setFormData(prev => ({ ...prev, phone: `${country.dialCode} ${nationalPart}` }));
+    } else {
+      if (currentPhone.startsWith("+")) {
+        const parts = currentPhone.split(" ");
+        const nationalPart = parts.slice(1).join(" ").trim();
+        setFormData(prev => ({ ...prev, phone: `${country.dialCode} ${nationalPart}` }));
+      } else {
+        setFormData(prev => ({ ...prev, phone: `${country.dialCode} ${currentPhone}` }));
+      }
+    }
+  };
+
   const handleSave = () => {
     const newErrors: Record<string, string> = {};
 
@@ -152,7 +197,20 @@ export function AddTouristSheet({
       if (!formData.country) newErrors.country = "Country is required";
       if (!formData.countryCode) newErrors.countryCode = "Code is required";
       if (!formData.passport) newErrors.passport = "Passport is required";
-      if (!formData.phone) newErrors.phone = "Phone is required";
+      if (!formData.phone) {
+        newErrors.phone = "Phone is required";
+      } else {
+        const dialCode = selectedCountry.dialCode;
+        const cleanedInput = formData.phone.trim();
+        if (!cleanedInput.startsWith(dialCode)) {
+          newErrors.phone = `Phone must start with ${dialCode}`;
+        } else {
+          const nationalNumber = cleanedInput.substring(dialCode.length).replace(/[\s\-\(\)]/g, "");
+          if (!selectedCountry.pattern.test(nationalNumber)) {
+            newErrors.phone = `Invalid format for ${selectedCountry.name}. Example: ${dialCode} ${selectedCountry.placeholder}`;
+          }
+        }
+      }
       if (!formData.email) newErrors.email = "Email is required";
       if (!formData.arrival) newErrors.arrival = "Arrival date is required";
       if (!formData.departure) newErrors.departure = "Departure date is required";
@@ -168,6 +226,19 @@ export function AddTouristSheet({
           }
           if (!member || !member.passport.trim()) {
             newErrors[`group_${i}_passport`] = "Passport is required";
+          }
+        }
+      }
+    } else {
+      if (formData.phone) {
+        const dialCode = selectedCountry.dialCode;
+        const cleanedInput = formData.phone.trim();
+        if (!cleanedInput.startsWith(dialCode)) {
+          newErrors.phone = `Phone must start with ${dialCode}`;
+        } else {
+          const nationalNumber = cleanedInput.substring(dialCode.length).replace(/[\s\-\(\)]/g, "");
+          if (!selectedCountry.pattern.test(nationalNumber)) {
+            newErrors.phone = `Invalid format for ${selectedCountry.name}. Example: ${dialCode} ${selectedCountry.placeholder}`;
           }
         }
       }
@@ -254,7 +325,33 @@ export function AddTouristSheet({
                 </div>
                 <div className="space-y-2">
                   <Label className={cn(errors.phone && "text-destructive")}>Phone {mode === "confirmed" && "*"}</Label>
-                  <Input className={cn(errors.phone && "border-destructive focus-visible:ring-destructive")} value={formData.phone} onChange={e => { setFormData({...formData, phone: e.target.value}); if (errors.phone) setErrors({...errors, phone: ""}); }} placeholder="+44 7700 900077" />
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Input 
+                        className={cn(errors.phone && "border-destructive focus-visible:ring-destructive")} 
+                        value={formData.phone} 
+                        onChange={e => { 
+                          setFormData({...formData, phone: e.target.value}); 
+                          if (errors.phone) setErrors({...errors, phone: ""}); 
+                        }} 
+                        placeholder={`${selectedCountry.dialCode} ${selectedCountry.placeholder}`} 
+                      />
+                    </PopoverTrigger>
+                    <PopoverContent className="p-1 w-[240px] max-h-[250px] overflow-y-auto z-[100]" align="start">
+                      {COUNTRIES.map((c) => (
+                        <button
+                          key={c.code}
+                          type="button"
+                          onClick={() => handleSelectCountry(c)}
+                          className="w-full text-left px-3 py-1.5 text-xs hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2 rounded-sm cursor-pointer"
+                        >
+                          <span className="text-sm">{c.flag}</span>
+                          <span className="font-semibold text-slate-700 dark:text-slate-300">{c.dialCode}</span>
+                          <span className="text-slate-500 truncate">{c.name}</span>
+                        </button>
+                      ))}
+                    </PopoverContent>
+                  </Popover>
                   {errors.phone && <div className="text-[10px] text-destructive flex items-center gap-1"><AlertCircle className="h-3 w-3" /> {errors.phone}</div>}
                 </div>
                 <div className="space-y-2">

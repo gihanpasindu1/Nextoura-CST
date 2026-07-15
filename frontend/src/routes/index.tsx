@@ -1,4 +1,4 @@
-import { createFileRoute, useRouter } from "@tanstack/react-router";
+﻿import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { supabase } from "@/lib/supabase";
 import { useMemo, useState, useEffect } from "react";
 import {
@@ -1056,11 +1056,11 @@ function StatTile({
   tone: "success" | "info" | "default";
   icon: typeof Activity;
 }) {
-  const iconColor = 
-    tone === "success" 
-      ? "text-emerald-500 bg-emerald-500/10 border-emerald-500/20" 
-      : tone === "info" 
-        ? "text-blue-500 bg-blue-500/10 border-blue-500/20" 
+  const iconColor =
+    tone === "success"
+      ? "text-emerald-500 bg-emerald-500/10 border-emerald-500/20"
+      : tone === "info"
+        ? "text-blue-500 bg-blue-500/10 border-blue-500/20"
         : "text-slate-500 bg-slate-500/10 border-slate-500/20";
 
   return (
@@ -1222,37 +1222,37 @@ function ToursWorkspace({
           <div className="flex items-center justify-between border-b border-border bg-card px-6 py-2.5">
             <div className="flex bg-muted/60 p-0.5 rounded-lg border border-border/80 gap-0.5">
               {[
-                { 
-                  key: "all", 
-                  label: "All Statuses", 
+                {
+                  key: "all",
+                  label: "All Statuses",
                   icon: Layers,
                   activeClass: "bg-slate-200/60 text-slate-900 border-slate-300 dark:bg-slate-800 dark:text-slate-100 dark:border-slate-700 shadow-sm",
                   iconClass: "text-slate-600 dark:text-slate-400"
                 },
-                { 
-                  key: "Active", 
-                  label: "Active", 
+                {
+                  key: "Active",
+                  label: "Active",
                   icon: Plane,
                   activeClass: "bg-teal-100/70 text-teal-900 border-teal-200 dark:bg-teal-950/40 dark:text-teal-400 dark:border-teal-900/60 shadow-sm",
                   iconClass: "text-teal-700 dark:text-teal-400"
                 },
-                { 
-                  key: "Upcoming", 
-                  label: "Upcoming", 
+                {
+                  key: "Upcoming",
+                  label: "Upcoming",
                   icon: Clock,
                   activeClass: "bg-indigo-100/70 text-indigo-900 border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-400 dark:border-indigo-900/60 shadow-sm",
                   iconClass: "text-indigo-700 dark:text-indigo-400"
                 },
-                { 
-                  key: "Completed", 
-                  label: "Completed", 
+                {
+                  key: "Completed",
+                  label: "Completed",
                   icon: CheckCircle2,
                   activeClass: "bg-purple-100/70 text-purple-900 border-purple-200 dark:bg-purple-950/40 dark:text-purple-400 dark:border-purple-900/60 shadow-sm",
                   iconClass: "text-purple-700 dark:text-purple-400"
                 },
-                { 
-                  key: "Cancelled", 
-                  label: "Cancelled", 
+                {
+                  key: "Cancelled",
+                  label: "Cancelled",
                   icon: XCircle,
                   activeClass: "bg-orange-100/70 text-orange-900 border-orange-200 dark:bg-orange-950/40 dark:text-orange-400 dark:border-orange-900/60 shadow-sm",
                   iconClass: "text-orange-700 dark:text-orange-400"
@@ -1962,7 +1962,7 @@ function AgentManagement({ agents, onAddAgent, onEditAgent, onDeleteAgent }: {
                 </div>
 
                 <Separator className="my-4 bg-border/60" />
-                
+
                 <div className="flex items-center justify-between text-xs">
                   <div>
                     <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Region</div>
