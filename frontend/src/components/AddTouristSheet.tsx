@@ -382,7 +382,14 @@ export function AddTouristSheet({
           newErrors.phone = `Invalid phone for ${selectedCountry.name}. Example: ${selectedCountry.placeholder}`;
         }
       }
-      if (!formData.email) newErrors.email = "Email is required";
+      if (!formData.email) {
+        newErrors.email = "Email is required";
+      } else {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(formData.email.trim())) {
+          newErrors.email = "Invalid email format";
+        }
+      }
       if (!formData.arrival) newErrors.arrival = "Arrival date is required";
       if (!formData.departure) newErrors.departure = "Departure date is required";
       if (!formData.duration) newErrors.duration = "Duration is required";
@@ -405,6 +412,12 @@ export function AddTouristSheet({
         const localNumber = formData.phone.replace(/[\s\-\(\)]/g, "");
         if (!selectedCountry.pattern.test(localNumber)) {
           newErrors.phone = `Invalid phone for ${selectedCountry.name}. Example: ${selectedCountry.placeholder}`;
+        }
+      }
+      if (formData.email) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(formData.email.trim())) {
+          newErrors.email = "Invalid email format";
         }
       }
     }
