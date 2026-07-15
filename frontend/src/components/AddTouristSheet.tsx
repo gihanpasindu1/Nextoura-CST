@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tourist } from "@/lib/tourism-data";
-import { Loader2, Plus, UploadCloud, FileText, Settings2, Trash2, X, Users, AlertCircle, Send } from "lucide-react";
+import { Loader2, Plus, UploadCloud, FileText, Settings2, Trash2, X, Users, AlertCircle, Send, ChevronDown } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
@@ -524,59 +524,84 @@ export function AddTouristSheet({
                 </div>
                 <div className="space-y-2">
                   <Label className={cn(errors.phone && "text-destructive")}>Phone {mode === "confirmed" && "*"}</Label>
-                  <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
-                    <PopoverTrigger asChild>
-                      <Input 
-                        className={cn(errors.phone && "border-destructive focus-visible:ring-destructive")} 
-                        value={formData.phone} 
-                        onChange={e => { 
-                          setFormData({...formData, phone: e.target.value}); 
-                          if (errors.phone) setErrors({...errors, phone: ""}); 
-                        }} 
-                        placeholder={selectedCountry?.dialCode ? `e.g. ${selectedCountry.dialCode} ${selectedCountry.placeholder}` : "e.g. +44 7700 900077"} 
-                      />
-                    </PopoverTrigger>
-                    <PopoverContent className="p-1 w-[260px] flex flex-col z-[100] bg-card border border-border rounded-md shadow-md" align="start">
-                      <div className="p-1 border-b border-border">
-                        <Input
-                          placeholder="Search country..."
-                          value={searchQuery}
-                          onChange={(e) => setSearchQuery(e.target.value)}
-                          className="h-8 text-xs focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent border-none shadow-none focus-visible:border-none focus-visible:outline-none"
-                          autoFocus
-                        />
-                      </div>
-                      <div className="overflow-y-auto flex-1 max-h-[200px] py-1">
-                        {filteredCountries.map((c) => (
-                          <button
-                            key={c.code}
-                            type="button"
-                            onClick={() => {
-                              handleSelectCountry(c);
-                              setPopoverOpen(false);
+                  <div className="flex gap-0">
+                    <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+                      <PopoverTrigger asChild>
+                        <button
+                          type="button"
+                          className={cn(
+                            "flex items-center gap-1 h-9 px-2 rounded-l-md border border-r-0 border-input bg-muted/50 hover:bg-muted text-xs shrink-0 cursor-pointer",
+                            errors.phone && "border-destructive"
+                          )}
+                        >
+                          <img
+                            src={`https://flagcdn.com/w20/${selectedCountry.code.toLowerCase()}.png`}
+                            width="16"
+                            height="12"
+                            alt=""
+                            className="object-contain shrink-0"
+                            onError={(e) => {
+                              (e.target as HTMLElement).style.display = "none";
                             }}
-                            className="w-full text-left px-3 py-1.5 text-xs hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2 rounded-sm cursor-pointer"
-                          >
-                            <img
-                              src={`https://flagcdn.com/w20/${c.code.toLowerCase()}.png`}
-                              width="16"
-                              height="12"
-                              alt=""
-                              className="object-contain shrink-0 mr-1"
-                              onError={(e) => {
-                                (e.target as HTMLElement).style.display = "none";
+                          />
+                          <span className="font-medium text-foreground">{selectedCountry.dialCode}</span>
+                          <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent className="p-0 w-[260px] flex flex-col z-[100] bg-card border border-border rounded-md shadow-md" align="start">
+                        <div className="p-2 border-b border-border">
+                          <Input
+                            placeholder="Search country..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="h-8 text-xs"
+                            autoFocus
+                          />
+                        </div>
+                        <div className="overflow-y-auto flex-1 max-h-[200px] py-1">
+                          {filteredCountries.map((c) => (
+                            <button
+                              key={c.code}
+                              type="button"
+                              onClick={() => {
+                                handleSelectCountry(c);
+                                setPopoverOpen(false);
                               }}
-                            />
-                            <span className="font-semibold text-slate-700 dark:text-slate-300">{c.dialCode}</span>
-                            <span className="text-slate-500 truncate">{c.name}</span>
-                          </button>
-                        ))}
-                        {filteredCountries.length === 0 && (
-                          <div className="text-[10px] text-muted-foreground text-center py-2">No countries found</div>
-                        )}
-                      </div>
-                    </PopoverContent>
-                  </Popover>
+                              className="w-full text-left px-3 py-1.5 text-xs hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2 rounded-sm cursor-pointer"
+                            >
+                              <img
+                                src={`https://flagcdn.com/w20/${c.code.toLowerCase()}.png`}
+                                width="16"
+                                height="12"
+                                alt=""
+                                className="object-contain shrink-0"
+                                onError={(e) => {
+                                  (e.target as HTMLElement).style.display = "none";
+                                }}
+                              />
+                              <span className="font-semibold text-slate-700 dark:text-slate-300">{c.dialCode}</span>
+                              <span className="text-slate-500 truncate">{c.name}</span>
+                            </button>
+                          ))}
+                          {filteredCountries.length === 0 && (
+                            <div className="text-[10px] text-muted-foreground text-center py-2">No countries found</div>
+                          )}
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                    <Input 
+                      className={cn(
+                        "rounded-l-none",
+                        errors.phone && "border-destructive focus-visible:ring-destructive"
+                      )} 
+                      value={formData.phone} 
+                      onChange={e => { 
+                        setFormData({...formData, phone: e.target.value}); 
+                        if (errors.phone) setErrors({...errors, phone: ""}); 
+                      }} 
+                      placeholder={`e.g. ${selectedCountry.dialCode} ${selectedCountry.placeholder}`} 
+                    />
+                  </div>
                   {errors.phone && <div className="text-[10px] text-destructive flex items-center gap-1"><AlertCircle className="h-3 w-3" /> {errors.phone}</div>}
                 </div>
                 <div className="space-y-2">
