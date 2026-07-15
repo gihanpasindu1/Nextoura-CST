@@ -1015,6 +1015,16 @@ function Console() {
               </div>
             </div>
 
+            {/* Center: Brand logo */}
+            <div className="flex flex-1 flex-col items-center justify-center px-4">
+              <div className="grid h-12 w-12 place-items-center rounded-[14px] shadow-md" style={{
+                background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
+                boxShadow: '0 4px 12px rgba(59,130,246,0.15)',
+              }}>
+                <MapPinned className="h-6 w-6 text-white" strokeWidth={2} />
+              </div>
+            </div>
+
             {/* Pinned to the bottom of the sidebar: Live Time */}
             {currentTime && (
               <div className="mt-auto p-4 border-t border-border bg-card/20">
