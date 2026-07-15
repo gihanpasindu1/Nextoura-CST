@@ -995,8 +995,8 @@ function Console() {
           }}
         />
 
-        {/* Right sidebar — only show on tours/leads pages */}
-        {!isDetailOpen && (nav === "tours" || nav === "leads") && (
+        {/* Right sidebar — show on all pages */}
+        {!isDetailOpen && (
           <aside className="hidden w-80 shrink-0 flex-col border-l border-border bg-sidebar/40 backdrop-blur-sm xl:flex">
             <div className="flex items-center gap-3.5 px-6 py-5">
               <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-primary/10 bg-primary/5 text-primary shadow-sm">
@@ -1012,34 +1012,6 @@ function Console() {
                   <p className="text-[13.5px] font-bold text-foreground mt-0.5 opacity-50">Loading time...</p>
                 )}
               </div>
-            </div>
-            <Separator />
-
-            <div className="grid grid-cols-2 gap-3.5 p-5">
-              <StatTile 
-                label="Active" 
-                value={stats.active} 
-                tone="success" 
-                icon={Activity} 
-              />
-              <StatTile 
-                label="Upcoming" 
-                value={stats.upcoming} 
-                tone="info" 
-                icon={CalendarRange} 
-              />
-              <StatTile 
-                label="Pax on tour" 
-                value={stats.pax} 
-                tone="default" 
-                icon={Users2} 
-              />
-              <StatTile 
-                label="Countries" 
-                value={stats.countries} 
-                tone="default" 
-                icon={Globe2} 
-              />
             </div>
           </aside>
         )}
