@@ -169,6 +169,36 @@ function Console() {
   const [isLoadingAuth, setIsLoadingAuth] = useState(true);
   const router = useRouter();
 
+  const [currentTime, setCurrentTime] = useState<Date | null>(null);
+
+  useEffect(() => {
+    setCurrentTime(new Date());
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const formattedDate = useMemo(() => {
+    if (!currentTime) return "";
+    return currentTime.toLocaleDateString(undefined, {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      year: "numeric"
+    });
+  }, [currentTime]);
+
+  const formattedTime = useMemo(() => {
+    if (!currentTime) return "";
+    return currentTime.toLocaleTimeString(undefined, {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: true
+    });
+  }, [currentTime]);
+
   useEffect(() => {
     const checkOnboarding = async (userSession: any) => {
       try {
@@ -709,6 +739,15 @@ function Console() {
               </div>
             </div>
             <div className="flex items-center gap-2">
+              {currentTime && (
+                <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg border border-border bg-muted/30 text-muted-foreground mr-1">
+                  <CalendarDays className="h-4 w-4 text-primary" />
+                  <span className="text-xs font-semibold tabular-nums">
+                    {formattedDate} · {formattedTime}
+                  </span>
+                </div>
+              )}
+              {currentTime && <div className="hidden md:block h-4 w-px bg-border mx-1 mr-1" />}
               {nav !== "settings" && (
                 <Button
                   id="view-graphs-btn"
@@ -974,7 +1013,13 @@ function Console() {
               </div>
               <div>
                 <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Today</h3>
-                <p className="text-[13.5px] font-bold text-foreground mt-0.5">Monday, 22 June 2026</p>
+                {currentTime ? (
+                  <p className="text-[13.5px] font-bold text-foreground mt-0.5 tabular-nums">
+                    {formattedDate} <span className="text-primary font-semibold ml-1">{formattedTime}</span>
+                  </p>
+                ) : (
+                  <p className="text-[13.5px] font-bold text-foreground mt-0.5 opacity-50">Loading time...</p>
+                )}
               </div>
             </div>
             <Separator />
