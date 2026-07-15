@@ -519,7 +519,7 @@ export function AddTouristSheet({
                           setFormData({...formData, phone: e.target.value}); 
                           if (errors.phone) setErrors({...errors, phone: ""}); 
                         }} 
-                        placeholder={`e.g. ${selectedCountry.dialCode} ${selectedCountry.placeholder}`} 
+                        placeholder={selectedCountry ? `e.g. ${selectedCountry.dialCode} ${selectedCountry.placeholder}` : "e.g. +44 7700 900077"} 
                       />
                     </PopoverTrigger>
                     <PopoverContent className="p-1 w-[240px] max-h-[250px] overflow-y-auto z-[100]" align="start">
@@ -530,7 +530,16 @@ export function AddTouristSheet({
                           onClick={() => handleSelectCountry(c)}
                           className="w-full text-left px-3 py-1.5 text-xs hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2 rounded-sm cursor-pointer"
                         >
-                          <span className="text-sm">{c.flag}</span>
+                          <img
+                            src={`https://flagcdn.com/w20/${c.code.toLowerCase()}.png`}
+                            width="16"
+                            height="12"
+                            alt=""
+                            className="object-contain shrink-0 mr-1"
+                            onError={(e) => {
+                              (e.target as HTMLElement).style.display = "none";
+                            }}
+                          />
                           <span className="font-semibold text-slate-700 dark:text-slate-300">{c.dialCode}</span>
                           <span className="text-slate-500 truncate">{c.name}</span>
                         </button>
