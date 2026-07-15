@@ -235,7 +235,7 @@ export function AddTouristSheet({
 }) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [selectedCountry, setSelectedCountry] = useState(COUNTRIES[1]);
+  const [selectedCountry, setSelectedCountry] = useState(() => COUNTRIES.find(c => c.code === "GB") || COUNTRIES[0]);
   const [formData, setFormData] = useState({
     name: "",
     country: "",
@@ -519,7 +519,7 @@ export function AddTouristSheet({
                           setFormData({...formData, phone: e.target.value}); 
                           if (errors.phone) setErrors({...errors, phone: ""}); 
                         }} 
-                        placeholder={`${selectedCountry.dialCode} ${selectedCountry.placeholder}`} 
+                        placeholder={`e.g. ${selectedCountry.dialCode} ${selectedCountry.placeholder}`} 
                       />
                     </PopoverTrigger>
                     <PopoverContent className="p-1 w-[240px] max-h-[250px] overflow-y-auto z-[100]" align="start">
