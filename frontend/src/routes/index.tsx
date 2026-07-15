@@ -739,15 +739,6 @@ function Console() {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              {currentTime && (
-                <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg border border-border bg-muted/30 text-muted-foreground mr-1">
-                  <CalendarDays className="h-4 w-4 text-primary" />
-                  <span className="text-xs font-semibold tabular-nums">
-                    {formattedDate} · {formattedTime}
-                  </span>
-                </div>
-              )}
-              {currentTime && <div className="hidden md:block h-4 w-px bg-border mx-1 mr-1" />}
               {nav !== "settings" && (
                 <Button
                   id="view-graphs-btn"

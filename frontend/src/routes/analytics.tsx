@@ -5,7 +5,7 @@ import { useTheme } from "@/lib/theme";
 import {
   ArrowLeft, BarChart3, Car, Briefcase, TrendingUp,
   MapPin, Phone, Mail, CheckCircle2, Clock, Plane, XCircle, Navigation,
-  Moon, Sun, CalendarDays,
+  Moon, Sun,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -137,36 +137,6 @@ function AnalyticsPage() {
   const [drivers,  setDrivers]  = useState<any[]>([]);
   const [loading,  setLoading]  = useState(true);
 
-  const [currentTime, setCurrentTime] = useState<Date | null>(null);
-
-  useEffect(() => {
-    setCurrentTime(new Date());
-    const timer = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  const formattedDate = useMemo(() => {
-    if (!currentTime) return "";
-    return currentTime.toLocaleDateString(undefined, {
-      weekday: "long",
-      day: "numeric",
-      month: "long",
-      year: "numeric"
-    });
-  }, [currentTime]);
-
-  const formattedTime = useMemo(() => {
-    if (!currentTime) return "";
-    return currentTime.toLocaleTimeString(undefined, {
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-      hour12: true
-    });
-  }, [currentTime]);
-
   useEffect(() => {
     (async () => {
       try {
@@ -253,15 +223,6 @@ function AnalyticsPage() {
           </div>
         </div>
         <div className="flex items-center gap-3">
-          {currentTime && (
-            <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-lg border border-border bg-card text-muted-foreground mr-1">
-              <CalendarDays className="h-4 w-4 text-primary" />
-              <span className="text-xs font-semibold tabular-nums">
-                {formattedDate} · {formattedTime}
-              </span>
-            </div>
-          )}
-          {currentTime && <div className="hidden lg:block h-4 w-px bg-border mx-1 mr-1" />}
           <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
             <TrendingUp className="h-3.5 w-3.5" />
             <span>{confirmed.length} confirmed tours</span>
