@@ -1187,6 +1187,21 @@ function ToursWorkspace({
   onDeleteClient: (id: string) => void;
 }) {
   const wsRouter = useRouter();
+  const [driverPopoverOpen, setDriverPopoverOpen] = useState(false);
+  const [driverSearchQuery, setDriverSearchQuery] = useState("");
+
+  useEffect(() => {
+    if (!driverPopoverOpen) {
+      setDriverSearchQuery("");
+    }
+  }, [driverPopoverOpen]);
+
+  const filteredDriversForFilter = useMemo(() => {
+    const query = driverSearchQuery.trim().toLowerCase();
+    if (!query) return drivers;
+    return drivers.filter((d: any) => d.name?.toLowerCase().includes(query));
+  }, [drivers, driverSearchQuery]);
+
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       {isDetailOpen ? (
