@@ -643,9 +643,7 @@ export function AddTouristSheet({
                                 country: c.name,
                                 countryCode: c.code
                               }));
-                              if (!formData.phone) {
-                                setSelectedCountry(c);
-                              }
+                              setSelectedCountry(c);
                               if (errors.country) setErrors(prev => ({ ...prev, country: "" }));
                               if (errors.countryCode) setErrors(prev => ({ ...prev, countryCode: "" }));
                               setCountryPopoverOpen(false);
