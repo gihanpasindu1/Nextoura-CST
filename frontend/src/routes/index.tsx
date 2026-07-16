@@ -1,4 +1,4 @@
-import { createFileRoute, useRouter } from "@tanstack/react-router";
+﻿import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { supabase } from "@/lib/supabase";
 import { useMemo, useState, useEffect } from "react";
 import {
@@ -78,7 +78,7 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Horizon Travel — Operations Console" },
+      { title: "Horizon Travel â€” Operations Console" },
       { name: "description", content: "Tour operator dashboard for managing tourists, agents and itineraries." },
     ],
   }),
@@ -123,7 +123,7 @@ function Console() {
   useEffect(() => {
     const checkOnboarding = async (userSession: any) => {
       try {
-        const res = await fetch(`http://localhost:8000/api/companies/me?user_id=${userSession.user.id}`);
+        const res = await fetch(`https://cst-tour-management-system.onrender.com/api/companies/me?user_id=${userSession.user.id}`);
         if (res.status === 404) {
           router.navigate({ to: "/onboarding" });
         } else if (res.ok) {
@@ -166,11 +166,11 @@ function Console() {
     if (!compId) return;
     try {
       const [touristsRes, agentsRes, driversRes, notifsRes, hotelsRes] = await Promise.all([
-        fetch(`http://localhost:8000/api/tourists?company_id=${compId}`),
-        fetch(`http://localhost:8000/api/agents?company_id=${compId}`),
-        fetch(`http://localhost:8000/api/drivers?company_id=${compId}`),
-        fetch(`http://localhost:8000/api/notifications?company_id=${compId}`),
-        fetch(`http://localhost:8000/api/hotels?company_id=${compId}`)
+        fetch(`https://cst-tour-management-system.onrender.com/api/tourists?company_id=${compId}`),
+        fetch(`https://cst-tour-management-system.onrender.com/api/agents?company_id=${compId}`),
+        fetch(`https://cst-tour-management-system.onrender.com/api/drivers?company_id=${compId}`),
+        fetch(`https://cst-tour-management-system.onrender.com/api/notifications?company_id=${compId}`),
+        fetch(`https://cst-tour-management-system.onrender.com/api/hotels?company_id=${compId}`)
       ]);
       const touristsData = await touristsRes.json();
       const agentsData = await agentsRes.json();
@@ -493,7 +493,7 @@ function Console() {
           {nav === "agents" ? (
             <AgentManagement agents={agents} onAddAgent={async (form) => {
               try {
-                const res = await fetch("http://localhost:8000/api/agents", {
+                const res = await fetch("https://cst-tour-management-system.onrender.com/api/agents", {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({ agent_name: form.name, email: form.email, region: form.region, company_id: companyId })
@@ -508,7 +508,7 @@ function Console() {
             }}
             onEditAgent={async (agent: any, form: any) => {
               try {
-                const res = await fetch(`http://localhost:8000/api/agents/${agent.id}`, {
+                const res = await fetch(`https://cst-tour-management-system.onrender.com/api/agents/${agent.id}`, {
                   method: "PUT",
                   headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({ agent_name: form.name, email: form.email, region: form.region, company_id: companyId })
@@ -523,7 +523,7 @@ function Console() {
             }}
             onDeleteAgent={async (agentId: string) => {
               try {
-                const res = await fetch(`http://localhost:8000/api/agents/${agentId}`, { method: "DELETE" });
+                const res = await fetch(`https://cst-tour-management-system.onrender.com/api/agents/${agentId}`, { method: "DELETE" });
                 if (res.ok) {
                   setAgents((prev: any[]) => prev.filter((a: any) => a.id !== agentId));
                 }
@@ -534,7 +534,7 @@ function Console() {
             />
           ) : nav === "drivers" ? (
             <DriverManagement drivers={drivers} onAddDriver={async (form) => {
-              const res = await fetch("http://localhost:8000/api/drivers", {
+              const res = await fetch("https://cst-tour-management-system.onrender.com/api/drivers", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ name: form.name, phone: form.phone, email: form.email, password: form.password, company_id: companyId })
@@ -550,7 +550,7 @@ function Console() {
             }}
             onUpdateDriver={async (driverId: string, form) => {
               try {
-                const res = await fetch(`http://localhost:8000/api/drivers/${driverId}`, {
+                const res = await fetch(`https://cst-tour-management-system.onrender.com/api/drivers/${driverId}`, {
                   method: "PUT",
                   headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({ name: form.name, phone: form.phone, email: form.email, password: form.password, company_id: companyId })
@@ -565,7 +565,7 @@ function Console() {
             }}
             onDeleteDriver={async (driverId: string) => {
               try {
-                const res = await fetch(`http://localhost:8000/api/drivers/${driverId}`, { method: "DELETE" });
+                const res = await fetch(`https://cst-tour-management-system.onrender.com/api/drivers/${driverId}`, { method: "DELETE" });
                 if (res.ok) {
                   setDrivers((prev: any[]) => prev.filter((d: any) => d.id !== driverId));
                 }
@@ -594,7 +594,7 @@ function Console() {
               notifications={notifications}
               onResolveAlert={async (id) => {
                 try {
-                  await fetch(`http://localhost:8000/api/notifications/${id}/resolve`, { method: "PATCH" });
+                  await fetch(`https://cst-tour-management-system.onrender.com/api/notifications/${id}/resolve`, { method: "PATCH" });
                   if (companyId) loadData(companyId);
                 } catch (e) {
                   toast.error("Failed to resolve notification");
@@ -613,7 +613,7 @@ function Console() {
               onDeleteClient={async (id) => {
                 console.log('DELETE called with id:', id);
                 try {
-                  const res = await fetch(`http://localhost:8000/api/tourists/${id}`, { method: 'DELETE' });
+                  const res = await fetch(`https://cst-tour-management-system.onrender.com/api/tourists/${id}`, { method: 'DELETE' });
                   console.log('DELETE response status:', res.status);
                   if (res.ok) {
                     setTouristsList(prev => prev.filter(t => t.id !== id));
@@ -698,8 +698,8 @@ function Console() {
               };
               
               const url = editingTourist 
-                ? `http://localhost:8000/api/tourists/${editingTourist.id}`
-                : 'http://localhost:8000/api/tourists';
+                ? `https://cst-tour-management-system.onrender.com/api/tourists/${editingTourist.id}`
+                : 'https://cst-tour-management-system.onrender.com/api/tourists';
               const method = editingTourist ? 'PUT' : 'POST';
               await fetch(url, {
                 method: method,
@@ -865,7 +865,7 @@ function ToursWorkspace({
               <Input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search by name, country, or passport number…"
+                placeholder="Search by name, country, or passport numberâ€¦"
                 className="h-9 pl-9"
               />
             </div>
@@ -937,7 +937,7 @@ function ToursWorkspace({
                                 <StatusPill status={t.status} />
                               </div>
                               <div className="mt-1 truncate text-sm text-muted-foreground">
-                                {t.country} · {t.pax} Pax · {t.duration}
+                                {t.country} Â· {t.pax} Pax Â· {t.duration}
                               </div>
                             </div>
                           </div>
@@ -1168,8 +1168,8 @@ function TouristDetail({
                     <tr key={g.passport} className="border-t border-border">
                       <td className="px-4 py-2.5">{g.name}</td>
                       <td className="px-4 py-2.5 font-mono text-xs">{g.passport}</td>
-                      <td className="px-4 py-2.5 text-xs text-muted-foreground hidden sm:table-cell">{g.phone || "—"}</td>
-                      <td className="px-4 py-2.5 text-xs text-muted-foreground hidden md:table-cell">{g.email || "—"}</td>
+                      <td className="px-4 py-2.5 text-xs text-muted-foreground hidden sm:table-cell">{g.phone || "â€”"}</td>
+                      <td className="px-4 py-2.5 text-xs text-muted-foreground hidden md:table-cell">{g.email || "â€”"}</td>
                       <td className="px-4 py-2.5 text-muted-foreground">Companion</td>
                     </tr>
                   ))}
@@ -1190,7 +1190,7 @@ function TouristDetail({
                       <div className="flex flex-wrap items-center gap-3">
                         <div>
                           <div className="text-xs uppercase tracking-wider text-muted-foreground">
-                            Day {d.day.toString().padStart(2, "0")} {d.location ? `· ${d.location}` : ""}
+                            Day {d.day.toString().padStart(2, "0")} {d.location ? `Â· ${d.location}` : ""}
                           </div>
                           <div className="mt-0.5 text-sm font-semibold">{d.title}</div>
                         </div>
@@ -1386,7 +1386,7 @@ function AgentManagement({ agents, onAddAgent, onEditAgent, onDeleteAgent }: {
     <div className="flex min-h-0 flex-1 flex-col bg-background">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-card px-6 py-3">
         <div className="text-sm text-muted-foreground">
-          {agents.length} agents · {agents.reduce((s, a) => s + (a.clients || 0), 0)} clients under management
+          {agents.length} agents Â· {agents.reduce((s, a) => s + (a.clients || 0), 0)} clients under management
         </div>
         <Dialog open={addOpen} onOpenChange={setAddOpen}>
           <DialogTrigger asChild>

@@ -1,4 +1,4 @@
-import { createFileRoute, useRouter } from "@tanstack/react-router";
+﻿import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
@@ -57,7 +57,7 @@ function OnboardingPage() {
 
     try {
       setSubmitting(true);
-      const res = await fetch("http://localhost:8000/api/companies/onboard", {
+      const res = await fetch("https://cst-tour-management-system.onrender.com/api/companies/onboard", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

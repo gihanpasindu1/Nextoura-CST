@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetFooter, SheetClose } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -163,7 +163,7 @@ export function AddTouristSheet({
     
     try {
       if (type === 'text') {
-        const response = await fetch("http://localhost:8000/api/itinerary/generate-text", {
+        const response = await fetch("https://cst-tour-management-system.onrender.com/api/itinerary/generate-text", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ raw_text: itineraryText }),
@@ -213,8 +213,8 @@ export function AddTouristSheet({
 
         // If we already extracted the text, use the fast endpoint
         const endpoint = rawItineraryData 
-            ? "http://localhost:8000/api/itinerary/generate-pdf-from-json" 
-            : "http://localhost:8000/api/itinerary/generate-pdf";
+            ? "https://cst-tour-management-system.onrender.com/api/itinerary/generate-pdf-from-json" 
+            : "https://cst-tour-management-system.onrender.com/api/itinerary/generate-pdf";
             
         const payload = rawItineraryData 
             ? { parsed_data: rawItineraryData } 
@@ -618,7 +618,7 @@ export function AddTouristSheet({
                             <div className="px-3 pt-2 pb-1 space-y-1.5">
                               {(Array.isArray(dest.activities) ? dest.activities : (dest.activities ? [dest.activities] : [])).map((act: string, actIdx: number) => (
                                 <div key={actIdx} className="flex items-center gap-1.5">
-                                  <span className="text-muted-foreground text-xs mt-0.5">•</span>
+                                  <span className="text-muted-foreground text-xs mt-0.5">â€¢</span>
                                   <Input
                                     className="h-7 text-xs flex-1 bg-muted/30"
                                     placeholder="Activity description..."
