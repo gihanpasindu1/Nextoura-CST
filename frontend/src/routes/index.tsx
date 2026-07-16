@@ -752,19 +752,17 @@ function Console() {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              {nav !== "settings" && (
-                <Button
-                  id="view-graphs-btn"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => router.navigate({ to: "/analytics" })}
-                  className="flex items-center gap-1.5 h-9 rounded-lg border border-border px-3 text-xs font-semibold text-muted-foreground bg-card/50 transition-all hover:bg-accent hover:text-primary hover:border-primary/30 shadow-sm mr-1"
-                >
-                  <BarChart3 className="h-4 w-4 text-primary" />
-                  <span className="hidden sm:inline">View Graphs</span>
-                </Button>
-              )}
-              {nav !== "settings" && <div className="h-4 w-px bg-border mx-1" />}
+              <Button
+                id="view-graphs-btn"
+                variant="outline"
+                size="sm"
+                onClick={() => router.navigate({ to: "/analytics" })}
+                className="flex items-center gap-1.5 h-9 rounded-lg border border-border px-3 text-xs font-semibold text-muted-foreground bg-card/50 transition-all hover:bg-accent hover:text-primary hover:border-primary/30 shadow-sm mr-1"
+              >
+                <BarChart3 className="h-4 w-4 text-primary" />
+                <span className="hidden sm:inline">View Graphs</span>
+              </Button>
+              <div className="h-4 w-px bg-border mx-1" />
               <Button
                 variant="ghost"
                 size="icon"
