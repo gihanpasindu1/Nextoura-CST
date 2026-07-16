@@ -886,6 +886,7 @@ function Console() {
               alertCounts={alertCounts}
               statusAlertCounts={statusAlertCounts}
               notifications={notifications}
+              nav={nav}
               onResolveAlert={async (id) => {
                 try {
                   await fetch(`http://localhost:8000/api/notifications/${id}/resolve`, { method: "PATCH" });
@@ -1163,6 +1164,7 @@ function ToursWorkspace({
   onAddClient,
   onConfirmTour,
   onDeleteClient,
+  nav,
 }: {
   drivers: any[];
   query: string;
@@ -1183,6 +1185,7 @@ function ToursWorkspace({
   onAddClient: () => void;
   onConfirmTour: (t: Tourist) => void;
   onDeleteClient: (id: string) => void;
+  nav: string;
 }) {
   const wsRouter = useRouter();
   const [driverPopoverOpen, setDriverPopoverOpen] = useState(false);
@@ -1363,16 +1366,29 @@ function ToursWorkspace({
             <div className="flex w-full flex-col">
               <div className="flex items-center justify-between border-b border-border bg-card px-5 py-2.5">
                 <div className="flex items-center gap-1.5 text-xs font-bold text-foreground">
-                  <Users className="h-3.5 w-3.5 text-muted-foreground" />
+                  {nav === "leads" ? (
+                    <MessageCircle className="h-3.5 w-3.5 text-muted-foreground" />
+                  ) : (
+                    <Users className="h-3.5 w-3.5 text-muted-foreground" />
+                  )}
                   <span>
-                    {tourists.length} {tourists.length === 1 ? "Tourist" : "Tourists"}
+                    {tourists.length} {nav === "leads" ? (tourists.length === 1 ? "Inquiry" : "Inquiries") : (tourists.length === 1 ? "Tourist" : "Tourists")}
                   </span>
                 </div>
                 <div className="flex items-center gap-4">
                   <div className="text-[11px] text-muted-foreground">Sorted by status</div>
                   <Button size="sm" onClick={onAddClient} className="gap-2 h-7 px-3 text-xs">
-                    <UserPlus className="h-3.5 w-3.5" />
-                    Add Client
+                    {nav === "leads" ? (
+                      <>
+                        <MessageCircle className="h-3.5 w-3.5" />
+                        Add Inquiry
+                      </>
+                    ) : (
+                      <>
+                        <UserPlus className="h-3.5 w-3.5" />
+                        Add Client
+                      </>
+                    )}
                   </Button>
                 </div>
               </div>
