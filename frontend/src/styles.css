@@ -1,5 +1,4 @@
-@import "tailwindcss" source(none);
-@source "../src";
+@import "tailwindcss";
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
@@ -146,15 +145,27 @@
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
+    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='3.5' fill='%233b82f6' stroke='%23ffffff' stroke-width='1.5'/%3E%3C/svg%3E") 8 8, auto;
+  }
+
+  a,
+  button,
+  [role="button"],
+  select,
+  .cursor-pointer {
+    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'%3E%3Ccircle cx='10' cy='10' r='6' fill='none' stroke='%233b82f6' stroke-width='1.5'/%3E%3Ccircle cx='10' cy='10' r='2' fill='%233b82f6'/%3E%3C/svg%3E") 10 10, pointer;
   }
 }
 
 @keyframes alert-glow {
-  0%, 100% {
+
+  0%,
+  100% {
     background-color: color-mix(in oklab, var(--color-destructive) 5%, transparent);
     border-color: color-mix(in oklab, var(--color-destructive) 30%, transparent);
     box-shadow: 0 0 5px 0px transparent;
   }
+
   50% {
     background-color: color-mix(in oklab, var(--color-destructive) 12%, transparent);
     border-color: color-mix(in oklab, var(--color-destructive) 60%, transparent);

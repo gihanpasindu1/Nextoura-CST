@@ -6,6 +6,7 @@ import {
   Plane,
   Users,
   BarChart3,
+  MapPinned,
   Settings,
   Settings2,
   Search,
@@ -13,6 +14,7 @@ import {
   Sun,
   Moon,
   ChevronDown,
+  ChevronRight,
   MapPin,
   Calendar,
   Phone,
@@ -30,6 +32,17 @@ import {
   Trash2,
   Copy,
   Clock,
+  Car,
+  XCircle,
+  Navigation,
+  LogOut,
+  Shield,
+  Activity,
+  Globe2,
+  Users2,
+  CalendarDays,
+  CalendarRange,
+  Layers,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -72,6 +85,7 @@ import {
   type Tourist,
   type TourStatus,
 } from "@/lib/tourism-data";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { AddTouristSheet } from "@/components/AddTouristSheet";
 import { toast } from "sonner";
 
@@ -87,15 +101,51 @@ export const Route = createFileRoute("/")({
 
 type NavKey = "dashboard" | "tours" | "leads" | "agents" | "drivers" | "reports" | "settings";
 
-const NAV: { key: NavKey; label: string; icon: typeof LayoutDashboard }[] = [
-  { key: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { key: "tours", label: "Active Tours", icon: Plane },
-  { key: "leads", label: "Inquiries", icon: Users },
-  { key: "agents", label: "Agent Management", icon: Briefcase },
-  { key: "drivers", label: "Drivers & Guides", icon: Users },
-  { key: "reports", label: "Reports", icon: BarChart3 },
-  { key: "settings", label: "Settings", icon: Settings },
+const WhatsAppIcon = ({ className }: { className?: string }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    width="24"
+    height="24"
+    className={className}
+    fill="currentColor"
+  >
+    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z" />
+  </svg>
+);
+
+type NavSection = {
+  title: string;
+  items: { key: NavKey; label: string; icon: typeof LayoutDashboard }[];
+};
+
+const NAV_SECTIONS: NavSection[] = [
+  {
+    title: "Main",
+    items: [
+      { key: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+      { key: "tours", label: "Active Tours", icon: Plane },
+      { key: "leads", label: "Inquiries", icon: MessageCircle },
+    ],
+  },
+  {
+    title: "Management",
+    items: [
+      { key: "agents", label: "Agent Management", icon: Briefcase },
+      { key: "drivers", label: "Drivers & Guides", icon: Car },
+    ],
+  },
+  {
+    title: "System",
+    items: [
+      { key: "reports", label: "Reports", icon: BarChart3 },
+      { key: "settings", label: "Settings", icon: Settings },
+    ],
+  },
 ];
+
+// Flat NAV for header lookups (preserving existing references)
+const NAV = NAV_SECTIONS.flatMap((s) => s.items);
 
 function Console() {
   const [nav, setNav] = useState<NavKey>("tours");
@@ -108,6 +158,8 @@ function Console() {
   const [isAddClientOpen, setIsAddClientOpen] = useState(false);
   const [addClientMode, setAddClientMode] = useState<"lead" | "confirmed">("confirmed");
   const [editingTourist, setEditingTourist] = useState<Tourist | undefined>(undefined);
+  const [driverPopoverOpen, setDriverPopoverOpen] = useState(false);
+  const [driverSearchQuery, setDriverSearchQuery] = useState("");
   const { theme, toggle } = useTheme();
 
   const [touristsList, setTouristsList] = useState<Tourist[]>([]);
@@ -119,6 +171,36 @@ function Console() {
   const [companyId, setCompanyId] = useState<string | null>(null);
   const [isLoadingAuth, setIsLoadingAuth] = useState(true);
   const router = useRouter();
+
+  const [currentTime, setCurrentTime] = useState<Date | null>(null);
+
+  useEffect(() => {
+    setCurrentTime(new Date());
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const formattedDate = useMemo(() => {
+    if (!currentTime) return "";
+    return currentTime.toLocaleDateString(undefined, {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      year: "numeric"
+    });
+  }, [currentTime]);
+
+  const formattedTime = useMemo(() => {
+    if (!currentTime) return "";
+    return currentTime.toLocaleTimeString(undefined, {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: true
+    });
+  }, [currentTime]);
 
   useEffect(() => {
     const checkOnboarding = async (userSession: any) => {
@@ -162,6 +244,12 @@ function Console() {
     return () => subscription.unsubscribe();
   }, [router]);
 
+  useEffect(() => {
+    if (!driverPopoverOpen) {
+      setDriverSearchQuery("");
+    }
+  }, [driverPopoverOpen]);
+
   const loadData = async (compId: string) => {
     if (!compId) return;
     try {
@@ -195,18 +283,18 @@ function Console() {
         let loc = "Not Started";
         for (const i of sortedItinerary) {
           if (i.driver_status === 'Completed') {
-             loc = i.location_name || i.day_title || "TBD";
+            loc = i.location_name || i.day_title || "TBD";
           }
           if (i.destinations && i.destinations.length > 0) {
             const sortedDests = [...i.destinations].sort((a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
             for (const d of sortedDests) {
-               if (d.driver_status === 'Completed') {
-                 loc = d.location_name;
-               }
+              if (d.driver_status === 'Completed') {
+                loc = d.location_name;
+              }
             }
           }
           if (i.hotel_driver_status === 'Completed' && i.hotel?.hotel_name) {
-             loc = i.hotel.hotel_name;
+            loc = i.hotel.hotel_name;
           }
         }
 
@@ -226,7 +314,7 @@ function Console() {
           currentLocation: loc,
           agent: agentMap[t.agent_id] || "All Agents",
           driver: driverMap[t.driver_id] || "All Drivers",
-          group: t.group_members?.map((g: any) => ({ name: g.name, passport: g.passport_number, email: g.email })) || [],
+          group: t.group_members?.map((g: any) => ({ name: g.name, passport: g.passport_number, email: g.email, phone: g.phone || "" })) || [],
           itinerary: sortedItinerary.map((i: any) => ({
             day: i.day_number,
             title: i.day_title,
@@ -239,7 +327,7 @@ function Console() {
         };
       });
       setTouristsList(mappedTourists);
-      
+
       const mappedNotifs = notifsData.map((n: any) => ({
         id: n.id,
         touristId: n.tourist_id,
@@ -256,7 +344,7 @@ function Console() {
   };
   useEffect(() => {
     if (!companyId) return;
-    
+
     // Subscribe to realtime updates for itineraries (when a driver marks a stop as completed)
     const channel1 = supabase.channel('itineraries_updates')
       .on(
@@ -279,7 +367,7 @@ function Console() {
         }
       )
       .subscribe();
-      
+
     return () => {
       supabase.removeChannel(channel1);
       supabase.removeChannel(channel2);
@@ -298,6 +386,20 @@ function Console() {
     return counts;
   }, [notifications]);
 
+  const statusAlertCounts = useMemo(() => {
+    const counts: Record<string, number> = { Active: 0, Upcoming: 0, Completed: 0, Cancelled: 0 };
+    for (const n of notifications) {
+      if (!n.resolved && n.touristId && n.touristId !== "all" && (n.type === "alert" || n.type === "warn")) {
+        const tourist = touristsList.find((t) => t.id === n.touristId);
+        if (tourist) {
+          const key = (tourist.status === "Active" || tourist.status === "On Tour") ? "Active" : tourist.status;
+          counts[key] = (counts[key] || 0) + 1;
+        }
+      }
+    }
+    return counts;
+  }, [notifications, touristsList]);
+
   const filtered = useMemo(() => {
     const results = touristsList.filter((t) => {
       // Filter by nav section: leads show isLead=true, tours show isLead=falsy
@@ -311,7 +413,13 @@ function Console() {
         const agent = agents.find((a) => a.id === agentFilter);
         if (agent && t.agent !== (agent.agent_name || agent.name)) return false;
       }
-      if (statusFilter !== "all" && t.status !== statusFilter) return false;
+      if (statusFilter !== "all") {
+        if (statusFilter === "Active") {
+          if (t.status !== "Active" && t.status !== "On Tour") return false;
+        } else {
+          if (t.status !== statusFilter) return false;
+        }
+      }
       if (driverFilter !== "All Drivers" && t.driver !== driverFilter) return false;
       if (query.trim()) {
         const q = query.toLowerCase();
@@ -334,7 +442,7 @@ function Console() {
     return results;
   }, [agentFilter, statusFilter, driverFilter, query, alertCounts, nav, touristsList]);
 
-  const selected = touristsList.find((t) => t.id === selectedId) ?? filtered[0] ?? touristsList[0];
+  const selected = filtered.find((t) => t.id === selectedId) ?? filtered[0] ?? touristsList[0];
 
   const stats = useMemo(() => {
     const active = touristsList.filter((t) => t.status === "Active").length;
@@ -342,6 +450,10 @@ function Console() {
     const pax = touristsList.filter((t) => t.status !== "Completed").reduce((s, t) => s + t.pax, 0);
     return { active, upcoming, pax, countries: new Set(touristsList.map((t) => t.country)).size };
   }, [touristsList]);
+
+  const filteredDriversForFilter = drivers.filter((d: any) =>
+    d.name?.toLowerCase().includes(driverSearchQuery.toLowerCase())
+  );
 
   if (isLoadingAuth) {
     return (
@@ -353,77 +465,221 @@ function Console() {
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-background text-foreground">
-      {/* Left sidebar */}
-      <aside className="flex w-64 shrink-0 flex-col border-r border-border bg-sidebar">
-        <div className="flex items-center gap-2 px-5 py-5">
-          <div className="grid h-9 w-9 place-items-center rounded-md bg-primary text-primary-foreground">
-            <Plane className="h-4 w-4" />
-          </div>
-          <div className="min-w-0">
-            <div className="text-sm font-semibold tracking-tight">Horizon Travel</div>
-            <div className="text-[11px] text-muted-foreground">Operations Console</div>
+      {/* Left sidebar — theme-aware premium design */}
+      <aside className="flex w-72 shrink-0 flex-col overflow-hidden transition-all duration-300" style={{
+        background: theme === "light"
+          ? 'linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%)'
+          : 'linear-gradient(180deg, #0f172a 0%, #1e293b 100%)',
+        borderRight: theme === "light"
+          ? '1px solid rgba(0,0,0,0.08)'
+          : '1px solid rgba(255,255,255,0.06)',
+      }}>
+        {/* ── Brand header ── */}
+        <div className="relative px-6 pb-5 pt-7">
+          {/* Subtle top-glow decoration */}
+          <div className="pointer-events-none absolute -top-24 left-1/2 h-48 w-48 -translate-x-1/2 rounded-full transition-opacity duration-300" style={{
+            background: theme === "light"
+              ? 'radial-gradient(circle, rgba(59,130,246,0.06) 0%, transparent 70%)'
+              : 'radial-gradient(circle, rgba(59,130,246,0.12) 0%, transparent 70%)'
+          }} />
+          <div className="relative flex items-center gap-3.5">
+            <div className="grid h-11 w-11 shrink-0 place-items-center rounded-[13px] shadow-lg" style={{
+              background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
+              boxShadow: theme === "light"
+                ? '0 6px 16px rgba(59,130,246,0.2), inset 0 1px 0 rgba(255,255,255,0.2)'
+                : '0 8px 24px rgba(59,130,246,0.3), inset 0 1px 0 rgba(255,255,255,0.15)',
+            }}>
+              <MapPinned className="h-[21px] w-[21px] text-white" strokeWidth={2.2} />
+            </div>
+            <div className="min-w-0">
+              <div className={cn(
+                "flex items-baseline gap-1 text-[20px] font-extrabold leading-none tracking-tight transition-colors duration-300",
+                theme === "light" ? "text-slate-900" : "text-white"
+              )}>
+                Horizon <span className={cn("font-medium transition-colors", theme === "light" ? "text-blue-600" : "text-blue-400")}>Travel</span>
+              </div>
+              <div className={cn(
+                "mt-1.5 text-[9px] font-semibold uppercase tracking-[0.25em] transition-colors",
+                theme === "light" ? "text-slate-500" : "text-slate-400"
+              )}>
+                Operations Console
+              </div>
+            </div>
           </div>
         </div>
 
-        <div className="px-4 pb-3">
-          <Label className="mb-1.5 block text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+        {/* ── Agent filter ── */}
+        <div className="px-5 pb-4">
+          <Label className={cn(
+            "mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.18em] transition-colors",
+            theme === "light" ? "text-slate-500/80" : "text-slate-500"
+          )}>
             Agent View
           </Label>
-          <Select value={agentFilter} onValueChange={setAgentFilter}>
-            <SelectTrigger className="h-9 w-full bg-card">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {agents.map((a) => (
-                <SelectItem key={a.id} value={a.id}>
-                  {a.agent_name || a.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="flex gap-2">
+            <Select value={agentFilter} onValueChange={(val) => {
+              setAgentFilter(val);
+              setIsDetailOpen(false);
+              setSelectedId("");
+            }}>
+              <SelectTrigger className={cn(
+                "h-9 flex-1 transition-all duration-200 focus:ring-blue-500/40",
+                theme === "light"
+                  ? "border-slate-300 bg-white text-slate-800 hover:bg-slate-50"
+                  : "border-slate-700/60 bg-slate-800/60 text-slate-200 hover:bg-slate-800"
+              )}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Agents</SelectItem>
+                {agents.map((a) => (
+                  <SelectItem key={a.id} value={a.id}>
+                    {a.agent_name || a.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <button
+              onClick={() => {
+                setAgentFilter("all");
+                setIsDetailOpen(false);
+                setSelectedId("");
+              }}
+              className={cn(
+                "h-9 rounded-md border px-3 text-xs font-medium transition-all duration-200",
+                theme === "light"
+                  ? "border-slate-300 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                  : "border-slate-700/60 bg-slate-800/60 text-slate-300 hover:bg-slate-700 hover:text-white"
+              )}
+            >
+              All Agents
+            </button>
+          </div>
         </div>
 
-        <Separator />
+        {/* ── Divider ── */}
+        <div className={cn(
+          "mx-5 h-px bg-gradient-to-r from-transparent to-transparent transition-all",
+          theme === "light" ? "via-slate-300" : "via-slate-700/60"
+        )} />
 
-        <nav className="flex-1 px-3 py-3">
-          {NAV.map((item) => {
-            const Icon = item.icon;
-            const active = nav === item.key;
-            return (
-              <button
-                key={item.key}
-                onClick={() => setNav(item.key)}
-                className={cn(
-                  "mb-0.5 flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-sm transition-colors",
-                  active
-                    ? "bg-sidebar-accent font-medium text-sidebar-accent-foreground"
-                    : "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground",
-                )}
-              >
-                <Icon className="h-4 w-4 shrink-0" />
-                <span className="truncate">{item.label}</span>
-              </button>
-            );
-          })}
+        {/* ── Navigation sections ── */}
+        <nav className="flex-1 space-y-5 overflow-y-auto px-4 py-5" style={{
+          scrollbarWidth: 'thin',
+          scrollbarColor: theme === "light" ? '#cbd5e1 transparent' : '#334155 transparent'
+        }}>
+          {NAV_SECTIONS.map((section) => (
+            <div key={section.title}>
+              <div className="mb-1.5 px-3 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">
+                {section.title}
+              </div>
+              <div className="space-y-0.5">
+                {section.items.map((item) => {
+                  const Icon = item.icon;
+                  const active = nav === item.key;
+                  return (
+                    <button
+                      key={item.key}
+                      onClick={() => {
+                        setNav(item.key);
+                        setSelectedId("");
+                        setIsDetailOpen(false);
+                      }}
+                      className={cn(
+                        "group relative flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-[13.5px] font-medium transition-all duration-200",
+                        active
+                          ? (theme === "light" ? "text-blue-600 font-semibold" : "text-white")
+                          : (theme === "light" ? "text-slate-600 hover:text-slate-900" : "text-slate-400 hover:text-slate-200"),
+                      )}
+                      style={active ? {
+                        background: theme === "light"
+                          ? 'linear-gradient(135deg, rgba(59,130,246,0.12) 0%, rgba(59,130,246,0.04) 100%)'
+                          : 'linear-gradient(135deg, rgba(59,130,246,0.18) 0%, rgba(59,130,246,0.08) 100%)',
+                        boxShadow: theme === "light"
+                          ? 'inset 0 0 0 1px rgba(59,130,246,0.15), 0 0 15px -4px rgba(59,130,246,0.08)'
+                          : 'inset 0 0 0 1px rgba(59,130,246,0.2), 0 0 20px -4px rgba(59,130,246,0.15)',
+                      } : undefined}
+                    >
+                      {/* Active left accent bar */}
+                      {active && (
+                        <span className={cn(
+                          "absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full",
+                          theme === "light" ? "bg-blue-600" : "bg-blue-400"
+                        )} style={{
+                          boxShadow: theme === "light"
+                            ? '0 0 6px 1px rgba(37,99,235,0.4)'
+                            : '0 0 8px 1px rgba(96,165,250,0.5)',
+                        }} />
+                      )}
+                      {/* Hover background */}
+                      {!active && (
+                        <span className={cn(
+                          "pointer-events-none absolute inset-0 rounded-lg opacity-0 transition-opacity duration-200 group-hover:opacity-100",
+                          theme === "light" ? "bg-slate-200/50" : "bg-white/[0.03]"
+                        )} />
+                      )}
+                      <Icon className={cn(
+                        "relative h-[18px] w-[18px] shrink-0 transition-colors duration-200",
+                        active
+                          ? (theme === "light" ? "text-blue-600" : "text-blue-400")
+                          : (theme === "light" ? "text-slate-500 group-hover:text-slate-800" : "text-slate-500 group-hover:text-slate-300"),
+                      )} strokeWidth={active ? 2.2 : 1.8} />
+                      <span className="relative truncate">{item.label}</span>
+                      {active && (
+                        <ChevronRight className={cn(
+                          "relative ml-auto h-3.5 w-3.5",
+                          theme === "light" ? "text-blue-600/60" : "text-blue-400/60"
+                        )} />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
         </nav>
 
-        <div className="border-t border-border p-3 space-y-2">
-          <div className="flex items-center gap-3 rounded-md p-2">
-            <div className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-accent text-xs font-semibold text-accent-foreground">
+        {/* ── Divider ── */}
+        <div className={cn(
+          "mx-5 h-px bg-gradient-to-r from-transparent to-transparent transition-all",
+          theme === "light" ? "via-slate-300" : "via-slate-700/60"
+        )} />
+
+        {/* ── User profile & Sign out ── */}
+        <div className="p-4 space-y-3">
+          <div className={cn(
+            "flex items-center gap-3 rounded-xl p-2.5 transition-colors",
+            theme === "light" ? "hover:bg-slate-200/50" : "hover:bg-white/[0.04]"
+          )}>
+            <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full font-semibold text-[11px] text-white" style={{
+              background: 'linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)',
+              boxShadow: '0 4px 12px rgba(99,102,241,0.25)',
+            }}>
               {session?.user?.email?.substring(0, 2).toUpperCase() || "CP"}
             </div>
             <div className="min-w-0 flex-1">
-              <div className="truncate text-sm font-medium">{session?.user?.email || "Company Profile"}</div>
-              <div className="truncate text-xs text-muted-foreground">Authorized Access</div>
+              <div className={cn(
+                "truncate text-[13px] font-medium transition-colors",
+                theme === "light" ? "text-slate-800" : "text-slate-200"
+              )}>{session?.user?.email || "Company Profile"}</div>
+              <div className="mt-0.5 flex items-center gap-1 text-[11px] text-slate-500">
+                <Shield className="h-3 w-3" />
+                <span>Authorized</span>
+              </div>
             </div>
           </div>
-          
+
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button variant="outline" className="w-full justify-start text-sm font-medium h-9 text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200">
-                <Building2 className="mr-2 h-4 w-4" />
-                Sign Out
-              </Button>
+              <button className={cn(
+                "group flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-[13px] font-medium transition-all duration-200",
+                theme === "light"
+                  ? "text-slate-500 hover:bg-red-50 hover:text-red-600"
+                  : "text-slate-500 hover:bg-red-500/10 hover:text-red-400"
+              )}>
+                <LogOut className="h-4 w-4 transition-transform duration-200 group-hover:-translate-x-0.5" />
+                <span>Sign Out</span>
+              </button>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
@@ -450,42 +706,79 @@ function Console() {
       <div className="flex min-w-0 flex-1">
         <main className="flex min-w-0 flex-1 flex-col">
           {/* Top bar */}
-          <header className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-card px-6">
-            <div>
-              <h1 className="text-base font-semibold tracking-tight">
-                {nav === "agents"
-                  ? "Agent Management"
-                  : nav === "leads"
-                    ? "Inquiries & Leads"
-                  : nav === "dashboard"
-                    ? "Dashboard"
-                    : nav === "reports"
-                      ? "Reports"
-                      : nav === "settings"
-                        ? "Settings"
-                        : "Active Tours"}
-              </h1>
-              <p className="text-xs text-muted-foreground">
-                {nav === "agents"
-                  ? "Manage your operations team"
-                  : nav === "leads"
-                    ? "Unconfirmed inquiries and requested itineraries"
-                  : "Live overview of tourists currently on tour"}
-              </p>
+          <header className="flex h-16 shrink-0 items-center justify-between border-b border-border bg-card/80 backdrop-blur-md px-7">
+            <div className="flex items-center gap-4">
+              {/* Icon with subtle tinted background and soft shadow */}
+              <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-primary/10 bg-primary/5 shadow-sm text-primary">
+                {nav === "agents" ? <Users className="h-5 w-5" /> :
+                  nav === "leads" ? <MessageCircle className="h-5 w-5" /> :
+                    nav === "dashboard" ? <LayoutDashboard className="h-5 w-5" /> :
+                      nav === "reports" ? <BarChart3 className="h-5 w-5" /> :
+                        nav === "settings" ? <Settings className="h-5 w-5" /> :
+                          nav === "drivers" ? <Car className="h-5 w-5" /> :
+                            <Plane className="h-5 w-5" />}
+              </div>
+              <div>
+                <h1 className="text-[17px] font-bold tracking-tight text-foreground leading-none">
+                  {nav === "agents"
+                    ? "Agent Management"
+                    : nav === "leads"
+                      ? "Inquiries & Leads"
+                      : nav === "dashboard"
+                        ? "Dashboard"
+                        : nav === "reports"
+                          ? "Reports"
+                          : nav === "settings"
+                            ? "Settings"
+                            : nav === "drivers"
+                              ? "Drivers & Guides"
+                              : "Active Tours"}
+                </h1>
+                <p className="text-[12.5px] text-muted-foreground mt-1 font-medium tracking-wide opacity-90">
+                  {nav === "agents"
+                    ? "Manage your operations team and their assignments"
+                    : nav === "leads"
+                      ? "Review and process unconfirmed inquiries and requested itineraries"
+                      : nav === "dashboard"
+                        ? "Overview of your business metrics and recent activity"
+                        : nav === "reports"
+                          ? "Analytics and performance reports"
+                          : nav === "settings"
+                            ? "Manage your account, preferences, and system settings"
+                            : nav === "drivers"
+                              ? "Manage your drivers, guides and vehicle assignments"
+                              : "Live overview of tourists currently on tour"}
+                </p>
+              </div>
             </div>
             <div className="flex items-center gap-2">
+              <Button
+                id="view-graphs-btn"
+                variant="outline"
+                size="sm"
+                onClick={() => router.navigate({ to: "/analytics" })}
+                className="flex items-center gap-1.5 h-9 rounded-lg border border-border px-3 text-xs font-semibold text-muted-foreground bg-card/50 transition-all hover:bg-accent hover:text-primary hover:border-primary/30 shadow-sm mr-1"
+              >
+                <BarChart3 className="h-4 w-4 text-primary" />
+                <span className="hidden sm:inline">View Graphs</span>
+              </Button>
+              <div className="h-4 w-px bg-border mx-1" />
               <Button
                 variant="ghost"
                 size="icon"
                 aria-label="Toggle theme"
                 onClick={toggle}
-                className="h-9 w-9"
+                className="h-9 w-9 rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
               >
-                {theme === "light" ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+                {theme === "light" ? <Moon className="h-4.5 w-4.5" /> : <Sun className="h-4.5 w-4.5" />}
               </Button>
-              <Button variant="ghost" size="icon" className="h-9 w-9 relative">
-                <Bell className="h-4 w-4" />
-                <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-destructive" />
+              <div className="h-4 w-px bg-border mx-1" />
+              <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground transition-colors relative">
+                <Bell className="h-4.5 w-4.5" />
+                <span className="absolute right-2 top-2 flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-destructive opacity-75" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-destructive" />
+                </span>
               </Button>
             </div>
           </header>
@@ -506,31 +799,31 @@ function Console() {
                 console.error(e);
               }
             }}
-            onEditAgent={async (agent: any, form: any) => {
-              try {
-                const res = await fetch(`http://localhost:8000/api/agents/${agent.id}`, {
-                  method: "PUT",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ agent_name: form.name, email: form.email, region: form.region, company_id: companyId })
-                });
-                if (res.ok) {
-                  const updated = await res.json();
-                  setAgents((prev: any[]) => prev.map((a: any) => a.id === updated.id ? updated : a));
+              onEditAgent={async (agent: any, form: any) => {
+                try {
+                  const res = await fetch(`http://localhost:8000/api/agents/${agent.id}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ agent_name: form.name, email: form.email, region: form.region, company_id: companyId })
+                  });
+                  if (res.ok) {
+                    const updated = await res.json();
+                    setAgents((prev: any[]) => prev.map((a: any) => a.id === updated.id ? updated : a));
+                  }
+                } catch (e) {
+                  console.error(e);
                 }
-              } catch (e) {
-                console.error(e);
-              }
-            }}
-            onDeleteAgent={async (agentId: string) => {
-              try {
-                const res = await fetch(`http://localhost:8000/api/agents/${agentId}`, { method: "DELETE" });
-                if (res.ok) {
-                  setAgents((prev: any[]) => prev.filter((a: any) => a.id !== agentId));
+              }}
+              onDeleteAgent={async (agentId: string) => {
+                try {
+                  const res = await fetch(`http://localhost:8000/api/agents/${agentId}`, { method: "DELETE" });
+                  if (res.ok) {
+                    setAgents((prev: any[]) => prev.filter((a: any) => a.id !== agentId));
+                  }
+                } catch (e) {
+                  console.error(e);
                 }
-              } catch (e) {
-                console.error(e);
-              }
-            }}
+              }}
             />
           ) : nav === "drivers" ? (
             <DriverManagement drivers={drivers} onAddDriver={async (form) => {
@@ -548,34 +841,34 @@ function Console() {
                 throw new Error(err.detail || "Server error");
               }
             }}
-            onUpdateDriver={async (driverId: string, form) => {
-              try {
-                const res = await fetch(`http://localhost:8000/api/drivers/${driverId}`, {
-                  method: "PUT",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ name: form.name, phone: form.phone, email: form.email, password: form.password, company_id: companyId })
-                });
-                if (res.ok) {
-                  const updated = await res.json();
-                  setDrivers((prev: any[]) => prev.map((d: any) => d.id === updated.id ? updated : d));
+              onUpdateDriver={async (driverId: string, form) => {
+                try {
+                  const res = await fetch(`http://localhost:8000/api/drivers/${driverId}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ name: form.name, phone: form.phone, email: form.email, password: form.password, company_id: companyId })
+                  });
+                  if (res.ok) {
+                    const updated = await res.json();
+                    setDrivers((prev: any[]) => prev.map((d: any) => d.id === updated.id ? updated : d));
+                  }
+                } catch (e) {
+                  console.error(e);
                 }
-              } catch (e) {
-                console.error(e);
-              }
-            }}
-            onDeleteDriver={async (driverId: string) => {
-              try {
-                const res = await fetch(`http://localhost:8000/api/drivers/${driverId}`, { method: "DELETE" });
-                if (res.ok) {
-                  setDrivers((prev: any[]) => prev.filter((d: any) => d.id !== driverId));
+              }}
+              onDeleteDriver={async (driverId: string) => {
+                try {
+                  const res = await fetch(`http://localhost:8000/api/drivers/${driverId}`, { method: "DELETE" });
+                  if (res.ok) {
+                    setDrivers((prev: any[]) => prev.filter((d: any) => d.id !== driverId));
+                  }
+                } catch (e) {
+                  console.error(e);
                 }
-              } catch (e) {
-                console.error(e);
-              }
-            }}
+              }}
             />
           ) : nav === "dashboard" || nav === "reports" || nav === "settings" ? (
-            <DashboardOverview stats={stats} navLabel={nav} />
+            <DashboardOverview stats={stats} navLabel={nav} onNavigate={setNav} />
           ) : (
             <ToursWorkspace
               drivers={drivers}
@@ -591,7 +884,9 @@ function Console() {
               isDetailOpen={isDetailOpen}
               setIsDetailOpen={setIsDetailOpen}
               alertCounts={alertCounts}
+              statusAlertCounts={statusAlertCounts}
               notifications={notifications}
+              nav={nav}
               onResolveAlert={async (id) => {
                 try {
                   await fetch(`http://localhost:8000/api/notifications/${id}/resolve`, { method: "PATCH" });
@@ -630,9 +925,9 @@ function Console() {
           )}
         </main>
 
-        <AddTouristSheet 
-          open={isAddClientOpen} 
-          onOpenChange={setIsAddClientOpen} 
+        <AddTouristSheet
+          open={isAddClientOpen}
+          onOpenChange={setIsAddClientOpen}
           mode={addClientMode}
           initialData={editingTourist}
           agents={agents}
@@ -650,13 +945,13 @@ function Console() {
             try {
               const matchedAgent = agents.find((a: any) => (a.agent_name || a.name) === newTourist.agent);
               const matchedDriver = drivers.find((d: any) => d.name === newTourist.driver);
-              
+
               let arrivalStr = new Date().toISOString().split('T')[0];
               if (newTourist.arrival && newTourist.arrival !== 'TBD') {
-                 const parsed = new Date(newTourist.arrival);
-                 if (!isNaN(parsed.getTime())) {
-                    arrivalStr = parsed.toISOString().split('T')[0];
-                 }
+                const parsed = new Date(newTourist.arrival);
+                if (!isNaN(parsed.getTime())) {
+                  arrivalStr = parsed.toISOString().split('T')[0];
+                }
               }
 
               const payload = {
@@ -678,7 +973,8 @@ function Console() {
                 group_members: (newTourist.group || []).map((g: any) => ({
                   name: g.name || 'Unknown',
                   passport_number: g.passport || 'N/A',
-                  email: g.email || 'N/A'
+                  email: g.email || 'N/A',
+                  phone: g.phone || null
                 })),
                 itineraries: (newTourist.itinerary || []).map((it: any) => ({
                   day_number: it.day || 1,
@@ -696,8 +992,8 @@ function Console() {
                   }))
                 }))
               };
-              
-              const url = editingTourist 
+
+              const url = editingTourist
                 ? `http://localhost:8000/api/tourists/${editingTourist.id}`
                 : 'http://localhost:8000/api/tourists';
               const method = editingTourist ? 'PUT' : 'POST';
@@ -709,24 +1005,50 @@ function Console() {
             } catch (e) {
               console.error('Failed to save to db', e);
             }
-          }} 
+          }}
         />
 
-        {/* Right sidebar */}
+        {/* Right sidebar — show on all pages */}
         {!isDetailOpen && (
-          <aside className="hidden w-80 shrink-0 flex-col border-l border-border bg-sidebar xl:flex">
-            <div className="px-5 py-4">
-            <h3 className="text-sm font-semibold">Today</h3>
-            <p className="text-xs text-muted-foreground">Monday, 22 June 2026</p>
-          </div>
-          <Separator />
+          <aside className="hidden w-[200px] shrink-0 flex-col border-l border-border bg-sidebar/40 backdrop-blur-sm xl:flex">
+            {/* Top section: Date */}
+            <div className="flex items-start gap-2.5 px-4 py-4">
+              <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg border border-primary/10 bg-primary/5 text-primary shadow-sm mt-0.5">
+                <CalendarDays className="h-4 w-4" />
+              </div>
+              <div className="min-w-0">
+                <h3 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Today</h3>
+                {currentTime ? (
+                  <div className="mt-0.5 text-xs font-bold text-foreground leading-snug tabular-nums break-words">
+                    {formattedDate}
+                  </div>
+                ) : (
+                  <div className="mt-0.5 text-xs font-bold text-foreground opacity-50">Loading...</div>
+                )}
+              </div>
+            </div>
 
-          <div className="grid grid-cols-2 gap-3 p-4">
-            <StatTile label="Active" value={stats.active} tone="success" />
-            <StatTile label="Upcoming" value={stats.upcoming} tone="info" />
-            <StatTile label="Pax on tour" value={stats.pax} tone="default" />
-            <StatTile label="Countries" value={stats.countries} tone="default" />
-          </div>
+            {/* Center: Brand logo */}
+            <div className="flex flex-1 flex-col items-center justify-center px-4">
+              <div className="grid h-12 w-12 place-items-center rounded-[14px] shadow-md" style={{
+                background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
+                boxShadow: '0 4px 12px rgba(59,130,246,0.15)',
+              }}>
+                <MapPinned className="h-6 w-6 text-white" strokeWidth={2} />
+              </div>
+            </div>
+
+            {/* Pinned to the bottom of the sidebar: Live Time */}
+            {currentTime && (
+              <div className="mt-auto p-4 border-t border-border bg-card/20">
+                <div className="flex flex-col items-center justify-center p-3 rounded-lg border border-border bg-card/50 shadow-sm">
+                  <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Local Time</span>
+                  <span className="text-sm font-bold tracking-tight text-primary tabular-nums">
+                    {formattedTime}
+                  </span>
+                </div>
+              </div>
+            )}
           </aside>
         )}
       </div>
@@ -740,24 +1062,44 @@ function StatTile({
   label,
   value,
   tone,
+  icon: Icon,
 }: {
   label: string;
   value: number;
   tone: "success" | "info" | "default";
+  icon: typeof Activity;
 }) {
+  const iconColor =
+    tone === "success"
+      ? "text-emerald-500 bg-emerald-500/10 border-emerald-500/20"
+      : tone === "info"
+        ? "text-blue-500 bg-blue-500/10 border-blue-500/20"
+        : "text-slate-500 bg-slate-500/10 border-slate-500/20";
+
   return (
-    <div className="rounded-md border border-border bg-card p-3">
-      <div className="text-[11px] uppercase tracking-wider text-muted-foreground">{label}</div>
-      <div className="mt-0.5 flex items-baseline gap-1.5">
-        <span className="text-xl font-semibold tracking-tight">{value}</span>
-        <span
-          className={cn(
-            "h-1.5 w-1.5 rounded-full",
-            tone === "success" && "bg-success",
-            tone === "info" && "bg-primary",
-            tone === "default" && "bg-muted-foreground/40",
-          )}
-        />
+    <div className="group rounded-xl border border-border bg-card p-4 transition-all duration-300 hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700 relative overflow-hidden">
+      {/* Subtle background tone glow on hover */}
+      <div className={cn(
+        "absolute -right-6 -bottom-6 h-16 w-16 rounded-full blur-2xl opacity-0 group-hover:opacity-30 transition-opacity duration-300",
+        tone === "success" && "bg-emerald-500",
+        tone === "info" && "bg-blue-500",
+        tone === "default" && "bg-slate-500"
+      )} />
+
+      <div className="flex items-center justify-between gap-2">
+        <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground/80">{label}</div>
+        <div className={cn("grid h-7 w-7 place-items-center rounded-lg border text-xs", iconColor)}>
+          <Icon className="h-4 w-4" />
+        </div>
+      </div>
+      <div className="mt-2.5 flex items-baseline gap-2">
+        <span className="text-2xl font-extrabold tracking-tight text-foreground leading-none">{value}</span>
+        <span className={cn(
+          "h-1.5 w-1.5 rounded-full",
+          tone === "success" && "bg-emerald-500",
+          tone === "info" && "bg-blue-500",
+          tone === "default" && "bg-slate-400"
+        )} />
       </div>
     </div>
   );
@@ -817,11 +1159,13 @@ function ToursWorkspace({
   isDetailOpen,
   setIsDetailOpen,
   alertCounts,
+  statusAlertCounts,
   notifications,
   onResolveAlert,
   onAddClient,
   onConfirmTour,
   onDeleteClient,
+  nav,
 }: {
   drivers: any[];
   query: string;
@@ -836,19 +1180,37 @@ function ToursWorkspace({
   isDetailOpen: boolean;
   setIsDetailOpen: (v: boolean) => void;
   alertCounts: Record<string, number>;
+  statusAlertCounts: Record<string, number>;
   notifications: any[];
   onResolveAlert: (id: string) => void;
   onAddClient: () => void;
   onConfirmTour: (t: Tourist) => void;
   onDeleteClient: (id: string) => void;
+  nav: string;
 }) {
+  const wsRouter = useRouter();
+  const [driverPopoverOpen, setDriverPopoverOpen] = useState(false);
+  const [driverSearchQuery, setDriverSearchQuery] = useState("");
+
+  useEffect(() => {
+    if (!driverPopoverOpen) {
+      setDriverSearchQuery("");
+    }
+  }, [driverPopoverOpen]);
+
+  const filteredDriversForFilter = useMemo(() => {
+    const query = driverSearchQuery.trim().toLowerCase();
+    if (!query) return drivers;
+    return drivers.filter((d: any) => d.name?.toLowerCase().includes(query));
+  }, [drivers, driverSearchQuery]);
+
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       {isDetailOpen ? (
         <div className="flex-1 bg-background overflow-hidden">
-          <TouristDetail 
-            t={selected} 
-            onBack={() => setIsDetailOpen(false)} 
+          <TouristDetail
+            t={selected}
+            onBack={() => setIsDetailOpen(false)}
             notifications={notifications}
             onResolveAlert={onResolveAlert}
             onConfirmTour={() => onConfirmTour(selected)}
@@ -869,51 +1231,177 @@ function ToursWorkspace({
                 className="h-9 pl-9"
               />
             </div>
-            <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as any)}>
-              <SelectTrigger className="h-9 w-[160px]">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="Active">Active</SelectItem>
-                <SelectItem value="Upcoming">Upcoming</SelectItem>
-                <SelectItem value="Completed">Completed</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={driverFilter} onValueChange={setDriverFilter}>
-              <SelectTrigger className="h-9 w-[180px]">
-                <SelectValue placeholder="Driver" />
-              </SelectTrigger>
-              <SelectContent>
-                {drivers.map((d: any) => (
-                  <SelectItem key={d.id} value={d.name}>
-                    {d.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Popover open={driverPopoverOpen} onOpenChange={setDriverPopoverOpen}>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className="flex items-center justify-between h-9 w-[180px] px-3 rounded-md border border-input bg-background text-sm cursor-pointer hover:bg-muted/50 focus:outline-none focus:ring-1 focus:ring-ring"
+                >
+                  <span className="truncate">
+                    {driverFilter === "All Drivers" ? "Driver/Guide" : driverFilter}
+                  </span>
+                  <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0 ml-2" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="p-0 w-[200px] flex flex-col z-[100] bg-card border border-border rounded-md shadow-md" align="start">
+                <div className="p-2 border-b border-border">
+                  <Input
+                    placeholder="Search driver..."
+                    value={driverSearchQuery}
+                    onChange={(e) => setDriverSearchQuery(e.target.value)}
+                    className="h-8 text-xs"
+                    autoFocus
+                  />
+                </div>
+                <div className="overflow-y-auto flex-1 max-h-[200px] py-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDriverFilter("All Drivers");
+                      setDriverPopoverOpen(false);
+                    }}
+                    className={cn(
+                      "w-full text-left px-3 py-1.5 text-xs hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center rounded-sm cursor-pointer",
+                      driverFilter === "All Drivers" && "font-semibold bg-accent/50"
+                    )}
+                  >
+                    All Drivers
+                  </button>
+                  {filteredDriversForFilter.map((d: any) => (
+                    <button
+                      key={d.id}
+                      type="button"
+                      onClick={() => {
+                        setDriverFilter(d.name);
+                        setDriverPopoverOpen(false);
+                      }}
+                      className={cn(
+                        "w-full text-left px-3 py-1.5 text-xs hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center rounded-sm cursor-pointer",
+                        driverFilter === d.name && "font-semibold bg-accent/50"
+                      )}
+                    >
+                      <span className="truncate">{d.name}</span>
+                    </button>
+                  ))}
+                  {filteredDriversForFilter.length === 0 && (
+                    <div className="text-[10px] text-muted-foreground text-center py-2">No drivers found</div>
+                  )}
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
 
-          {/* List Full Width */}
+          {/* Status bar */}
+          <div className="flex items-center justify-center border-b border-border bg-slate-50/50 dark:bg-slate-950/20 px-6 py-3">
+            <div className="flex bg-slate-100/80 dark:bg-slate-900/60 p-1 rounded-xl border border-slate-200/60 dark:border-slate-800/50 gap-1.5 shadow-[inset_0_1px_3px_rgba(0,0,0,0.04)] backdrop-blur-sm">
+              {[
+                {
+                  key: "all",
+                  label: "All Statuses",
+                  icon: Layers,
+                  activeClass: "bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 border-slate-200/80 dark:border-slate-700/80 shadow-[0_2px_5px_rgba(0,0,0,0.06),0_0.5px_1.5px_rgba(0,0,0,0.04)]",
+                  iconClass: "text-slate-600 dark:text-slate-400"
+                },
+                {
+                  key: "Active",
+                  label: "Active",
+                  icon: Plane,
+                  activeClass: "bg-white dark:bg-slate-800 text-teal-600 dark:text-teal-400 border-teal-200/60 dark:border-teal-900/40 shadow-[0_2.5px_8px_-1px_rgba(20,184,166,0.12),0_1px_3px_rgba(20,184,166,0.06)]",
+                  iconClass: "text-teal-600 dark:text-teal-400"
+                },
+                {
+                  key: "Upcoming",
+                  label: "Upcoming",
+                  icon: Clock,
+                  activeClass: "bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 border-indigo-200/60 dark:border-indigo-900/40 shadow-[0_2.5px_8px_-1px_rgba(99,102,241,0.12),0_1px_3px_rgba(99,102,241,0.06)]",
+                  iconClass: "text-indigo-600 dark:text-indigo-400"
+                },
+                {
+                  key: "Completed",
+                  label: "Completed",
+                  icon: CheckCircle2,
+                  activeClass: "bg-white dark:bg-slate-800 text-purple-600 dark:text-purple-400 border-purple-200/60 dark:border-purple-900/40 shadow-[0_2.5px_8px_-1px_rgba(168,85,247,0.12),0_1px_3px_rgba(168,85,247,0.06)]",
+                  iconClass: "text-purple-600 dark:text-purple-400"
+                },
+                {
+                  key: "Cancelled",
+                  label: "Cancelled",
+                  icon: XCircle,
+                  activeClass: "bg-white dark:bg-slate-800 text-orange-600 dark:text-orange-400 border-orange-200/60 dark:border-orange-900/40 shadow-[0_2.5px_8px_-1px_rgba(249,115,22,0.12),0_1px_3px_rgba(249,115,22,0.06)]",
+                  iconClass: "text-orange-600 dark:text-orange-400"
+                },
+              ].map((tab) => {
+                const Icon = tab.icon;
+                const active = statusFilter === tab.key;
+                const hasAlert = (tab.key === "Active" || tab.key === "Upcoming") && statusAlertCounts[tab.key] > 0;
+                return (
+                  <button
+                    key={tab.key}
+                    type="button"
+                    onClick={() => setStatusFilter(tab.key as any)}
+                    className={cn(
+                      "group flex items-center gap-2 px-4 py-1.5 text-xs font-medium rounded-lg transition-all duration-200 cursor-pointer border border-transparent transform hover:scale-[1.02] active:scale-[0.98]",
+                      active
+                        ? tab.activeClass
+                        : "text-muted-foreground hover:text-foreground hover:bg-white/60 dark:hover:bg-slate-800/40"
+                    )}
+                  >
+                    <div className="relative flex items-center justify-center">
+                      <Icon className={cn("h-3.5 w-3.5 shrink-0 transition-transform duration-200 group-hover:scale-110", active ? tab.iconClass : "text-muted-foreground/70")} />
+                      {hasAlert && (
+                        <span className="absolute -top-0.5 -right-0.5 flex h-1.5 w-1.5">
+                          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-destructive opacity-75" />
+                          <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-destructive" />
+                        </span>
+                      )}
+                    </div>
+                    <span>{tab.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Tourist List */}
           <div className="flex min-h-0 flex-1">
             <div className="flex w-full flex-col">
               <div className="flex items-center justify-between border-b border-border bg-card px-5 py-2.5">
-                <div className="flex items-center gap-4 text-xs font-medium text-muted-foreground">
-                  {tourists.length} {tourists.length === 1 ? "tourist" : "tourists"}
+                <div className="flex items-center gap-1.5 text-xs font-bold text-foreground">
+                  {nav === "leads" ? (
+                    <MessageCircle className="h-3.5 w-3.5 text-muted-foreground" />
+                  ) : (
+                    <Users className="h-3.5 w-3.5 text-muted-foreground" />
+                  )}
+                  <span>
+                    {tourists.length} {nav === "leads" ? (tourists.length === 1 ? "Inquiry" : "Inquiries") : (tourists.length === 1 ? "Tourist" : "Tourists")}
+                  </span>
                 </div>
                 <div className="flex items-center gap-4">
-                  <div className="text-[11px] text-muted-foreground">Sorted by arrival</div>
+                  <div className="text-[11px] text-muted-foreground">Sorted by status</div>
                   <Button size="sm" onClick={onAddClient} className="gap-2 h-7 px-3 text-xs">
-                    <UserPlus className="h-3.5 w-3.5" />
-                    Add Client
+                    {nav === "leads" ? (
+                      <>
+                        <MessageCircle className="h-3.5 w-3.5" />
+                        Add Inquiry
+                      </>
+                    ) : (
+                      <>
+                        <UserPlus className="h-3.5 w-3.5" />
+                        Add Client
+                      </>
+                    )}
                   </Button>
                 </div>
               </div>
-        
-      <ScrollArea className="flex-1">
+
+              <ScrollArea className="flex-1">
                 <ul>
-                  {tourists.map((t) => {
+                  {[...tourists].sort((a, b) => {
+                    const order: Record<string, number> = { Active: 0, "On Tour": 0, Upcoming: 1, Completed: 2, Cancelled: 3 };
+                    return (order[a.status] ?? 4) - (order[b.status] ?? 4);
+                  }).map((t) => {
                     const hasAlerts = (alertCounts[t.id] || 0) > 0;
+                    const isEngaged = t.status === "Active" || t.status === "On Tour";
                     return (
                       <li
                         key={t.id}
@@ -923,14 +1411,39 @@ function ToursWorkspace({
                         }}
                         className={cn(
                           "group cursor-pointer border-b px-6 py-4 transition-all duration-500 relative",
-                          hasAlerts 
-                            ? "animate-[alert-glow_3s_ease-in-out_infinite] z-10 hover:brightness-110" 
-                            : "border-border hover:bg-accent/30"
+                          hasAlerts
+                            ? "animate-[alert-glow_3s_ease-in-out_infinite] z-10 hover:brightness-110"
+                            : "border-border hover:bg-accent/30",
+                          isEngaged && !hasAlerts && "border-l-[3px] border-l-teal-500 bg-teal-50/30 dark:bg-teal-950/10"
                         )}
                       >
                         <div className="flex items-center justify-between gap-4">
                           <div className="flex min-w-0 items-center gap-4">
-                            <span className="text-2xl leading-none">{flagEmoji(t.countryCode)}</span>
+                            <div className="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-accent text-sm relative">
+                              {t.countryCode && t.countryCode !== "UN" ? (
+                                <img
+                                  src={`https://flagcdn.com/w20/${t.countryCode.toLowerCase()}.png`}
+                                  width="20"
+                                  height="15"
+                                  alt={t.country}
+                                  className="object-contain"
+                                  onError={(e) => {
+                                    (e.target as HTMLImageElement).style.display = 'none';
+                                    const parent = (e.target as HTMLElement).parentElement;
+                                    if (parent) {
+                                      const fallback = parent.querySelector('.flag-fallback');
+                                      if (fallback) (fallback as HTMLElement).style.display = 'block';
+                                    }
+                                  }}
+                                />
+                              ) : null}
+                              <div
+                                className="flag-fallback text-muted-foreground"
+                                style={{ display: (!t.countryCode || t.countryCode === "UN") ? "block" : "none" }}
+                              >
+                                <Globe2 className="h-4 w-4" />
+                              </div>
+                            </div>
                             <div className="min-w-0">
                               <div className="flex items-center gap-3">
                                 <span className="truncate text-base font-semibold">{t.name}</span>
@@ -968,35 +1481,57 @@ function ToursWorkspace({
 }
 
 function StatusPill({ status }: { status: TourStatus }) {
-  const map: Record<TourStatus, string> = {
-    Active: "bg-success/15 text-success border-success/30",
-    Upcoming: "bg-primary/10 text-primary border-primary/25",
-    Completed: "bg-muted text-muted-foreground border-border",
+  const displayStatus = status === "On Tour" ? "Active" : status;
+  const config: Record<TourStatus, { color: string; icon: any }> = {
+    Active: {
+      color: "bg-teal-500 text-white border-teal-600",
+      icon: Plane,
+    },
+    Upcoming: {
+      color: "bg-indigo-400 text-white border-indigo-500",
+      icon: Clock,
+    },
+    Completed: {
+      color: "bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-950/60 dark:text-white dark:border-purple-900/60",
+      icon: CheckCircle2,
+    },
+    "On Tour": {
+      color: "bg-violet-500 text-white border-violet-600",
+      icon: Navigation,
+    },
+    Cancelled: {
+      color: "bg-orange-400 text-white border-orange-500",
+      icon: XCircle,
+    },
   };
+
+  const { color, icon: Icon } = config[displayStatus] || { color: "bg-slate-400 text-white border-slate-500", icon: Clock };
+
   return (
     <span
       className={cn(
-        "inline-flex h-4 items-center rounded-full border px-1.5 text-[10px] font-medium",
-        map[status],
+        "inline-flex h-5 items-center gap-1 rounded-full border px-2 text-[10px] font-semibold tracking-wide shadow-sm",
+        color
       )}
     >
-      {status}
+      <Icon className="h-2.5 w-2.5" strokeWidth={2.5} />
+      {displayStatus}
     </span>
   );
 }
 
-function TouristDetail({ 
-  t, 
-  onBack, 
-  notifications, 
-  onResolveAlert, 
+function TouristDetail({
+  t,
+  onBack,
+  notifications,
+  onResolveAlert,
   onConfirmTour,
   onEditClient,
   onDeleteClient
-}: { 
-  t: Tourist; 
-  onBack?: () => void; 
-  notifications: any[]; 
+}: {
+  t: Tourist;
+  onBack?: () => void;
+  notifications: any[];
   onResolveAlert: (id: string) => void;
   onConfirmTour: () => void;
   onEditClient?: () => void;
@@ -1024,8 +1559,30 @@ function TouristDetail({
           )}
           <div className="flex items-start justify-between gap-4">
             <div className="flex min-w-0 items-start gap-4">
-              <div className="grid h-12 w-12 shrink-0 place-items-center rounded-md bg-accent text-xl">
-                {flagEmoji(t.countryCode)}
+              <div className="grid h-12 w-12 shrink-0 place-items-center rounded-md bg-accent text-xl relative">
+                {t.countryCode && t.countryCode !== "UN" ? (
+                  <img
+                    src={`https://flagcdn.com/w20/${t.countryCode.toLowerCase()}.png`}
+                    width="28"
+                    height="21"
+                    alt={t.country}
+                    className="object-contain"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = 'none';
+                      const parent = (e.target as HTMLElement).parentElement;
+                      if (parent) {
+                        const fallback = parent.querySelector('.flag-fallback');
+                        if (fallback) (fallback as HTMLElement).style.display = 'block';
+                      }
+                    }}
+                  />
+                ) : null}
+                <div
+                  className="flag-fallback text-muted-foreground"
+                  style={{ display: (!t.countryCode || t.countryCode === "UN") ? "block" : "none" }}
+                >
+                  <Globe2 className="h-5 w-5" />
+                </div>
               </div>
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
@@ -1055,7 +1612,7 @@ function TouristDetail({
                 Edit Profile
               </Button>
               <Button variant="outline" size="sm" className="gap-2">
-                <MessageCircle className="h-4 w-4 text-green-600" />
+                <WhatsAppIcon className="h-4 w-4 text-[#25D366]" />
                 WhatsApp
               </Button>
               <Button variant="outline" size="sm" className="gap-2">
@@ -1136,11 +1693,13 @@ function TouristDetail({
           </TabsList>
 
           <TabsContent value="contact" className="mt-5">
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid gap-4 sm:grid-cols-2">
               <InfoField icon={Users} label="Full Name" value={t.name} />
-              <InfoField icon={CreditCard} label="Passport Number" value={t.passport} />
-              <InfoField icon={Phone} label="Phone" value={t.phone} />
-              <InfoField icon={Mail} label="Email" value={t.email} />
+              <InfoField icon={CreditCard} label="Passport Number" value={t.passport || "N/A"} />
+              <InfoField icon={Phone} label="Phone" value={t.phone || "N/A"} />
+              <InfoField icon={Mail} label="Email" value={t.email || "N/A"} />
+              <InfoField icon={Briefcase} label="Assigned Agent" value={t.agent && t.agent !== "All Agents" ? t.agent : "Unassigned"} />
+              <InfoField icon={Car} label="Assigned Driver" value={t.driver && t.driver !== "All Drivers" ? t.driver : "Unassigned"} />
             </div>
           </TabsContent>
 
@@ -1205,7 +1764,7 @@ function TouristDetail({
                         )}
                       </div>
                     </div>
-                    
+
                     {d.destinations && d.destinations.length > 0 ? (
                       <div className="mt-4 space-y-4">
                         {d.destinations.map((dest, i) => (
@@ -1226,7 +1785,7 @@ function TouristDetail({
                         ))}
                       </ul>
                     )}
-                    
+
                     <div className="mt-4 grid gap-2 rounded-md bg-muted/40 p-3 sm:grid-cols-[1fr_1fr_auto] items-center">
                       <div className="flex items-center gap-2 text-xs">
                         <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
@@ -1259,7 +1818,7 @@ function TouristDetail({
                             </div>
                             <div className="grid gap-2">
                               <Label htmlFor="message">Message</Label>
-                              <textarea 
+                              <textarea
                                 id="message"
                                 className="flex min-h-[160px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                                 defaultValue={`Dear Reservation Team at ${d.hotel},\n\nWe would like to confirm the booking for our client, ${t.name} (Group Size: ${t.pax}), arriving for Day ${d.day} of their tour.\n\nPlease let us know if everything is confirmed on your end and provide any relevant reservation numbers.\n\nBest regards,\nCeylon Signature Travels`}
@@ -1323,12 +1882,12 @@ function InfoField({
   value: string;
 }) {
   return (
-    <div className="rounded-md border border-border bg-card p-3.5">
-      <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-wider text-muted-foreground">
-        <Icon className="h-3 w-3" />
+    <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-[0_2px_10px_rgb(0,0,0,0.02)] transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:border-blue-200 dark:bg-card dark:border-slate-800 flex flex-col gap-1.5">
+      <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+        <Icon className="h-3.5 w-3.5 text-blue-500" />
         {label}
       </div>
-      <div className="mt-1 break-words text-sm font-medium">{value}</div>
+      <div className="break-words text-[15px] font-semibold text-slate-900 dark:text-slate-100">{value}</div>
     </div>
   );
 }
@@ -1385,14 +1944,17 @@ function AgentManagement({ agents, onAddAgent, onEditAgent, onDeleteAgent }: {
   return (
     <div className="flex min-h-0 flex-1 flex-col bg-background">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-card px-6 py-3">
-        <div className="text-sm text-muted-foreground">
-          {agents.length} agents · {agents.reduce((s, a) => s + (a.clients || 0), 0)} clients under management
+        <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+          <Briefcase className="h-4 w-4 text-muted-foreground" />
+          <span>
+            {agents.length} Agents · {agents.reduce((s, a) => s + (a.clients || 0), 0)} Clients Under Management
+          </span>
         </div>
         <Dialog open={addOpen} onOpenChange={setAddOpen}>
           <DialogTrigger asChild>
             <Button size="sm" className="gap-1.5">
               <UserPlus className="h-4 w-4" />
-              Add agent
+              Add Agent
             </Button>
           </DialogTrigger>
           <DialogContent>
@@ -1482,7 +2044,7 @@ function AgentManagement({ agents, onAddAgent, onEditAgent, onDeleteAgent }: {
 
 
       <ScrollArea className="flex-1">
-        <div className="grid gap-3 p-6 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-4 p-6 sm:grid-cols-2 xl:grid-cols-3">
           {agents.map((a: any) => {
             const initials = (a.agent_name || a.name || "?")
               .split(" ")
@@ -1490,22 +2052,28 @@ function AgentManagement({ agents, onAddAgent, onEditAgent, onDeleteAgent }: {
               .slice(0, 2)
               .join("");
             return (
-              <div key={a.id} className="group relative rounded-lg border border-border bg-card p-5 transition-all hover:shadow-md hover:border-primary/30">
+              <div
+                key={a.id}
+                className="group relative overflow-hidden rounded-xl border border-border bg-card p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md hover:border-primary/20"
+              >
+                {/* Visual accent left line */}
+                <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary/40 transition-colors group-hover:bg-primary" />
+
                 {/* Hover action buttons */}
-                <div className="absolute right-3 top-3 flex gap-1.5 opacity-0 transition-opacity group-hover:opacity-100">
+                <div className="absolute right-3 top-3 flex items-center gap-1 opacity-0 transition-all duration-200 group-hover:opacity-100 bg-background/95 backdrop-blur-sm p-1 rounded-lg border border-border shadow-sm">
                   <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-7 w-7 p-0 border-primary/40 text-primary hover:bg-primary/10"
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 text-muted-foreground hover:text-primary hover:bg-primary/5"
                     onClick={() => openEdit(a)}
                     title="Edit agent"
                   >
                     <Settings2 className="h-3.5 w-3.5" />
                   </Button>
                   <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-7 w-7 p-0 border-destructive/40 text-destructive hover:bg-destructive/10"
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/5"
                     onClick={() => openDelete(a)}
                     title="Delete agent"
                   >
@@ -1513,24 +2081,39 @@ function AgentManagement({ agents, onAddAgent, onEditAgent, onDeleteAgent }: {
                   </Button>
                 </div>
 
-                <div className="flex items-start gap-3">
-                  <div className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
+                <div className="flex items-start gap-4">
+                  {/* Initial Badge with slate styling */}
+                  <div className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-primary/5 border border-primary/10 text-primary font-bold text-sm">
                     {initials}
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm font-semibold">{a.agent_name || a.name}</div>
-                    <div className="truncate text-xs text-muted-foreground">{a.email}</div>
+                  <div className="min-w-0 flex-1 pr-2">
+                    <div className="truncate text-sm font-bold text-foreground mb-0.5">
+                      {a.agent_name || a.name}
+                    </div>
+                    {a.email && (
+                      <div className="flex items-center gap-1.5 mt-1.5 text-xs text-muted-foreground">
+                        <Mail className="h-3.5 w-3.5 shrink-0 text-muted-foreground/60" />
+                        <span className="truncate">{a.email}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
-                <Separator className="my-4" />
+
+                <Separator className="my-4 bg-border/60" />
+
                 <div className="flex items-center justify-between text-xs">
                   <div>
-                    <div className="text-muted-foreground">Region</div>
-                    <div className="mt-0.5 font-medium">{a.region}</div>
+                    <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Region</div>
+                    <div className="mt-1 flex items-center gap-1 font-semibold text-foreground">
+                      <MapPin className="h-3.5 w-3.5 text-primary/70 shrink-0" />
+                      <span>{a.region || "Unassigned"}</span>
+                    </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-muted-foreground">Clients</div>
-                    <div className="mt-0.5 text-base font-semibold">{a.clients}</div>
+                    <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Clients</div>
+                    <div className="mt-1 font-bold text-sm text-primary">
+                      {a.clients || 0}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1618,19 +2201,22 @@ function DriverManagement({
   return (
     <div className="flex min-h-0 flex-1 flex-col bg-background">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-card px-6 py-3">
-        <div className="text-sm text-muted-foreground">
-          {drivers.length} drivers & guides
+        <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+          <Car className="h-4 w-4 text-muted-foreground" />
+          <span>
+            {drivers.length} Drivers & Guides
+          </span>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button size="sm" className="gap-1.5">
               <UserPlus className="h-4 w-4" />
-              Add driver / guide
+              Add Driver / Guide
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Add new driver</DialogTitle>
+              <DialogTitle>Add new driver / guide</DialogTitle>
               <DialogDescription>Create a profile for a driver or guide.</DialogDescription>
             </DialogHeader>
             <div className="space-y-3">
@@ -1693,7 +2279,7 @@ function DriverManagement({
 
 
       <ScrollArea className="flex-1">
-        <div className="grid gap-3 p-6 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-4 p-6 sm:grid-cols-2 xl:grid-cols-3">
           {drivers.map((d: any) => {
             const initials = (d.name || "?")
               .split(" ")
@@ -1701,34 +2287,68 @@ function DriverManagement({
               .slice(0, 2)
               .join("");
             return (
-              <div key={d.id} className="group relative rounded-lg border border-border bg-card p-5 overflow-hidden transition-all hover:shadow-md hover:border-primary/20">
-                
-                {/* Hover Actions */}
-                <div className="absolute right-2 top-2 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+              <div
+                key={d.id}
+                className="group relative overflow-hidden rounded-xl border border-border bg-card p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md hover:border-primary/20"
+              >
+                {/* Visual accent left line */}
+                <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary/40 transition-colors group-hover:bg-primary" />
+
+                {/* Actions (visible on hover) */}
+                <div className="absolute right-3 top-3 flex items-center gap-1 opacity-0 transition-all duration-200 group-hover:opacity-100 bg-background/95 backdrop-blur-sm p-1 rounded-lg border border-border shadow-sm">
                   {d.password && (
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10" onClick={() => {
-                      navigator.clipboard.writeText(`Email: ${d.email}\nPassword: ${d.password}`);
-                      toast.success("Credentials copied!");
-                    }} title="Copy Credentials">
-                      <Copy className="h-4 w-4" />
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-muted-foreground hover:text-primary hover:bg-primary/5"
+                      onClick={() => {
+                        navigator.clipboard.writeText(`Email: ${d.email}\nPassword: ${d.password}`);
+                        toast.success("Credentials copied!");
+                      }}
+                      title="Copy Credentials"
+                    >
+                      <Copy className="h-3.5 w-3.5" />
                     </Button>
                   )}
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10" onClick={() => openEdit(d)}>
-                    <Settings2 className="h-4 w-4" />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 text-muted-foreground hover:text-primary hover:bg-primary/5"
+                    onClick={() => openEdit(d)}
+                  >
+                    <Settings2 className="h-3.5 w-3.5" />
                   </Button>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10" onClick={() => openDelete(d)}>
-                    <Trash2 className="h-4 w-4" />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/5"
+                    onClick={() => openDelete(d)}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
                   </Button>
                 </div>
 
-                <div className="flex items-start gap-3">
-                  <div className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
+                <div className="flex items-start gap-4">
+                  {/* Avatar Initials Badge */}
+                  <div className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-primary/5 border border-primary/10 text-primary font-bold text-sm">
                     {initials}
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm font-semibold pr-16">{d.name}</div>
-                    <div className="truncate text-xs text-muted-foreground">{d.phone}</div>
-                    {d.email && <div className="truncate text-xs text-muted-foreground">{d.email}</div>}
+                  <div className="min-w-0 flex-1 pr-2">
+                    <div className="truncate text-sm font-bold text-foreground mb-0.5">
+                      {d.name}
+                    </div>
+                    <div className="flex flex-col gap-1.5 mt-2">
+                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <Phone className="h-3.5 w-3.5 shrink-0 text-muted-foreground/60" />
+                        <span className="truncate">{d.phone}</span>
+                      </div>
+                      {d.email && (
+                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                          <Mail className="h-3.5 w-3.5 shrink-0 text-muted-foreground/60" />
+                          <span className="truncate">{d.email}</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1802,16 +2422,59 @@ function DriverManagement({
 function DashboardOverview({
   stats,
   navLabel,
+  onNavigate,
 }: {
   stats: { active: number; upcoming: number; pax: number; countries: number };
   navLabel: NavKey;
+  onNavigate: (key: NavKey) => void;
 }) {
   const tiles = [
-    { label: "Active tours", value: stats.active, hint: "Currently in country" },
-    { label: "Upcoming arrivals", value: stats.upcoming, hint: "Next 30 days" },
-    { label: "Travelers on tour", value: stats.pax, hint: "Total pax in service" },
-    { label: "Source countries", value: stats.countries, hint: "Markets this month" },
+    {
+      label: "Active tours",
+      value: stats.active,
+      hint: "Currently in country",
+      color: "teal",
+      bgClass: "bg-teal-50 dark:bg-teal-950/10",
+      textClass: "text-teal-600 dark:text-teal-400",
+      borderClass: "border-teal-100 dark:border-teal-900/30",
+      accentLine: "bg-teal-500",
+      icon: Plane,
+    },
+    {
+      label: "Upcoming arrivals",
+      value: stats.upcoming,
+      hint: "Next 30 days",
+      color: "indigo",
+      bgClass: "bg-indigo-50 dark:bg-indigo-950/10",
+      textClass: "text-indigo-600 dark:text-indigo-400",
+      borderClass: "border-indigo-100 dark:border-indigo-900/30",
+      accentLine: "bg-indigo-500",
+      icon: CalendarRange,
+    },
+    {
+      label: "Travelers on tour",
+      value: stats.pax,
+      hint: "Total pax in service",
+      color: "emerald",
+      bgClass: "bg-emerald-50 dark:bg-emerald-950/10",
+      textClass: "text-emerald-600 dark:text-emerald-400",
+      borderClass: "border-emerald-100 dark:border-emerald-900/30",
+      accentLine: "bg-emerald-500",
+      icon: Users2,
+    },
+    {
+      label: "Source countries",
+      value: stats.countries,
+      hint: "Markets this month",
+      color: "amber",
+      bgClass: "bg-amber-50 dark:bg-amber-950/10",
+      textClass: "text-amber-600 dark:text-amber-400",
+      borderClass: "border-amber-100 dark:border-amber-900/30",
+      accentLine: "bg-amber-500",
+      icon: Globe2,
+    },
   ];
+
   const labelMap: Record<NavKey, string> = {
     dashboard: "Dashboard",
     tours: "Active Tours",
@@ -1821,25 +2484,61 @@ function DashboardOverview({
     reports: "Reports",
     settings: "Settings",
   };
+
   return (
     <ScrollArea className="flex-1">
       <div className="p-6">
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          {tiles.map((t) => (
-            <div key={t.label} className="rounded-lg border border-border bg-card p-5">
-              <div className="text-xs uppercase tracking-wider text-muted-foreground">{t.label}</div>
-              <div className="mt-2 text-3xl font-semibold tracking-tight">{t.value}</div>
-              <div className="mt-1 text-xs text-muted-foreground">{t.hint}</div>
-            </div>
-          ))}
-        </div>
+        {navLabel !== "settings" && (
+          <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+            {tiles.map((t) => {
+              const Icon = t.icon;
+              return (
+                <div
+                  key={t.label}
+                  className={cn(
+                    "relative overflow-hidden rounded-xl border bg-card p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md",
+                    t.borderClass
+                  )}
+                >
+                  {/* Visual accent indicator line */}
+                  <div className={cn("absolute left-0 top-0 bottom-0 w-1", t.accentLine)} />
 
-        <div className="mt-6 rounded-lg border border-border bg-card p-6">
-          <h3 className="text-sm font-semibold">{labelMap[navLabel]}</h3>
-          <p className="mt-1 text-sm text-muted-foreground">
+                  <div className="flex items-center justify-between">
+                    <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                      {t.label}
+                    </div>
+                    <div className={cn("flex h-8 w-8 items-center justify-center rounded-lg bg-opacity-10", t.bgClass)}>
+                      <Icon className={cn("h-4 w-4", t.textClass)} />
+                    </div>
+                  </div>
+
+                  <div className="mt-3 flex items-baseline gap-1.5">
+                    <div className="text-3xl font-extrabold tracking-tight text-foreground">
+                      {t.value}
+                    </div>
+                  </div>
+
+                  <div className="mt-1.5 flex items-center gap-1 text-[11px] font-medium text-muted-foreground">
+                    <span>{t.hint}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        <div className="mt-6 rounded-xl border border-border bg-card p-6 shadow-sm">
+          <h3 className="text-sm font-bold text-foreground">{labelMap[navLabel]}</h3>
+          <p className="mt-1.5 text-[13px] text-muted-foreground leading-relaxed">
             Detailed {labelMap[navLabel].toLowerCase()} views are available here. Switch to{" "}
-            <span className="font-medium text-foreground">Active Tours</span> from the left
-            navigation to manage tourist itineraries and bookings.
+            <span
+              onClick={() => onNavigate("tours")}
+              className="font-semibold text-primary hover:underline cursor-pointer"
+            >
+              Active Tours
+            </span>{" "}
+            from the left
+            navigation to manage tourist itineraries, agent performance logs, and real-time coordinator actions.
           </p>
         </div>
       </div>

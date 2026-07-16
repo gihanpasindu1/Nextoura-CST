@@ -1,4 +1,4 @@
-export type TourStatus = "Active" | "Upcoming" | "Completed";
+export type TourStatus = "Active" | "Upcoming" | "Completed" | "On Tour" | "Cancelled";
 
 export interface GroupMember {
   name: string;
@@ -13,6 +13,7 @@ export interface ItineraryDestination {
 }
 
 export interface ItineraryDay {
+  status?: string;
   day: number;
   title: string;
   activities?: string[];
