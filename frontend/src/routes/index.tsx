@@ -1364,10 +1364,10 @@ function ToursWorkspace({
           <div className="flex min-h-0 flex-1">
             <div className="flex w-full flex-col">
               <div className="flex items-center justify-between border-b border-border bg-card px-5 py-2.5">
-                <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-                  <Users className="h-3.5 w-3.5 text-muted-foreground/75" />
+                <div className="flex items-center gap-1.5 text-xs font-bold text-foreground">
+                  <Users className="h-3.5 w-3.5 text-muted-foreground" />
                   <span>
-                    {tourists.length} {tourists.length === 1 ? "tourist" : "tourists"}
+                    {tourists.length} {tourists.length === 1 ? "Tourist" : "Tourists"}
                   </span>
                 </div>
                 <div className="flex items-center gap-4">
@@ -2462,7 +2462,7 @@ function DashboardOverview({
           <h3 className="text-sm font-bold text-foreground">{labelMap[navLabel]}</h3>
           <p className="mt-1.5 text-[13px] text-muted-foreground leading-relaxed">
             Detailed {labelMap[navLabel].toLowerCase()} views are available here. Switch to{" "}
-            <span 
+            <span
               onClick={() => onNavigate("tours")}
               className="font-semibold text-primary hover:underline cursor-pointer"
             >
