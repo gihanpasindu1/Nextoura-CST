@@ -1881,8 +1881,11 @@ function AgentManagement({ agents, onAddAgent, onEditAgent, onDeleteAgent }: {
   return (
     <div className="flex min-h-0 flex-1 flex-col bg-background">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-card px-6 py-3">
-        <div className="text-sm text-muted-foreground">
-          {agents.length} Agents · {agents.reduce((s, a) => s + (a.clients || 0), 0)} Clients Under Management
+        <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+          <Briefcase className="h-4 w-4 text-muted-foreground" />
+          <span>
+            {agents.length} Agents · {agents.reduce((s, a) => s + (a.clients || 0), 0)} Clients Under Management
+          </span>
         </div>
         <Dialog open={addOpen} onOpenChange={setAddOpen}>
           <DialogTrigger asChild>
@@ -2135,8 +2138,11 @@ function DriverManagement({
   return (
     <div className="flex min-h-0 flex-1 flex-col bg-background">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-card px-6 py-3">
-        <div className="text-sm text-muted-foreground">
-          {drivers.length} Drivers & Guides
+        <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+          <Car className="h-4 w-4 text-muted-foreground" />
+          <span>
+            {drivers.length} Drivers & Guides
+          </span>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
