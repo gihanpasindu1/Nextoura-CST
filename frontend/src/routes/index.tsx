@@ -1882,7 +1882,7 @@ function AgentManagement({ agents, onAddAgent, onEditAgent, onDeleteAgent }: {
     <div className="flex min-h-0 flex-1 flex-col bg-background">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-card px-6 py-3">
         <div className="text-sm text-muted-foreground">
-          {agents.length} agents · {agents.reduce((s, a) => s + (a.clients || 0), 0)} clients under management
+          {agents.length} agents · {agents.reduce((s, a) => s + (a.clients || 0), 0)} Clients Under Management
         </div>
         <Dialog open={addOpen} onOpenChange={setAddOpen}>
           <DialogTrigger asChild>
