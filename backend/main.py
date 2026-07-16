@@ -1,12 +1,20 @@
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, Request
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from typing import List
+from pydantic import BaseModel
 import uuid
+import asyncio
+import os
 
 from db import models, schemas
 from db.supabase_client import supabase_admin
 from db.database import engine, get_db
 from fastapi.middleware.cors import CORSMiddleware
+from utils.email import send_hotel_booking_email, send_driver_credentials_email
+from utils.ai_processor import parse_raw_itinerary
+from utils.image_search import search_images
+from utils.pdf_generator import generate_itinerary
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -195,6 +203,13 @@ def create_driver(driver: schemas.DriverCreate, db: Session = Depends(get_db)):
     db.add(db_driver)
     db.commit()
     db.refresh(db_driver)
+    
+    # Send email to the driver
+    if driver.email and driver.password and driver.company_id:
+        company = db.query(models.Company).filter(models.Company.id == driver.company_id).first()
+        if company:
+            send_driver_credentials_email(driver, company)
+            
     return db_driver
 
 @app.put("/api/drivers/{driver_id}", response_model=schemas.Driver)
@@ -319,6 +334,30 @@ def create_hotel(hotel: schemas.HotelCreate, db: Session = Depends(get_db)):
     db.refresh(db_hotel)
     return db_hotel
 
+@app.post("/api/itineraries/{itinerary_id}/send-hotel-booking")
+def send_hotel_email(itinerary_id: uuid.UUID, db: Session = Depends(get_db)):
+    itinerary = db.query(models.TourItinerary).filter(models.TourItinerary.id == itinerary_id).first()
+    if not itinerary:
+        raise HTTPException(status_code=404, detail="Itinerary not found")
+        
+    if not itinerary.hotel_id:
+        raise HTTPException(status_code=400, detail="This itinerary does not have a hotel attached.")
+        
+    hotel = db.query(models.Hotel).filter(models.Hotel.id == itinerary.hotel_id).first()
+    tourist = db.query(models.ForeignTourist).filter(models.ForeignTourist.id == itinerary.tourist_id).first()
+    company = db.query(models.Company).filter(models.Company.id == tourist.company_id).first()
+    
+    if not hotel or not tourist or not company:
+        raise HTTPException(status_code=500, detail="Missing linked records")
+        
+    try:
+        send_hotel_booking_email(hotel=hotel, company=company, itinerary=itinerary, tourist=tourist)
+        itinerary.booking_email_sent = True
+        db.commit()
+        return {"message": "Email sent successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 # ----------------- Onboarding -----------------
 import json
 
@@ -364,3 +403,114 @@ def onboard_company(company: schemas.CompanyCreate, db: Session = Depends(get_db
         "phone_numbers": json.loads(db_company.phone_numbers) if db_company.phone_numbers else [],
         "created_at": db_company.created_at
     }
+
+
+# ==================== AI ITINERARY GENERATOR ====================
+
+class RawItineraryRequest(BaseModel):
+    raw_text: str
+
+from typing import Dict, Any
+
+class JsonItineraryRequest(BaseModel):
+    parsed_data: Dict[str, Any]
+
+@app.post("/api/itinerary/generate-pdf-from-json")
+async def generate_pdf_from_json(payload: JsonItineraryRequest):
+    """Fast Pipeline: Structured JSON → Pexels images → PDF generation."""
+    try:
+        parsed_data = payload.parsed_data
+        
+        # 2. Resolve image search keywords in parallel for speed
+        async def resolve_day_images(day):
+            keywords = day.get("image_keywords", [])
+            hotel_kw = day.get("hotel_image_keyword", "luxury Sri Lanka resort infinity pool")
+
+            # Search all attraction keywords in parallel
+            tasks = [asyncio.to_thread(search_images, kw) for kw in keywords]
+            results = await asyncio.gather(*tasks)
+            
+            # Flatten: take first URL per keyword for variety
+            urls = []
+            for res_urls in results:
+                if res_urls:
+                    urls.append(res_urls[0])
+
+            # Search hotel image (last slot on every page)
+            hotel_urls = await asyncio.to_thread(search_images, hotel_kw)
+            if hotel_urls:
+                urls.append(hotel_urls[0])
+            else:
+                fallback = await asyncio.to_thread(search_images, "luxury Sri Lanka resort infinity pool")
+                if fallback:
+                    urls.append(fallback[0])
+
+            day["image_urls"] = urls
+
+        # Run all days concurrently
+        day_tasks = [resolve_day_images(day) for day in parsed_data.get("days", [])]
+        await asyncio.gather(*day_tasks)
+        
+        # 3. Generate the PDF
+        output_path = await generate_itinerary(parsed_data)
+        
+        filename_out = os.path.basename(output_path)
+        return FileResponse(output_path, media_type="application/pdf", filename=filename_out)
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/itinerary/generate-text")
+async def generate_text_from_raw(payload: RawItineraryRequest):
+    """Pipeline: Raw text → Gemini parse (returns JSON)."""
+    try:
+        parsed_data = parse_raw_itinerary(payload.raw_text)
+        return parsed_data
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/itinerary/generate-pdf")
+async def generate_pdf_from_raw(payload: RawItineraryRequest):
+    """Full Pipeline: Raw text → Gemini parse → Pexels images → PDF generation."""
+    try:
+        # 1. Parse raw text into structured format using Gemini
+        parsed_data = parse_raw_itinerary(payload.raw_text)
+        
+        # 2. Resolve image search keywords in parallel for speed
+        async def resolve_day_images(day):
+            keywords = day.get("image_keywords", [])
+            hotel_kw = day.get("hotel_image_keyword", "luxury Sri Lanka resort infinity pool")
+
+            # Search all attraction keywords in parallel
+            tasks = [asyncio.to_thread(search_images, kw) for kw in keywords]
+            results = await asyncio.gather(*tasks)
+            
+            # Flatten: take first URL per keyword for variety
+            urls = []
+            for res_urls in results:
+                if res_urls:
+                    urls.append(res_urls[0])
+
+            # Search hotel image (last slot on every page)
+            hotel_urls = await asyncio.to_thread(search_images, hotel_kw)
+            if hotel_urls:
+                urls.append(hotel_urls[0])
+            else:
+                fallback = await asyncio.to_thread(search_images, "luxury Sri Lanka resort infinity pool")
+                if fallback:
+                    urls.append(fallback[0])
+
+            day["image_urls"] = urls
+
+        # Run all days concurrently
+        day_tasks = [resolve_day_images(day) for day in parsed_data.get("days", [])]
+        await asyncio.gather(*day_tasks)
+        
+        # 3. Generate the PDF
+        output_path = await generate_itinerary(parsed_data)
+        
+        filename_out = os.path.basename(output_path)
+        return FileResponse(output_path, media_type="application/pdf", filename=filename_out)
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

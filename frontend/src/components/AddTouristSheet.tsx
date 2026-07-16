@@ -11,6 +11,7 @@ import { Tourist } from "@/lib/tourism-data";
 import { Loader2, Plus, UploadCloud, FileText, Settings2, Trash2, X, Users, AlertCircle, Send } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 const validateTouristData = (data: any, mode: string) => {
   const newErrors: Record<string, string> = {};
@@ -150,35 +151,115 @@ export function AddTouristSheet({
 
   const [itinerary, setItinerary] = useState<any[]>([]);
   const [itineraryText, setItineraryText] = useState("");
+  const [rawItineraryData, setRawItineraryData] = useState<any>(null);
 
-  const handleGenerate = (type: 'text' | 'pdf') => {
+  const handleGenerate = async (type: 'text' | 'pdf') => {
+    if (type === 'text' && !itineraryText.trim()) {
+      toast.error("Please paste the raw itinerary text first.");
+      return;
+    }
+    
     setIsGenerating(true);
-    // Mocking an AI generation delay
-    setTimeout(() => {
-      setItinerary([
-        {
-          day: 1,
-          title: "Arrival & City Tour",
-          hotel: "Galle Face Hotel",
-          hotelEmail: "reservations@gallefacehotel.net",
-          destinations: [
-            { location: "Airport", activities: "Meet & greet at BIA, transfer to hotel." },
-            { location: "Colombo", activities: "Evening city tour including Lotus Tower and Galle Face Green." }
-          ]
-        },
-        {
-          day: 2,
-          title: "Cultural Triangle",
-          hotel: "Heritance Kandalama",
-          hotelEmail: "kandalama@heritancehotels.com",
-          destinations: [
-            { location: "Dambulla", activities: "Visit Dambulla Cave Temple." },
-            { location: "Minneriya", activities: "Afternoon elephant safari at Minneriya National Park." }
-          ]
+    
+    try {
+      if (type === 'text') {
+        const response = await fetch("http://localhost:8000/api/itinerary/generate-text", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ raw_text: itineraryText }),
+        });
+        
+        if (!response.ok) {
+          throw new Error("Failed to extract itinerary from text.");
         }
-      ]);
+        
+        const data = await response.json();
+        setRawItineraryData(data); // Save the raw data for fast PDF generation later
+        
+        const newItin = (data.days || []).map((d: any) => {
+          // Find matching hotel if possible
+          const matchingHotel = (data.hotels || []).find((h: any) => 
+            d.destination && h.destination && h.destination.toLowerCase() === d.destination.toLowerCase()
+          );
+          
+          return {
+            day: d.day_number,
+            title: d.title || `Day ${d.day_number}`,
+            hotel: matchingHotel ? matchingHotel.hotel_name : "",
+            hotelEmail: "",
+            destinations: [{
+              location: d.destination || "",
+              activities: Array.isArray(d.description) ? d.description.join("\n") : (d.description || "")
+            }]
+          };
+        });
+        
+        setItinerary(newItin);
+        
+        setFormData(prev => ({
+          ...prev,
+          name: prev.name || data.guest_name || "",
+          duration: prev.duration || data.duration || prev.duration,
+        }));
+        
+        toast.success("Itinerary extracted successfully!");
+        
+      } else if (type === 'pdf') {
+        if (!itineraryText.trim()) {
+           toast.error("Please paste the raw itinerary text in the Auto (Text) tab first.");
+           setIsGenerating(false);
+           return;
+        }
+
+        // If we already extracted the text, use the fast endpoint
+        const endpoint = rawItineraryData 
+            ? "http://localhost:8000/api/itinerary/generate-pdf-from-json" 
+            : "http://localhost:8000/api/itinerary/generate-pdf";
+            
+        const payload = rawItineraryData 
+            ? { parsed_data: rawItineraryData } 
+            : { raw_text: itineraryText };
+
+        const response = await fetch(endpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        
+        if (!response.ok) {
+          throw new Error("Failed to generate PDF.");
+        }
+        
+        const blob = await response.blob();
+        console.log("PDF Blob received. Size:", blob.size, "Type:", blob.type);
+        
+        if (blob.size === 0) {
+          throw new Error("Received empty PDF file from the server.");
+        }
+
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        const guestName = formData.name || "Client";
+        a.download = `${guestName.replace(/\s+/g, "_")}_Itinerary.pdf`;
+        
+        document.body.appendChild(a);
+        a.click();
+        
+        // Small delay before cleanup to ensure download triggers in all browsers
+        setTimeout(() => {
+          document.body.removeChild(a);
+          window.URL.revokeObjectURL(url);
+        }, 1000);
+        
+        toast.success("PDF generated successfully!");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "An error occurred during generation.");
+    } finally {
       setIsGenerating(false);
-    }, 2000);
+    }
   };
 
   const handleSave = () => {
@@ -617,31 +698,42 @@ export function AddTouristSheet({
                     value={itineraryText}
                     onChange={e => setItineraryText(e.target.value)}
                   />
-                  <Button 
-                    className="w-full" 
-                    onClick={() => handleGenerate('text')}
-                    disabled={isGenerating || !itineraryText.trim()}
-                  >
-                    {isGenerating ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Extracting Itinerary...</> : "Generate Itinerary"}
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button 
+                      className="w-full" 
+                      onClick={() => handleGenerate('text')}
+                      disabled={isGenerating || !itineraryText.trim()}
+                    >
+                      {isGenerating ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Extracting Itinerary...</> : "Generate Itinerary (Text)"}
+                    </Button>
+                    
+                    {rawItineraryData && (
+                      <Button 
+                        className="w-full" 
+                        variant="secondary"
+                        onClick={() => handleGenerate('pdf')}
+                        disabled={isGenerating}
+                      >
+                        {isGenerating ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generating PDF...</> : "Download PDF"}
+                      </Button>
+                    )}
+                  </div>
                 </TabsContent>
                 
                 <TabsContent value="pdf" className="pt-4 space-y-4">
-                  <div className="border-2 border-dashed border-border rounded-lg p-10 flex flex-col items-center justify-center text-center space-y-3 hover:bg-accent/30 transition-colors cursor-pointer">
-                    <div className="p-3 bg-primary/10 rounded-full">
-                      <UploadCloud className="h-6 w-6 text-primary" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium">Click to upload or drag and drop</p>
-                      <p className="text-xs text-muted-foreground mt-1">PDF itineraries (max 5MB)</p>
-                    </div>
-                  </div>
+                  <div className="text-sm text-muted-foreground">Generate a beautifully formatted PDF itinerary with AI-selected images based on your raw text.</div>
+                  <Textarea 
+                    placeholder="E.g. They arrive on the 24th and stay at Galle Face Hotel. Next day they go to Dambulla and stay at Kandalama..." 
+                    className="min-h-[150px]"
+                    value={itineraryText}
+                    onChange={e => setItineraryText(e.target.value)}
+                  />
                   <Button 
                     className="w-full" 
                     onClick={() => handleGenerate('pdf')}
-                    disabled={isGenerating}
+                    disabled={isGenerating || !itineraryText.trim()}
                   >
-                    {isGenerating ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Analyzing PDF...</> : "Upload & Extract"}
+                    {isGenerating ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generating PDF...</> : "Generate & Download PDF"}
                   </Button>
                 </TabsContent>
               </Tabs>
