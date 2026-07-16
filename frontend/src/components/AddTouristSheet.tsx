@@ -425,7 +425,14 @@ export function AddTouristSheet({
     if (mode === "confirmed") {
       if (!formData.country) newErrors.country = "Country is required";
       if (!formData.countryCode) newErrors.countryCode = "Code is required";
-      if (!formData.passport) newErrors.passport = "Passport is required";
+      if (!formData.passport) {
+        newErrors.passport = "Passport is required";
+      } else {
+        const passportRegex = /^[a-zA-Z0-9]{6,15}$/;
+        if (!passportRegex.test(formData.passport.trim())) {
+          newErrors.passport = "Passport must be 6-15 alphanumeric characters";
+        }
+      }
       if (!formData.phone) {
         newErrors.phone = "Phone is required";
       } else {
@@ -456,6 +463,11 @@ export function AddTouristSheet({
           }
           if (!member || !member.passport?.trim()) {
             newErrors[`group_${i}_passport`] = "Passport is required";
+          } else {
+            const passportRegex = /^[a-zA-Z0-9]{6,15}$/;
+            if (!passportRegex.test(member.passport.trim())) {
+              newErrors[`group_${i}_passport`] = "Passport must be 6-15 alphanumeric characters";
+            }
           }
           if (!member || !member.phone?.trim()) {
             newErrors[`group_${i}_phone`] = "Phone is required";
@@ -477,6 +489,12 @@ export function AddTouristSheet({
         }
       }
     } else {
+      if (formData.passport) {
+        const passportRegex = /^[a-zA-Z0-9]{6,15}$/;
+        if (!passportRegex.test(formData.passport.trim())) {
+          newErrors.passport = "Passport must be 6-15 alphanumeric characters";
+        }
+      }
       if (formData.phone) {
         const localNumber = formData.phone.replace(/[\s\-\(\)]/g, "");
         if (!selectedCountry.pattern.test(localNumber)) {
@@ -493,6 +511,12 @@ export function AddTouristSheet({
         for (let i = 0; i < formData.pax - 1; i++) {
           const member = formData.group[i];
           if (member) {
+            if (member.passport?.trim()) {
+              const passportRegex = /^[a-zA-Z0-9]{6,15}$/;
+              if (!passportRegex.test(member.passport.trim())) {
+                newErrors[`group_${i}_passport`] = "Passport must be 6-15 alphanumeric characters";
+              }
+            }
             if (member.phone?.trim()) {
               const memberCountry = COUNTRIES.find(c => c.code === member.countryCode) || COUNTRIES.find(c => c.code === "GB") || COUNTRIES[0];
               const localNumber = member.phone.replace(/[\s\-\(\)]/g, "");
@@ -875,7 +899,7 @@ export function AddTouristSheet({
                               setErrors(newErrors);
                             }
                           }} />
-                          {errors[`group_${i}_passport`] && <div className="text-[10px] text-destructive flex items-center gap-1"><AlertCircle className="h-3 w-3" /> Required</div>}
+                          {errors[`group_${i}_passport`] && <div className="text-[10px] text-destructive flex items-center gap-1"><AlertCircle className="h-3 w-3" /> {errors[`group_${i}_passport`]}</div>}
                         </div>
                         <div className="space-y-1">
                           <Label className={cn("text-xs", errors[`group_${i}_phone`] && "text-destructive")}>
