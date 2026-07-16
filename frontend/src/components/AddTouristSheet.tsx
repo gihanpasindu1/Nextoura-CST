@@ -264,16 +264,17 @@ export function AddTouristSheet({
       if (initialData) {
         // Parse main phone number
         let phoneVal = initialData.phone || "";
-        let matchedCountry = COUNTRIES.find(c => c.code === initialData.countryCode);
-        if (!matchedCountry && phoneVal.startsWith("+")) {
+        if (phoneVal.startsWith("+")) {
           const sorted = [...COUNTRIES].sort((a, b) => b.dialCode.length - a.dialCode.length);
-          matchedCountry = sorted.find(c => phoneVal.startsWith(c.dialCode));
+          const phoneDialCodeCountry = sorted.find(c => phoneVal.startsWith(c.dialCode));
+          if (phoneDialCodeCountry) {
+            phoneVal = phoneVal.slice(phoneDialCodeCountry.dialCode.length).trim();
+          }
         }
+        
+        let matchedCountry = COUNTRIES.find(c => c.code === initialData.countryCode);
         if (matchedCountry) {
           setSelectedCountry(matchedCountry);
-          if (phoneVal.startsWith(matchedCountry.dialCode)) {
-            phoneVal = phoneVal.slice(matchedCountry.dialCode.length).trim();
-          }
         } else {
           setSelectedCountry(COUNTRIES.find(c => c.code === "GB") || COUNTRIES[0]);
         }
@@ -407,6 +408,11 @@ export function AddTouristSheet({
 
   const handleSelectCountry = (country: typeof COUNTRIES[0]) => {
     setSelectedCountry(country);
+    setFormData(prev => ({
+      ...prev,
+      country: country.name,
+      countryCode: country.code
+    }));
   };
 
   const handleSave = () => {
