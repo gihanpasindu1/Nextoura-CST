@@ -2421,42 +2421,44 @@ function DashboardOverview({
   return (
     <ScrollArea className="flex-1">
       <div className="p-6">
-        <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
-          {tiles.map((t) => {
-            const Icon = t.icon;
-            return (
-              <div
-                key={t.label}
-                className={cn(
-                  "relative overflow-hidden rounded-xl border bg-card p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md",
-                  t.borderClass
-                )}
-              >
-                {/* Visual accent indicator line */}
-                <div className={cn("absolute left-0 top-0 bottom-0 w-1", t.accentLine)} />
+        {navLabel !== "settings" && (
+          <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+            {tiles.map((t) => {
+              const Icon = t.icon;
+              return (
+                <div
+                  key={t.label}
+                  className={cn(
+                    "relative overflow-hidden rounded-xl border bg-card p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md",
+                    t.borderClass
+                  )}
+                >
+                  {/* Visual accent indicator line */}
+                  <div className={cn("absolute left-0 top-0 bottom-0 w-1", t.accentLine)} />
 
-                <div className="flex items-center justify-between">
-                  <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                    {t.label}
+                  <div className="flex items-center justify-between">
+                    <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                      {t.label}
+                    </div>
+                    <div className={cn("flex h-8 w-8 items-center justify-center rounded-lg bg-opacity-10", t.bgClass)}>
+                      <Icon className={cn("h-4 w-4", t.textClass)} />
+                    </div>
                   </div>
-                  <div className={cn("flex h-8 w-8 items-center justify-center rounded-lg bg-opacity-10", t.bgClass)}>
-                    <Icon className={cn("h-4 w-4", t.textClass)} />
+
+                  <div className="mt-3 flex items-baseline gap-1.5">
+                    <div className="text-3xl font-extrabold tracking-tight text-foreground">
+                      {t.value}
+                    </div>
+                  </div>
+
+                  <div className="mt-1.5 flex items-center gap-1 text-[11px] font-medium text-muted-foreground">
+                    <span>{t.hint}</span>
                   </div>
                 </div>
-
-                <div className="mt-3 flex items-baseline gap-1.5">
-                  <div className="text-3xl font-extrabold tracking-tight text-foreground">
-                    {t.value}
-                  </div>
-                </div>
-
-                <div className="mt-1.5 flex items-center gap-1 text-[11px] font-medium text-muted-foreground">
-                  <span>{t.hint}</span>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
 
         <div className="mt-6 rounded-xl border border-border bg-card p-6 shadow-sm">
           <h3 className="text-sm font-bold text-foreground">{labelMap[navLabel]}</h3>
