@@ -1364,8 +1364,11 @@ function ToursWorkspace({
           <div className="flex min-h-0 flex-1">
             <div className="flex w-full flex-col">
               <div className="flex items-center justify-between border-b border-border bg-card px-5 py-2.5">
-                <div className="flex items-center gap-4 text-xs font-medium text-muted-foreground">
-                  {tourists.length} {tourists.length === 1 ? "tourist" : "tourists"}
+                <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                  <Users className="h-3.5 w-3.5 text-muted-foreground/75" />
+                  <span>
+                    {tourists.length} {tourists.length === 1 ? "tourist" : "tourists"}
+                  </span>
                 </div>
                 <div className="flex items-center gap-4">
                   <div className="text-[11px] text-muted-foreground">Sorted by status</div>
