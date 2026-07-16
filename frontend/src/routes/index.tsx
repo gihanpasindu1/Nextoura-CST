@@ -1419,7 +1419,31 @@ function ToursWorkspace({
                       >
                         <div className="flex items-center justify-between gap-4">
                           <div className="flex min-w-0 items-center gap-4">
-                            <img src={`https://flagcdn.com/w40/${t.countryCode.toLowerCase()}.png`} width="28" height="21" alt={t.country} className="object-contain" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                            <div className="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-accent text-sm relative">
+                              {t.countryCode && t.countryCode !== "UN" ? (
+                                <img
+                                  src={`https://flagcdn.com/w20/${t.countryCode.toLowerCase()}.png`}
+                                  width="20"
+                                  height="15"
+                                  alt={t.country}
+                                  className="object-contain"
+                                  onError={(e) => {
+                                    (e.target as HTMLImageElement).style.display = 'none';
+                                    const parent = (e.target as HTMLElement).parentElement;
+                                    if (parent) {
+                                      const fallback = parent.querySelector('.flag-fallback');
+                                      if (fallback) (fallback as HTMLElement).style.display = 'block';
+                                    }
+                                  }}
+                                />
+                              ) : null}
+                              <div
+                                className="flag-fallback text-muted-foreground"
+                                style={{ display: (!t.countryCode || t.countryCode === "UN") ? "block" : "none" }}
+                              >
+                                <Globe2 className="h-4 w-4" />
+                              </div>
+                            </div>
                             <div className="min-w-0">
                               <div className="flex items-center gap-3">
                                 <span className="truncate text-base font-semibold">{t.name}</span>
@@ -1535,8 +1559,30 @@ function TouristDetail({
           )}
           <div className="flex items-start justify-between gap-4">
             <div className="flex min-w-0 items-start gap-4">
-              <div className="grid h-12 w-12 shrink-0 place-items-center rounded-md bg-accent text-xl">
-                <img src={`https://flagcdn.com/w40/${t.countryCode.toLowerCase()}.png`} width="28" height="21" alt={t.country} className="object-contain" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+              <div className="grid h-12 w-12 shrink-0 place-items-center rounded-md bg-accent text-xl relative">
+                {t.countryCode && t.countryCode !== "UN" ? (
+                  <img
+                    src={`https://flagcdn.com/w20/${t.countryCode.toLowerCase()}.png`}
+                    width="28"
+                    height="21"
+                    alt={t.country}
+                    className="object-contain"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = 'none';
+                      const parent = (e.target as HTMLElement).parentElement;
+                      if (parent) {
+                        const fallback = parent.querySelector('.flag-fallback');
+                        if (fallback) (fallback as HTMLElement).style.display = 'block';
+                      }
+                    }}
+                  />
+                ) : null}
+                <div
+                  className="flag-fallback text-muted-foreground"
+                  style={{ display: (!t.countryCode || t.countryCode === "UN") ? "block" : "none" }}
+                >
+                  <Globe2 className="h-5 w-5" />
+                </div>
               </div>
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
