@@ -240,6 +240,8 @@ export function AddTouristSheet({
   const [searchQuery, setSearchQuery] = useState("");
   const [countryPopoverOpen, setCountryPopoverOpen] = useState(false);
   const [countrySearchQuery, setCountrySearchQuery] = useState("");
+  const [memberPopoverOpen, setMemberPopoverOpen] = useState<Record<number, boolean>>({});
+  const [memberSearchQuery, setMemberSearchQuery] = useState<Record<number, string>>({});
   const [formData, setFormData] = useState({
     name: "",
     country: "",
@@ -260,12 +262,53 @@ export function AddTouristSheet({
   useEffect(() => {
     if (open) {
       if (initialData) {
+        // Parse main phone number
+        let phoneVal = initialData.phone || "";
+        let matchedCountry = COUNTRIES.find(c => c.code === initialData.countryCode);
+        if (!matchedCountry && phoneVal.startsWith("+")) {
+          const sorted = [...COUNTRIES].sort((a, b) => b.dialCode.length - a.dialCode.length);
+          matchedCountry = sorted.find(c => phoneVal.startsWith(c.dialCode));
+        }
+        if (matchedCountry) {
+          setSelectedCountry(matchedCountry);
+          if (phoneVal.startsWith(matchedCountry.dialCode)) {
+            phoneVal = phoneVal.slice(matchedCountry.dialCode.length).trim();
+          }
+        } else {
+          setSelectedCountry(COUNTRIES.find(c => c.code === "GB") || COUNTRIES[0]);
+        }
+
+        // Parse group member phone numbers
+        const parsedGroup = (initialData.group || []).map((member: any) => {
+          let mPhone = member.phone || "";
+          let mMatched = COUNTRIES.find(c => c.code === member.countryCode);
+          if (!mMatched && mPhone.startsWith("+")) {
+            const sorted = [...COUNTRIES].sort((a, b) => b.dialCode.length - a.dialCode.length);
+            mMatched = sorted.find(c => mPhone.startsWith(c.dialCode));
+          }
+          if (mMatched) {
+            if (mPhone.startsWith(mMatched.dialCode)) {
+              mPhone = mPhone.slice(mMatched.dialCode.length).trim();
+            }
+            return {
+              ...member,
+              phone: mPhone,
+              countryCode: mMatched.code
+            };
+          }
+          return {
+            ...member,
+            phone: mPhone,
+            countryCode: member.countryCode || "GB"
+          };
+        });
+
         setFormData({
           name: initialData.name || "",
           country: initialData.country || "",
           countryCode: initialData.countryCode || "",
           passport: initialData.passport || "",
-          phone: initialData.phone || "",
+          phone: phoneVal,
           email: initialData.email || "",
           pax: initialData.pax || 1,
           arrival: initialData.arrival || "",
@@ -274,7 +317,7 @@ export function AddTouristSheet({
           status: initialData.status || "Upcoming",
           agent: initialData.agent || "All Agents",
           driver: initialData.driver || "All Drivers",
-          group: initialData.group || [],
+          group: parsedGroup,
         });
         setItinerary(initialData.itinerary || []);
       } else {
@@ -294,8 +337,11 @@ export function AddTouristSheet({
           driver: "All Drivers",
           group: [],
         });
+        setSelectedCountry(COUNTRIES.find(c => c.code === "GB") || COUNTRIES[0]);
         setItinerary([]);
       }
+      setMemberPopoverOpen({});
+      setMemberSearchQuery({});
       setErrors({});
     }
   }, [open, initialData]);
@@ -399,11 +445,28 @@ export function AddTouristSheet({
       if (formData.pax > 1) {
         for (let i = 0; i < formData.pax - 1; i++) {
           const member = formData.group[i];
-          if (!member || !member.name.trim()) {
+          if (!member || !member.name?.trim()) {
             newErrors[`group_${i}_name`] = "Name is required";
           }
-          if (!member || !member.passport.trim()) {
+          if (!member || !member.passport?.trim()) {
             newErrors[`group_${i}_passport`] = "Passport is required";
+          }
+          if (!member || !member.phone?.trim()) {
+            newErrors[`group_${i}_phone`] = "Phone is required";
+          } else {
+            const memberCountry = COUNTRIES.find(c => c.code === member.countryCode) || COUNTRIES.find(c => c.code === "GB") || COUNTRIES[0];
+            const localNumber = member.phone.replace(/[\s\-\(\)]/g, "");
+            if (!memberCountry.pattern.test(localNumber)) {
+              newErrors[`group_${i}_phone`] = `Invalid phone. Example: ${memberCountry.placeholder}`;
+            }
+          }
+          if (!member || !member.email?.trim()) {
+            newErrors[`group_${i}_email`] = "Email is required";
+          } else {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(member.email.trim())) {
+              newErrors[`group_${i}_email`] = "Invalid email format";
+            }
           }
         }
       }
@@ -418,6 +481,26 @@ export function AddTouristSheet({
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(formData.email.trim())) {
           newErrors.email = "Invalid email format";
+        }
+      }
+      if (formData.pax > 1) {
+        for (let i = 0; i < formData.pax - 1; i++) {
+          const member = formData.group[i];
+          if (member) {
+            if (member.phone?.trim()) {
+              const memberCountry = COUNTRIES.find(c => c.code === member.countryCode) || COUNTRIES.find(c => c.code === "GB") || COUNTRIES[0];
+              const localNumber = member.phone.replace(/[\s\-\(\)]/g, "");
+              if (!memberCountry.pattern.test(localNumber)) {
+                newErrors[`group_${i}_phone`] = `Invalid phone. Example: ${memberCountry.placeholder}`;
+              }
+            }
+            if (member.email?.trim()) {
+              const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+              if (!emailRegex.test(member.email.trim())) {
+                newErrors[`group_${i}_email`] = "Invalid email format";
+              }
+            }
+          }
         }
       }
     }
@@ -444,7 +527,16 @@ export function AddTouristSheet({
       passport: formData.passport || "N/A",
       phone: formData.phone ? `${selectedCountry.dialCode} ${formData.phone.trim()}` : "N/A",
       email: formData.email || "N/A",
-      group: formData.group || [],
+      group: (formData.group || []).slice(0, formData.pax - 1).map((g: any) => {
+        const memberCountry = COUNTRIES.find(c => c.code === g.countryCode) || COUNTRIES.find(c => c.code === "GB") || COUNTRIES[0];
+        return {
+          name: g.name,
+          passport: g.passport,
+          email: g.email || null,
+          phone: g.phone ? `${memberCountry.dialCode} ${g.phone.trim()}` : "",
+          countryCode: g.countryCode || memberCountry.code,
+        };
+      }),
       currentLocation: initialData ? initialData.currentLocation : "TBD",
       itinerary: itinerary,
       isLead: mode === "lead",
@@ -755,7 +847,7 @@ export function AddTouristSheet({
                           <Label className={cn("text-xs", errors[`group_${i}_name`] && "text-destructive")}>Name {mode === "confirmed" && "*"}</Label>
                           <Input className={cn("h-8 text-sm", errors[`group_${i}_name`] && "border-destructive focus-visible:ring-destructive")} value={formData.group[i]?.name || ""} onChange={e => {
                             const newGroup = [...formData.group];
-                            if (!newGroup[i]) newGroup[i] = { name: "", passport: "" };
+                            if (!newGroup[i]) newGroup[i] = { name: "", passport: "", phone: "", email: "", countryCode: "GB" };
                             newGroup[i].name = e.target.value;
                             setFormData({...formData, group: newGroup});
                             if (errors[`group_${i}_name`]) {
@@ -770,7 +862,7 @@ export function AddTouristSheet({
                           <Label className={cn("text-xs", errors[`group_${i}_passport`] && "text-destructive")}>Passport {mode === "confirmed" && "*"}</Label>
                           <Input className={cn("h-8 text-sm", errors[`group_${i}_passport`] && "border-destructive focus-visible:ring-destructive")} value={formData.group[i]?.passport || ""} onChange={e => {
                             const newGroup = [...formData.group];
-                            if (!newGroup[i]) newGroup[i] = { name: "", passport: "" };
+                            if (!newGroup[i]) newGroup[i] = { name: "", passport: "", phone: "", email: "", countryCode: "GB" };
                             newGroup[i].passport = e.target.value;
                             setFormData({...formData, group: newGroup});
                             if (errors[`group_${i}_passport`]) {
@@ -782,22 +874,135 @@ export function AddTouristSheet({
                           {errors[`group_${i}_passport`] && <div className="text-[10px] text-destructive flex items-center gap-1"><AlertCircle className="h-3 w-3" /> Required</div>}
                         </div>
                         <div className="space-y-1">
-                          <Label className="text-xs">Phone</Label>
-                          <Input className="h-8 text-sm" value={formData.group[i]?.phone || ""} onChange={e => {
-                            const newGroup = [...formData.group];
-                            if (!newGroup[i]) newGroup[i] = { name: "", passport: "" };
-                            newGroup[i].phone = e.target.value;
-                            setFormData({...formData, group: newGroup});
-                          }} />
+                          <Label className={cn("text-xs", errors[`group_${i}_phone`] && "text-destructive")}>
+                            Phone {mode === "confirmed" && "*"}
+                          </Label>
+                          <div className="flex gap-0">
+                            <Popover 
+                              open={!!memberPopoverOpen[i]} 
+                              onOpenChange={(isOpen) => setMemberPopoverOpen(prev => ({ ...prev, [i]: isOpen }))}
+                            >
+                              <PopoverTrigger asChild>
+                                <button
+                                  type="button"
+                                  className={cn(
+                                    "flex items-center gap-1 h-8 px-2 rounded-l-md border border-r-0 border-input bg-muted/50 hover:bg-muted text-[11px] shrink-0 cursor-pointer",
+                                    errors[`group_${i}_phone`] && "border-destructive"
+                                  )}
+                                >
+                                  <img
+                                    src={`https://flagcdn.com/w20/${(COUNTRIES.find(c => c.code === (formData.group[i]?.countryCode || "GB")) || COUNTRIES[0]).code.toLowerCase()}.png`}
+                                    width="14"
+                                    height="10"
+                                    alt=""
+                                    className="object-contain shrink-0"
+                                    onError={(e) => {
+                                      (e.target as HTMLElement).style.display = "none";
+                                    }}
+                                  />
+                                  <span className="font-medium text-foreground">
+                                    {(COUNTRIES.find(c => c.code === (formData.group[i]?.countryCode || "GB")) || COUNTRIES[0]).dialCode}
+                                  </span>
+                                  <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                                </button>
+                              </PopoverTrigger>
+                              <PopoverContent className="p-0 w-[260px] flex flex-col z-[100] bg-card border border-border rounded-md shadow-md" align="start">
+                                <div className="p-2 border-b border-border">
+                                  <Input
+                                    placeholder="Search country..."
+                                    value={memberSearchQuery[i] || ""}
+                                    onChange={(e) => setMemberSearchQuery(prev => ({ ...prev, [i]: e.target.value }))}
+                                    className="h-8 text-xs"
+                                    autoFocus
+                                  />
+                                </div>
+                                <div className="overflow-y-auto flex-1 max-h-[200px] py-1">
+                                  {COUNTRIES.filter(c => 
+                                    c.name.toLowerCase().includes((memberSearchQuery[i] || "").toLowerCase()) ||
+                                    c.dialCode.includes(memberSearchQuery[i] || "") ||
+                                    c.code.toLowerCase().includes((memberSearchQuery[i] || "").toLowerCase())
+                                  ).map((c) => (
+                                    <button
+                                      key={c.code}
+                                      type="button"
+                                      onClick={() => {
+                                        const newGroup = [...formData.group];
+                                        if (!newGroup[i]) newGroup[i] = { name: "", passport: "", phone: "", email: "", countryCode: "GB" };
+                                        newGroup[i].countryCode = c.code;
+                                        setFormData({ ...formData, group: newGroup });
+                                        setMemberPopoverOpen(prev => ({ ...prev, [i]: false }));
+                                        setMemberSearchQuery(prev => ({ ...prev, [i]: "" }));
+                                        if (errors[`group_${i}_phone`]) {
+                                          const newErrors = { ...errors };
+                                          delete newErrors[`group_${i}_phone`];
+                                          setErrors(newErrors);
+                                        }
+                                      }}
+                                      className="w-full text-left px-3 py-1.5 text-xs hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2 rounded-sm cursor-pointer"
+                                    >
+                                      <img
+                                        src={`https://flagcdn.com/w20/${c.code.toLowerCase()}.png`}
+                                        width="16"
+                                        height="12"
+                                        alt=""
+                                        className="object-contain shrink-0"
+                                        onError={(e) => {
+                                          (e.target as HTMLElement).style.display = "none";
+                                        }}
+                                      />
+                                      <span className="font-semibold text-slate-700 dark:text-slate-300">{c.dialCode}</span>
+                                      <span className="text-slate-500 truncate">{c.name}</span>
+                                    </button>
+                                  ))}
+                                </div>
+                              </PopoverContent>
+                            </Popover>
+                            <Input 
+                              className={cn(
+                                "h-8 text-sm rounded-l-none",
+                                errors[`group_${i}_phone`] && "border-destructive focus-visible:ring-destructive"
+                              )} 
+                              value={formData.group[i]?.phone || ""} 
+                              onChange={e => { 
+                                const newGroup = [...formData.group];
+                                if (!newGroup[i]) newGroup[i] = { name: "", passport: "", phone: "", email: "", countryCode: "GB" };
+                                newGroup[i].phone = e.target.value;
+                                setFormData({...formData, group: newGroup}); 
+                                if (errors[`group_${i}_phone`]) {
+                                  const newErrors = {...errors};
+                                  delete newErrors[`group_${i}_phone`];
+                                  setErrors(newErrors);
+                                }
+                              }} 
+                              placeholder={`e.g. ${(COUNTRIES.find(c => c.code === (formData.group[i]?.countryCode || "GB")) || COUNTRIES[0]).placeholder}`} 
+                            />
+                          </div>
+                          {errors[`group_${i}_phone`] && <div className="text-[10px] text-destructive flex items-center gap-1 mt-0.5"><AlertCircle className="h-3 w-3" /> {errors[`group_${i}_phone`]}</div>}
                         </div>
                         <div className="space-y-1">
-                          <Label className="text-xs">Email</Label>
-                          <Input className="h-8 text-sm" value={formData.group[i]?.email || ""} onChange={e => {
-                            const newGroup = [...formData.group];
-                            if (!newGroup[i]) newGroup[i] = { name: "", passport: "" };
-                            newGroup[i].email = e.target.value;
-                            setFormData({...formData, group: newGroup});
-                          }} />
+                          <Label className={cn("text-xs", errors[`group_${i}_email`] && "text-destructive")}>
+                            Email {mode === "confirmed" && "*"}
+                          </Label>
+                          <Input 
+                            className={cn(
+                              "h-8 text-sm",
+                              errors[`group_${i}_email`] && "border-destructive focus-visible:ring-destructive"
+                            )} 
+                            value={formData.group[i]?.email || ""} 
+                            onChange={e => { 
+                              const newGroup = [...formData.group];
+                              if (!newGroup[i]) newGroup[i] = { name: "", passport: "", phone: "", email: "", countryCode: "GB" };
+                              newGroup[i].email = e.target.value;
+                              setFormData({...formData, group: newGroup}); 
+                              if (errors[`group_${i}_email`]) {
+                                const newErrors = {...errors};
+                                delete newErrors[`group_${i}_email`];
+                                setErrors(newErrors);
+                              }
+                            }} 
+                            placeholder="john@example.com"
+                          />
+                          {errors[`group_${i}_email`] && <div className="text-[10px] text-destructive flex items-center gap-1 mt-0.5"><AlertCircle className="h-3 w-3" /> {errors[`group_${i}_email`]}</div>}
                         </div>
                       </div>
                     </div>

@@ -314,7 +314,7 @@ function Console() {
           currentLocation: loc,
           agent: agentMap[t.agent_id] || "All Agents",
           driver: driverMap[t.driver_id] || "All Drivers",
-          group: t.group_members?.map((g: any) => ({ name: g.name, passport: g.passport_number, email: g.email })) || [],
+          group: t.group_members?.map((g: any) => ({ name: g.name, passport: g.passport_number, email: g.email, phone: g.phone || "" })) || [],
           itinerary: sortedItinerary.map((i: any) => ({
             day: i.day_number,
             title: i.day_title,
@@ -973,7 +973,8 @@ function Console() {
                 group_members: (newTourist.group || []).map((g: any) => ({
                   name: g.name || 'Unknown',
                   passport_number: g.passport || 'N/A',
-                  email: g.email || 'N/A'
+                  email: g.email || 'N/A',
+                  phone: g.phone || null
                 })),
                 itineraries: (newTourist.itinerary || []).map((it: any) => ({
                   day_number: it.day || 1,
