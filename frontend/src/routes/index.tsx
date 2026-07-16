@@ -1290,42 +1290,42 @@ function ToursWorkspace({
           </div>
 
           {/* Status bar */}
-          <div className="flex items-center justify-center border-b border-border bg-card px-6 py-2">
-            <div className="flex bg-muted/40 p-1 rounded-xl border border-border/50 gap-1 shadow-[inset_0_1px_2px_rgba(0,0,0,0.02)]">
+          <div className="flex items-center justify-center border-b border-border bg-slate-50/50 dark:bg-slate-950/20 px-6 py-3">
+            <div className="flex bg-slate-100/80 dark:bg-slate-900/60 p-1 rounded-xl border border-slate-200/60 dark:border-slate-800/50 gap-1.5 shadow-[inset_0_1px_3px_rgba(0,0,0,0.04)] backdrop-blur-sm">
               {[
                 {
                   key: "all",
                   label: "All Statuses",
                   icon: Layers,
-                  activeClass: "bg-background text-foreground border-border/60 shadow-[0_2px_4px_rgba(0,0,0,0.05)]",
+                  activeClass: "bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 border-slate-200/80 dark:border-slate-700/80 shadow-[0_2px_5px_rgba(0,0,0,0.06),0_0.5px_1.5px_rgba(0,0,0,0.04)]",
                   iconClass: "text-slate-600 dark:text-slate-400"
                 },
                 {
                   key: "Active",
                   label: "Active",
                   icon: Plane,
-                  activeClass: "bg-background text-foreground border-border/60 shadow-[0_2px_4px_rgba(0,0,0,0.05)]",
+                  activeClass: "bg-white dark:bg-slate-800 text-teal-600 dark:text-teal-400 border-teal-200/60 dark:border-teal-900/40 shadow-[0_2.5px_8px_-1px_rgba(20,184,166,0.12),0_1px_3px_rgba(20,184,166,0.06)]",
                   iconClass: "text-teal-600 dark:text-teal-400"
                 },
                 {
                   key: "Upcoming",
                   label: "Upcoming",
                   icon: Clock,
-                  activeClass: "bg-background text-foreground border-border/60 shadow-[0_2px_4px_rgba(0,0,0,0.05)]",
+                  activeClass: "bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 border-indigo-200/60 dark:border-indigo-900/40 shadow-[0_2.5px_8px_-1px_rgba(99,102,241,0.12),0_1px_3px_rgba(99,102,241,0.06)]",
                   iconClass: "text-indigo-600 dark:text-indigo-400"
                 },
                 {
                   key: "Completed",
                   label: "Completed",
                   icon: CheckCircle2,
-                  activeClass: "bg-background text-foreground border-border/60 shadow-[0_2px_4px_rgba(0,0,0,0.05)]",
+                  activeClass: "bg-white dark:bg-slate-800 text-purple-600 dark:text-purple-400 border-purple-200/60 dark:border-purple-900/40 shadow-[0_2.5px_8px_-1px_rgba(168,85,247,0.12),0_1px_3px_rgba(168,85,247,0.06)]",
                   iconClass: "text-purple-600 dark:text-purple-400"
                 },
                 {
                   key: "Cancelled",
                   label: "Cancelled",
                   icon: XCircle,
-                  activeClass: "bg-background text-foreground border-border/60 shadow-[0_2px_4px_rgba(0,0,0,0.05)]",
+                  activeClass: "bg-white dark:bg-slate-800 text-orange-600 dark:text-orange-400 border-orange-200/60 dark:border-orange-900/40 shadow-[0_2.5px_8px_-1px_rgba(249,115,22,0.12),0_1px_3px_rgba(249,115,22,0.06)]",
                   iconClass: "text-orange-600 dark:text-orange-400"
                 },
               ].map((tab) => {
@@ -1338,14 +1338,14 @@ function ToursWorkspace({
                     type="button"
                     onClick={() => setStatusFilter(tab.key as any)}
                     className={cn(
-                      "flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-medium rounded-lg transition-all duration-200 cursor-pointer border border-transparent",
+                      "group flex items-center gap-2 px-4 py-1.5 text-xs font-medium rounded-lg transition-all duration-200 cursor-pointer border border-transparent transform hover:scale-[1.02] active:scale-[0.98]",
                       active
                         ? tab.activeClass
-                        : "text-muted-foreground hover:text-foreground hover:bg-background/40"
+                        : "text-muted-foreground hover:text-foreground hover:bg-white/60 dark:hover:bg-slate-800/40"
                     )}
                   >
                     <div className="relative flex items-center justify-center">
-                      <Icon className={cn("h-3.5 w-3.5 shrink-0", active ? tab.iconClass : "text-muted-foreground/70")} />
+                      <Icon className={cn("h-3.5 w-3.5 shrink-0 transition-transform duration-200 group-hover:scale-110", active ? tab.iconClass : "text-muted-foreground/70")} />
                       {hasAlert && (
                         <span className="absolute -top-0.5 -right-0.5 flex h-1.5 w-1.5">
                           <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-destructive opacity-75" />
