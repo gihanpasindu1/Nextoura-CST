@@ -87,6 +87,7 @@ import {
 } from "@/lib/tourism-data";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { AddTouristSheet } from "@/components/AddTouristSheet";
+import { Calendar as UICalendar } from "@/components/ui/calendar";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/")({
@@ -173,6 +174,8 @@ function Console() {
   const router = useRouter();
 
   const [currentTime, setCurrentTime] = useState<Date | null>(null);
+  const [sidebarDate, setSidebarDate] = useState<Date | undefined>(new Date());
+  const [calendarPopoverOpen, setCalendarPopoverOpen] = useState(false);
 
   useEffect(() => {
     setCurrentTime(new Date());
@@ -1013,9 +1016,25 @@ function Console() {
           <aside className="hidden w-[200px] shrink-0 flex-col border-l border-border bg-sidebar/40 backdrop-blur-sm xl:flex">
             {/* Top section: Date */}
             <div className="flex items-start gap-2.5 px-4 py-4">
-              <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg border border-primary/10 bg-primary/5 text-primary shadow-sm mt-0.5">
-                <CalendarDays className="h-4 w-4" />
-              </div>
+              <Popover open={calendarPopoverOpen} onOpenChange={setCalendarPopoverOpen}>
+                <PopoverTrigger asChild>
+                  <button
+                    type="button"
+                    title="Open Calendar"
+                    className="grid h-8 w-8 shrink-0 place-items-center rounded-lg border border-primary/10 bg-primary/5 text-primary shadow-sm mt-0.5 hover:bg-primary/10 hover:border-primary/20 transition-all cursor-pointer"
+                  >
+                    <CalendarDays className="h-4 w-4" />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0 z-[100] bg-card border border-border rounded-md shadow-md" align="start" side="bottom">
+                  <UICalendar
+                    mode="single"
+                    selected={sidebarDate}
+                    onSelect={setSidebarDate}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
               <div className="min-w-0">
                 <h3 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Today</h3>
                 {currentTime ? (
