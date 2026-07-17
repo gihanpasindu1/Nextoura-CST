@@ -1100,7 +1100,7 @@ function StatTile({
         : "text-slate-500 bg-slate-500/10 border-slate-500/20";
 
   return (
-    <div className="group rounded-xl border border-border bg-card p-4 transition-all duration-300 hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700 relative overflow-hidden">
+    <div className="group rounded-xl border border-border bg-card p-3.5 transition-all duration-300 hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700 relative overflow-hidden">
       {/* Subtle background tone glow on hover */}
       <div className={cn(
         "absolute -right-6 -bottom-6 h-16 w-16 rounded-full blur-2xl opacity-0 group-hover:opacity-30 transition-opacity duration-300",
@@ -1110,13 +1110,13 @@ function StatTile({
       )} />
 
       <div className="flex items-center justify-between gap-2">
-        <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground/80">{label}</div>
-        <div className={cn("grid h-7 w-7 place-items-center rounded-lg border text-xs", iconColor)}>
-          <Icon className="h-4 w-4" />
+        <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80">{label}</div>
+        <div className={cn("grid h-6 w-6 place-items-center rounded-lg border text-xs", iconColor)}>
+          <Icon className="h-3.5 w-3.5" />
         </div>
       </div>
-      <div className="mt-2.5 flex items-baseline gap-2">
-        <span className="text-2xl font-extrabold tracking-tight text-foreground leading-none">{value}</span>
+      <div className="mt-2 flex items-baseline gap-2">
+        <span className="text-xl font-extrabold tracking-tight text-foreground leading-none">{value}</span>
         <span className={cn(
           "h-1.5 w-1.5 rounded-full",
           tone === "success" && "bg-emerald-500",
@@ -1143,7 +1143,7 @@ function NotificationItem({
         ? "text-warning"
         : "text-success";
   return (
-    <div className={cn("rounded-md border border-border p-3 transition-colors hover:bg-accent/40", n.resolved ? "bg-muted/30" : "bg-card")}>
+    <div className={cn("rounded-xl border border-border p-3 transition-all hover:bg-accent/40", n.resolved ? "bg-muted/30" : "bg-card shadow-sm")}>
       <div className="flex items-start gap-2.5">
         <Icon className={cn("mt-0.5 h-4 w-4 shrink-0", color)} />
         <div className="min-w-0 flex-1">
@@ -1152,7 +1152,7 @@ function NotificationItem({
           <div className="mt-2 flex items-center justify-between">
             <div className="text-[10px] text-muted-foreground/70">{n.time}</div>
             {!n.resolved && onResolve && (
-              <Button variant="outline" size="sm" onClick={() => onResolve(n.id)} className="h-7 text-xs px-3">
+              <Button variant="outline" size="sm" onClick={() => onResolve(n.id)} className="h-7 text-xs px-3 rounded-lg">
                 Mark as Resolved
               </Button>
             )}
@@ -1581,18 +1581,18 @@ function TouristDetail({
     <ScrollArea className="h-full">
       <div key={t.id} className="animate-in fade-in slide-in-from-right-2 duration-200">
         {/* Header */}
-        <div className="border-b border-border bg-card px-7 py-5">
+        <div className="border-b border-border bg-card/90 backdrop-blur-sm px-7 py-5">
           {onBack && (
             <div className="mb-4">
-              <Button variant="ghost" size="sm" onClick={onBack} className="gap-2 -ml-2 text-muted-foreground hover:text-foreground">
-                <ArrowLeft className="h-4 w-4" />
+              <Button variant="ghost" size="sm" onClick={onBack} className="gap-2 -ml-2 text-muted-foreground hover:text-foreground rounded-lg transition-all duration-200">
+                <ArrowLeft className="h-3.5 w-3.5" />
                 Back to list
               </Button>
             </div>
           )}
           <div className="flex items-start justify-between gap-4">
             <div className="flex min-w-0 items-start gap-4">
-              <div className="grid h-12 w-12 shrink-0 place-items-center rounded-md bg-accent text-xl relative">
+              <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-accent/60 text-xl relative border border-border/40">
                 {t.countryCode && t.countryCode !== "UN" ? (
                   <img
                     src={`https://flagcdn.com/w20/${t.countryCode.toLowerCase()}.png`}
@@ -1619,10 +1619,10 @@ function TouristDetail({
               </div>
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
-                  <h2 className="truncate text-lg font-semibold tracking-tight">{t.name}</h2>
+                  <h2 className="truncate text-[16px] font-bold tracking-tight text-foreground">{t.name}</h2>
                   <StatusPill status={t.status} />
                 </div>
-                <div className="mt-1 flex items-center gap-3 text-sm text-muted-foreground">
+                <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
                   <div className="flex items-center gap-1.5">
                     <MapPin className="h-3.5 w-3.5" />
                     {t.currentLocation}
@@ -1636,18 +1636,18 @@ function TouristDetail({
             </div>
             <div className="hidden shrink-0 gap-2 sm:flex">
               {t.isLead && (
-                <Button variant="default" size="sm" onClick={onConfirmTour} className="gap-2 bg-green-600 hover:bg-green-700 text-white">
+                <Button variant="default" size="sm" onClick={onConfirmTour} className="gap-2 bg-green-600 hover:bg-green-700 text-white rounded-lg shadow-sm h-8 text-xs">
                   Confirm Tour
                 </Button>
               )}
-              <Button variant="outline" size="sm" onClick={onEditClient} className="gap-2 border-primary text-primary hover:bg-primary/10">
-                <Settings2 className="h-4 w-4" />
+              <Button variant="outline" size="sm" onClick={onEditClient} className="gap-2 border-primary text-primary hover:bg-primary/10 rounded-lg h-8 text-xs">
+                <Settings2 className="h-3.5 w-3.5" />
                 Edit Profile
               </Button>
               <Button 
                 variant="outline" 
                 size="sm" 
-                className="gap-2"
+                className="gap-2 rounded-lg h-8 text-xs"
                 onClick={() => {
                   if (t.phone) {
                     const num = t.phone.replace(/[^0-9]/g, '');
@@ -1655,20 +1655,20 @@ function TouristDetail({
                   }
                 }}
               >
-                <WhatsAppIcon className="h-4 w-4 text-[#25D366]" />
+                <WhatsAppIcon className="h-3.5 w-3.5 text-[#25D366]" />
                 WhatsApp
               </Button>
-              <Button variant="outline" size="sm" className="gap-2" onClick={() => t.email && (window.location.href = `mailto:${t.email}`)}>
-                <Mail className="h-4 w-4" />
+              <Button variant="outline" size="sm" className="gap-2 rounded-lg h-8 text-xs" onClick={() => t.email && (window.location.href = `mailto:${t.email}`)}>
+                <Mail className="h-3.5 w-3.5" />
                 Email
               </Button>
-              <Button size="sm">Open Booking</Button>
+              <Button size="sm" className="rounded-lg shadow-sm h-8 text-xs">Open Booking</Button>
             </div>
           </div>
         </div>
 
         {activeAlerts.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 px-7 pt-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 px-7 pt-5">
             {activeComplains.length > 0 && (
               <div>
                 <div className="flex items-center justify-between pb-2 border-b border-border mb-3">
@@ -1747,15 +1747,15 @@ function TouristDetail({
           </TabsContent>
 
           <TabsContent value="group" className="mt-5">
-            <div className="overflow-hidden rounded-md border border-border bg-card">
+            <div className="overflow-hidden rounded-xl border border-border bg-card">
               <table className="w-full text-sm text-left">
-                <thead className="bg-muted/40 text-xs uppercase tracking-wider text-muted-foreground">
+                <thead className="bg-accent/30 text-[10px] uppercase tracking-wider text-muted-foreground">
                   <tr>
-                    <th className="px-4 py-2 font-medium">Traveler</th>
-                    <th className="px-4 py-2 font-medium">Passport No.</th>
-                    <th className="px-4 py-2 font-medium hidden sm:table-cell">Phone</th>
-                    <th className="px-4 py-2 font-medium hidden md:table-cell">Email</th>
-                    <th className="px-4 py-2 font-medium">Role</th>
+                    <th className="px-4 py-2.5 font-semibold">Traveler</th>
+                    <th className="px-4 py-2.5 font-semibold">Passport No.</th>
+                    <th className="px-4 py-2.5 font-semibold hidden sm:table-cell">Phone</th>
+                    <th className="px-4 py-2.5 font-semibold hidden md:table-cell">Email</th>
+                    <th className="px-4 py-2.5 font-semibold">Role</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1787,7 +1787,7 @@ function TouristDetail({
                   <span className="absolute -left-[31px] top-0.5 grid h-6 w-6 place-items-center rounded-full border-2 border-background bg-primary text-[10px] font-semibold text-primary-foreground">
                     {d.day.toString().padStart(2, "0")}
                   </span>
-                  <div className="rounded-md border border-border bg-card p-4">
+                  <div className="rounded-xl border border-border bg-card p-4 transition-all hover:shadow-sm">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <div className="flex flex-wrap items-center gap-3">
                         <div>
@@ -1797,11 +1797,11 @@ function TouristDetail({
                           <div className="mt-0.5 text-sm font-semibold">{d.title}</div>
                         </div>
                         {d.status === 'Completed' ? (
-                          <div className="flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-medium text-green-700 border border-green-200">
+                          <div className="flex items-center gap-1 rounded-full bg-green-50 px-2 py-0.5 text-[10px] font-medium text-green-700 border border-green-200 dark:bg-green-500/10 dark:text-green-400 dark:border-green-500/20">
                             <CheckCircle2 className="h-3 w-3" /> Arrived
                           </div>
                         ) : (
-                          <div className="flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-medium text-amber-600 border border-amber-200">
+                          <div className="flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-medium text-amber-600 border border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20">
                             <Clock className="h-3 w-3" /> Pending
                           </div>
                         )}
@@ -1829,7 +1829,7 @@ function TouristDetail({
                       </ul>
                     )}
 
-                    <div className="mt-4 grid gap-2 rounded-md bg-muted/40 p-3 sm:grid-cols-[1fr_1fr_auto] items-center">
+                    <div className="mt-4 grid gap-2 rounded-xl bg-accent/30 p-3 sm:grid-cols-[1fr_1fr_auto] items-center">
                       <div className="flex items-center gap-2 text-xs">
                         <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
                         <span className="font-medium">{d.hotel}</span>
@@ -1840,7 +1840,7 @@ function TouristDetail({
                       </div>
                       <Dialog>
                         <DialogTrigger asChild>
-                          <Button variant="outline" size="sm" className="h-7 text-[10px] gap-1.5 w-full sm:w-auto bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100">
+                          <Button variant="outline" size="sm" className="h-7 text-[10px] gap-1.5 w-full sm:w-auto bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100 rounded-lg dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/20 dark:hover:bg-blue-500/20">
                             <Send className="h-3 w-3" />
                             Review Auto-Generated Email
                           </Button>
@@ -1884,7 +1884,7 @@ function TouristDetail({
         <div className="px-7 pb-10 pt-6 mt-8 border-t border-border/50">
           <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
             <DialogTrigger asChild>
-              <Button variant="destructive" className="w-full sm:w-auto">
+              <Button variant="destructive" className="w-full sm:w-auto rounded-lg">
                 <Trash2 className="mr-2 h-4 w-4" />
                 Delete Client
               </Button>
@@ -1925,12 +1925,14 @@ function InfoField({
   value: string;
 }) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-[0_2px_10px_rgb(0,0,0,0.02)] transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:border-blue-200 dark:bg-card dark:border-slate-800 flex flex-col gap-1.5">
-      <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-        <Icon className="h-3.5 w-3.5 text-blue-500" />
+    <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-[0_2px_10px_rgb(0,0,0,0.02)] transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:border-blue-200 dark:bg-card dark:border-slate-800 dark:hover:border-slate-700 flex flex-col gap-2">
+      <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+        <div className="grid h-6 w-6 place-items-center rounded-md bg-primary/5 border border-primary/10">
+          <Icon className="h-3 w-3 text-primary" />
+        </div>
         {label}
       </div>
-      <div className="break-words text-[15px] font-semibold text-slate-900 dark:text-slate-100">{value}</div>
+      <div className="break-words text-[14px] font-semibold text-slate-900 dark:text-slate-100">{value}</div>
     </div>
   );
 }
@@ -2023,17 +2025,17 @@ function AgentManagement({ agents, onAddAgent, onEditAgent, onDeleteAgent }: {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col bg-background">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-card px-6 py-3">
-        <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-          <Briefcase className="h-4 w-4 text-muted-foreground" />
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-accent/30 px-6 py-2.5">
+        <div className="flex items-center gap-1.5 text-[11px] font-semibold text-muted-foreground">
+          <Briefcase className="h-3.5 w-3.5" />
           <span>
             {agents.length} Agents · {agents.reduce((s, a) => s + (a.clients || 0), 0)} Clients Under Management
           </span>
         </div>
         <Dialog open={addOpen} onOpenChange={setAddOpen}>
           <DialogTrigger asChild>
-            <Button size="sm" className="gap-1.5">
-              <UserPlus className="h-4 w-4" />
+            <Button size="sm" className="gap-1.5 rounded-lg shadow-sm text-xs h-8">
+              <UserPlus className="h-3.5 w-3.5" />
               Add Agent
             </Button>
           </DialogTrigger>
@@ -2248,7 +2250,7 @@ function AgentManagement({ agents, onAddAgent, onEditAgent, onDeleteAgent }: {
 
                 <div className="flex items-start gap-4">
                   {/* Initial Badge with slate styling */}
-                  <div className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-primary/5 border border-primary/10 text-primary font-bold text-sm">
+                  <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-primary/5 border border-primary/10 text-primary font-bold text-sm">
                     {initials}
                   </div>
                   <div className="min-w-0 flex-1 pr-2">
@@ -2264,7 +2266,7 @@ function AgentManagement({ agents, onAddAgent, onEditAgent, onDeleteAgent }: {
                   </div>
                 </div>
 
-                <Separator className="my-4 bg-border/60" />
+                <Separator className="my-3.5 bg-border/40" />
 
                 <div className="flex items-center justify-between text-xs">
                   <div>
@@ -2426,17 +2428,17 @@ function DriverManagement({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col bg-background">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-card px-6 py-3">
-        <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-          <Car className="h-4 w-4 text-muted-foreground" />
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-accent/30 px-6 py-2.5">
+        <div className="flex items-center gap-1.5 text-[11px] font-semibold text-muted-foreground">
+          <Car className="h-3.5 w-3.5" />
           <span>
             {drivers.length} Drivers & Guides
           </span>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button size="sm" className="gap-1.5">
-              <UserPlus className="h-4 w-4" />
+            <Button size="sm" className="gap-1.5 rounded-lg shadow-sm text-xs h-8">
+              <UserPlus className="h-3.5 w-3.5" />
               Add Driver / Guide
             </Button>
           </DialogTrigger>
@@ -2562,7 +2564,7 @@ function DriverManagement({
 
                 <div className="flex items-start gap-4">
                   {/* Avatar Initials Badge */}
-                  <div className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-primary/5 border border-primary/10 text-primary font-bold text-sm">
+                  <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-primary/5 border border-primary/10 text-primary font-bold text-sm">
                     {initials}
                   </div>
                   <div className="min-w-0 flex-1 pr-2">
@@ -2735,7 +2737,7 @@ function DashboardOverview({
                 <div
                   key={t.label}
                   className={cn(
-                    "relative overflow-hidden rounded-xl border bg-card p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md",
+                    "relative overflow-hidden rounded-xl border bg-card p-4 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md",
                     t.borderClass
                   )}
                 >
@@ -2751,8 +2753,8 @@ function DashboardOverview({
                     </div>
                   </div>
 
-                  <div className="mt-3 flex items-baseline gap-1.5">
-                    <div className="text-3xl font-extrabold tracking-tight text-foreground">
+                  <div className="mt-2.5 flex items-baseline gap-1.5">
+                    <div className="text-2xl font-extrabold tracking-tight text-foreground">
                       {t.value}
                     </div>
                   </div>
@@ -2766,9 +2768,9 @@ function DashboardOverview({
           </div>
         )}
 
-        <div className="mt-6 rounded-xl border border-border bg-card p-6 shadow-sm">
-          <h3 className="text-sm font-bold text-foreground">{labelMap[navLabel]}</h3>
-          <p className="mt-1.5 text-[13px] text-muted-foreground leading-relaxed">
+        <div className="mt-6 rounded-xl border border-border bg-card p-5 shadow-sm">
+          <h3 className="text-[13px] font-bold text-foreground">{labelMap[navLabel]}</h3>
+          <p className="mt-1.5 text-xs text-muted-foreground leading-relaxed">
             Detailed {labelMap[navLabel].toLowerCase()} views are available here. Switch to{" "}
             <span
               onClick={() => onNavigate("tours")}
