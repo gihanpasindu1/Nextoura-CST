@@ -2,10 +2,7 @@ import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useState } from "react";
 import { supabase } from "../lib/supabase";
 import { toast } from "sonner";
-import { MapPinned } from "lucide-react";
-import { Button } from "../components/ui/button";
-import { Input } from "../components/ui/input";
-import { Label } from "../components/ui/label";
+import { MapPinned, Mail, Lock, Eye, EyeOff, Loader2, Shield } from "lucide-react";
 
 export const Route = createFileRoute("/login")({
   component: LoginPage,
@@ -15,6 +12,7 @@ function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -48,73 +46,99 @@ function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50 p-4 relative overflow-hidden">
-      {/* Decorative background elements */}
-      <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none">
-        <div className="absolute -top-[30%] -left-[10%] w-[70%] h-[70%] rounded-full bg-blue-100 blur-[120px]" />
-        <div className="absolute bottom-[10%] -right-[10%] w-[50%] h-[50%] rounded-full bg-teal-100 blur-[100px]" />
-      </div>
+    <div className="relative flex min-h-screen flex-col items-center justify-center bg-slate-950 p-4 select-none overflow-hidden font-sans">
+      {/* Dynamic Background Blobs */}
+      <div className="absolute top-[-20%] right-[-10%] h-[600px] w-[600px] rounded-full bg-indigo-500/10 blur-[140px] pointer-events-none animate-pulse" style={{ animationDuration: '8s' }} />
+      <div className="absolute bottom-[-20%] left-[-10%] h-[600px] w-[600px] rounded-full bg-blue-500/10 blur-[140px] pointer-events-none animate-pulse" style={{ animationDuration: '12s' }} />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[900px] w-[900px] rounded-full bg-emerald-500/5 blur-[160px] pointer-events-none" />
 
-      <div className="z-10 w-full max-w-md space-y-8 rounded-2xl border border-slate-200 bg-white p-10 shadow-xl">
+      {/* Grid Pattern Overlay */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#0f172a_1px,transparent_1px),linear-gradient(to_bottom,#0f172a_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] opacity-35 z-0 pointer-events-none" />
+
+      {/* Login Card Container */}
+      <div className="relative z-10 w-full max-w-[420px] rounded-2xl border border-slate-800/80 bg-slate-900/40 p-8 sm:p-10 backdrop-blur-xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] transition-all duration-300 hover:border-slate-800">
         <div className="flex flex-col items-center text-center">
-          <div className="mb-6 grid h-14 w-14 place-items-center rounded-[14px] shadow-md" style={{
-            background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
-            boxShadow: '0 4px 12px rgba(59,130,246,0.15)',
-          }}>
-            <MapPinned className="h-7 w-7 text-white" strokeWidth={2} />
+          {/* Logo container with gradient border and subtle pulse */}
+          <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 via-indigo-500 to-indigo-600 p-[1.5px] shadow-lg shadow-indigo-500/20">
+            <div className="flex h-full w-full items-center justify-center rounded-[14px] bg-slate-950">
+              <MapPinned className="h-6.5 w-6.5 text-indigo-400" strokeWidth={2} />
+            </div>
           </div>
-          <h2 className="text-2xl font-bold tracking-tight text-slate-900">
+
+          <h2 className="mt-5 text-2xl font-extrabold tracking-tight text-white">
             Horizon Travel
           </h2>
-          <p className="mt-2 text-sm text-slate-500">
-            Sign in to the Operations Console
+          <p className="mt-2 text-xs font-semibold uppercase tracking-widest text-slate-400">
+            Operations Console
           </p>
         </div>
 
-        <form onSubmit={handleLogin} className="space-y-6">
-          <div className="space-y-2">
-            <Label htmlFor="email" className="text-slate-700 font-medium">
+        <form onSubmit={handleLogin} className="mt-8 space-y-5">
+          <div className="space-y-1.5 group">
+            <label htmlFor="email" className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
               Email address
-            </Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="company@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="bg-white border-slate-200 text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:ring-blue-500"
-              required
-            />
+            </label>
+            <div className="relative flex items-center">
+              <Mail className="absolute left-3.5 h-4.5 w-4.5 text-slate-500 transition-colors group-focus-within:text-indigo-400" />
+              <input
+                id="email"
+                type="email"
+                placeholder="operator@horizontravel.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full rounded-xl border border-slate-800 bg-slate-950/60 py-2.5 pl-11 pr-4 text-sm text-slate-100 placeholder:text-slate-600 outline-none transition-all focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 focus:bg-slate-950/90"
+                required
+              />
+            </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="password" className="text-slate-700 font-medium">
+          <div className="space-y-1.5 group">
+            <label htmlFor="password" className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
               Password
-            </Label>
-            <Input
-              id="password"
-              type="password"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="bg-white border-slate-200 text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:ring-blue-500"
-              required
-            />
+            </label>
+            <div className="relative flex items-center">
+              <Lock className="absolute left-3.5 h-4.5 w-4.5 text-slate-500 transition-colors group-focus-within:text-indigo-400" />
+              <input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full rounded-xl border border-slate-800 bg-slate-950/60 py-2.5 pl-11 pr-11 text-sm text-slate-100 placeholder:text-slate-600 outline-none transition-all focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 focus:bg-slate-950/90"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3.5 flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:text-slate-300 hover:bg-slate-800/40 transition-colors cursor-pointer"
+              >
+                {showPassword ? <EyeOff className="h-4.5 w-4.5" /> : <Eye className="h-4.5 w-4.5" />}
+              </button>
+            </div>
           </div>
 
-          <Button
+          <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white shadow-md transition-all active:scale-[0.98]"
+            className="relative mt-6 flex h-11 w-full items-center justify-center rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 text-sm font-semibold text-white shadow-lg shadow-indigo-500/25 hover:from-blue-600 hover:to-indigo-700 hover:shadow-indigo-600/35 transition-all duration-300 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
           >
-            {loading ? "Signing in..." : "Sign in"}
-          </Button>
+            {loading ? (
+              <div className="flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>Verifying credentials...</span>
+              </div>
+            ) : (
+              <span>Sign in</span>
+            )}
+          </button>
         </form>
 
-        <p className="text-center text-xs text-slate-500">
-          Access is restricted to registered partner companies.
-        </p>
+        <div className="mt-8 flex items-center justify-center gap-1.5 border-t border-slate-800/60 pt-5 text-center text-[10px] font-medium tracking-wide text-slate-500">
+          <Shield className="h-3.5 w-3.5 text-slate-600" />
+          <span>Access restricted to authorized personnel.</span>
+        </div>
       </div>
     </div>
   );
 }
+
