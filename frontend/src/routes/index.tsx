@@ -2292,15 +2292,25 @@ function DriverManagement({
     }
 
     // Sri Lankan phone number validation
-    const cleanPhone = form.phone.replace(/[\s\-\(\)]/g, "");
-    const slPhoneRegex = /^(?:\+94|94|0)?[1-9]\d{8}$/;
+    let cleanPhone = form.phone.replace(/[\s\-\(\)]/g, "");
+    if (cleanPhone.startsWith("+94")) {
+      cleanPhone = cleanPhone.slice(3);
+    } else if (cleanPhone.startsWith("94")) {
+      cleanPhone = cleanPhone.slice(2);
+    } else if (cleanPhone.startsWith("0")) {
+      cleanPhone = cleanPhone.slice(1);
+    }
+
+    const slPhoneRegex = /^[1-9]\d{8}$/;
     if (!slPhoneRegex.test(cleanPhone)) {
-      toast.error("Invalid phone number. Must be a valid Sri Lankan number (e.g., +94 77 123 4567 or 077 123 4567)");
+      toast.error("Invalid phone number. Must be a valid Sri Lankan number (e.g., 77 123 4567)");
       return;
     }
 
+    const finalPhone = `+94${cleanPhone}`;
+
     try {
-      await onAddDriver(form);
+      await onAddDriver({ ...form, phone: finalPhone });
       setForm({ name: "", phone: "", email: "", password: "" });
       setOpen(false);
     } catch (e) {
@@ -2322,16 +2332,26 @@ function DriverManagement({
     }
 
     // Sri Lankan phone number validation
-    const cleanPhone = form.phone.replace(/[\s\-\(\)]/g, "");
-    const slPhoneRegex = /^(?:\+94|94|0)?[1-9]\d{8}$/;
+    let cleanPhone = form.phone.replace(/[\s\-\(\)]/g, "");
+    if (cleanPhone.startsWith("+94")) {
+      cleanPhone = cleanPhone.slice(3);
+    } else if (cleanPhone.startsWith("94")) {
+      cleanPhone = cleanPhone.slice(2);
+    } else if (cleanPhone.startsWith("0")) {
+      cleanPhone = cleanPhone.slice(1);
+    }
+
+    const slPhoneRegex = /^[1-9]\d{8}$/;
     if (!slPhoneRegex.test(cleanPhone)) {
-      toast.error("Invalid phone number. Must be a valid Sri Lankan number (e.g., +94 77 123 4567 or 077 123 4567)");
+      toast.error("Invalid phone number. Must be a valid Sri Lankan number (e.g., 77 123 4567)");
       return;
     }
 
+    const finalPhone = `+94${cleanPhone}`;
+
     if (selectedDriver) {
       try {
-        await onUpdateDriver(selectedDriver.id, form);
+        await onUpdateDriver(selectedDriver.id, { ...form, phone: finalPhone });
       } catch (e) {
         toast.error("Failed to update driver.");
         return;
@@ -2353,7 +2373,16 @@ function DriverManagement({
 
   function openEdit(driver: any) {
     setSelectedDriver(driver);
-    setForm({ name: driver.name || "", phone: driver.phone || "", email: driver.email || "", password: "" });
+    let rawPhone = driver.phone || "";
+    let cleanPhone = rawPhone.replace(/[\s\-\(\)]/g, "");
+    if (cleanPhone.startsWith("+94")) {
+      cleanPhone = cleanPhone.slice(3);
+    } else if (cleanPhone.startsWith("94")) {
+      cleanPhone = cleanPhone.slice(2);
+    } else if (cleanPhone.startsWith("0")) {
+      cleanPhone = cleanPhone.slice(1);
+    }
+    setForm({ name: driver.name || "", phone: cleanPhone, email: driver.email || "", password: "" });
     setEditOpen(true);
   }
 
@@ -2395,12 +2424,18 @@ function DriverManagement({
               </div>
               <div>
                 <Label htmlFor="drv-phone">Phone Number</Label>
-                <Input
-                  id="drv-phone"
-                  value={form.phone}
-                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                  placeholder="+94 77 123 4567"
-                />
+                <div className="flex rounded-md shadow-sm">
+                  <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-input bg-muted text-muted-foreground text-sm font-semibold select-none">
+                    🇱🇰 +94
+                  </span>
+                  <Input
+                    id="drv-phone"
+                    value={form.phone}
+                    onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                    placeholder="77 123 4567"
+                    className="rounded-l-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                  />
+                </div>
               </div>
 
               <div>
@@ -2538,11 +2573,18 @@ function DriverManagement({
             </div>
             <div>
               <Label htmlFor="edit-drv-phone">Phone Number</Label>
-              <Input
-                id="edit-drv-phone"
-                value={form.phone}
-                onChange={(e) => setForm({ ...form, phone: e.target.value })}
-              />
+              <div className="flex rounded-md shadow-sm">
+                <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-input bg-muted text-muted-foreground text-sm font-semibold select-none">
+                  🇱🇰 +94
+                </span>
+                <Input
+                  id="edit-drv-phone"
+                  value={form.phone}
+                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                  placeholder="77 123 4567"
+                  className="rounded-l-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                />
+              </div>
             </div>
             <div>
               <Label htmlFor="edit-drv-email">Email</Label>
