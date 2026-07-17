@@ -444,7 +444,7 @@ export function AddTouristSheet({
       if (!formData.email) {
         newErrors.email = "Email is required";
       } else {
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
         if (!emailRegex.test(formData.email.trim())) {
           newErrors.email = "Invalid email format";
         }
@@ -481,7 +481,7 @@ export function AddTouristSheet({
           if (!member || !member.email?.trim()) {
             newErrors[`group_${i}_email`] = "Email is required";
           } else {
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
             if (!emailRegex.test(member.email.trim())) {
               newErrors[`group_${i}_email`] = "Invalid email format";
             }
@@ -502,7 +502,7 @@ export function AddTouristSheet({
         }
       }
       if (formData.email) {
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
         if (!emailRegex.test(formData.email.trim())) {
           newErrors.email = "Invalid email format";
         }
@@ -525,7 +525,7 @@ export function AddTouristSheet({
               }
             }
             if (member.email?.trim()) {
-              const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+              const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
               if (!emailRegex.test(member.email.trim())) {
                 newErrors[`group_${i}_email`] = "Invalid email format";
               }

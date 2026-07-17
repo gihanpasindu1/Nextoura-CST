@@ -284,6 +284,19 @@ def create_agent(agent: schemas.AgentCreate, db: Session = Depends(get_db)):
     db.refresh(db_agent)
     return db_agent
 
+@app.put("/api/agents/{agent_id}", response_model=schemas.Agent)
+def update_agent(agent_id: uuid.UUID, agent: schemas.AgentCreate, db: Session = Depends(get_db)):
+    db_agent = db.query(models.ForeignTourAgent).filter(models.ForeignTourAgent.id == agent_id).first()
+    if not db_agent:
+        raise HTTPException(status_code=404, detail="Agent not found")
+    db_agent.agent_name = agent.agent_name
+    db_agent.email = agent.email
+    db_agent.region = agent.region
+    db_agent.company_id = agent.company_id
+    db.commit()
+    db.refresh(db_agent)
+    return db_agent
+
 @app.delete("/api/agents/{agent_id}")
 def delete_agent(agent_id: uuid.UUID, db: Session = Depends(get_db)):
     db_agent = db.query(models.ForeignTourAgent).filter(models.ForeignTourAgent.id == agent_id).first()
