@@ -178,10 +178,7 @@ def create_driver(driver: schemas.DriverCreate, db: Session = Depends(get_db)):
 
     if supabase_admin and driver.email:
         try:
-            # Check if user already exists
-            existing_users = supabase_admin.auth.admin.list_users()
-            # Note: list_users is paginated in real apps, but for this small app it works or we just try-except
-            # Or better, just try creating and catch the error if it exists.
+            # Note: list_users might not be supported in all SDK versions, we'll just try creating and catch the error if it exists.
             
 
             auth_payload = {
@@ -196,8 +193,12 @@ def create_driver(driver: schemas.DriverCreate, db: Session = Depends(get_db)):
             supabase_admin.auth.admin.create_user(auth_payload)
 
         except Exception as e:
-            print("Auth user creation failed (might already exist):", e)
-            
+            error_msg = str(e)
+            print("Auth user creation failed:", error_msg)
+            # If the error is not that the user already exists, we should raise an exception
+            # so we don't end up with a driver in the DB that can't log in.
+            if "already exists" not in error_msg.lower() and "user_already_exists" not in error_msg.lower():
+                raise HTTPException(status_code=400, detail=f"Failed to create driver auth account: {error_msg}")
     db_driver = models.Driver(**driver.model_dump(exclude={"password"}))
 
     db.add(db_driver)
