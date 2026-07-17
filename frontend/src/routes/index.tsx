@@ -1917,9 +1917,19 @@ function AgentManagement({ agents, onAddAgent, onEditAgent, onDeleteAgent }: {
   const [form, setForm] = useState({ name: "", email: "", region: "" });
   const [editForm, setEditForm] = useState({ name: "", email: "", region: "" });
 
+  const [addRegionOpen, setAddRegionOpen] = useState(false);
+  const [addSearch, setAddSearch] = useState("");
+  const [editRegionOpen, setEditRegionOpen] = useState(false);
+  const [editSearch, setEditSearch] = useState("");
+
   function submitAdd() {
     if (!form.name || !form.email) {
       toast.error("Name and email required");
+      return;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(form.email.trim())) {
+      toast.error("Please enter a valid email address");
       return;
     }
     onAddAgent(form);
@@ -1931,6 +1941,11 @@ function AgentManagement({ agents, onAddAgent, onEditAgent, onDeleteAgent }: {
   function submitEdit() {
     if (!editForm.name || !editForm.email) {
       toast.error("Name and email required");
+      return;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(editForm.email.trim())) {
+      toast.error("Please enter a valid email address");
       return;
     }
     onEditAgent(editingAgent, editForm);
@@ -1949,7 +1964,29 @@ function AgentManagement({ agents, onAddAgent, onEditAgent, onDeleteAgent }: {
     setDeleteOpen(true);
   }
 
-  const regions = ["South Asia", "Europe", "East Asia", "Oceania", "Middle East", "Americas"];
+  const regions = [
+    "Americas",
+    "Caribbean",
+    "Central Africa",
+    "Central Asia",
+    "East Africa",
+    "East Asia",
+    "Eastern Europe",
+    "Europe",
+    "Middle East",
+    "North Africa",
+    "North America",
+    "Northern Europe",
+    "Oceania",
+    "South Africa",
+    "South America",
+    "South Asia",
+    "Southeast Asia",
+    "Southern Africa",
+    "Southern Europe",
+    "West Africa",
+    "Western Europe"
+  ];
 
   return (
     <div className="flex min-h-0 flex-1 flex-col bg-background">
@@ -1983,12 +2020,55 @@ function AgentManagement({ agents, onAddAgent, onEditAgent, onDeleteAgent }: {
               </div>
               <div>
                 <Label htmlFor="ag-region">Assigned region</Label>
-                <Select value={form.region} onValueChange={(v) => setForm({ ...form, region: v })}>
-                  <SelectTrigger id="ag-region"><SelectValue placeholder="Choose a region" /></SelectTrigger>
-                  <SelectContent>
-                    {regions.map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+                <Popover open={addRegionOpen} onOpenChange={setAddRegionOpen}>
+                  <PopoverTrigger asChild>
+                    <button
+                      id="ag-region"
+                      type="button"
+                      className="w-full flex items-center justify-between h-9 px-3 py-2 text-sm rounded-md border border-input bg-background hover:bg-muted text-left cursor-pointer"
+                    >
+                      <span className={form.region ? "text-foreground" : "text-muted-foreground"}>
+                        {form.region || "Choose a region"}
+                      </span>
+                      <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="p-0 w-[240px] flex flex-col z-[100] bg-card border border-border rounded-md shadow-md" align="start">
+                    <div className="p-2 border-b border-border">
+                      <Input
+                        placeholder="Search region..."
+                        value={addSearch}
+                        onChange={(e) => setAddSearch(e.target.value)}
+                        className="h-8 text-xs focus-visible:ring-0"
+                        autoFocus
+                      />
+                    </div>
+                    <div className="overflow-y-auto flex-1 max-h-[200px] py-1">
+                      {regions
+                        .filter((r) => r.toLowerCase().includes(addSearch.toLowerCase()))
+                        .map((r) => (
+                          <button
+                            key={r}
+                            type="button"
+                            onClick={() => {
+                              setForm({ ...form, region: r });
+                              setAddRegionOpen(false);
+                              setAddSearch("");
+                            }}
+                            className="w-full text-left px-3 py-1.5 text-xs hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-between rounded-sm cursor-pointer"
+                          >
+                            <span className="text-slate-700 dark:text-slate-300">{r}</span>
+                            {form.region === r && (
+                              <span className="h-2 w-2 rounded-full bg-blue-500" />
+                            )}
+                          </button>
+                        ))}
+                      {regions.filter((r) => r.toLowerCase().includes(addSearch.toLowerCase())).length === 0 && (
+                        <div className="text-[10px] text-muted-foreground text-center py-2">No regions found</div>
+                      )}
+                    </div>
+                  </PopoverContent>
+                </Popover>
               </div>
             </div>
             <DialogFooter>
@@ -2017,12 +2097,54 @@ function AgentManagement({ agents, onAddAgent, onEditAgent, onDeleteAgent }: {
             </div>
             <div>
               <Label>Assigned region</Label>
-              <Select value={editForm.region} onValueChange={(v) => setEditForm({ ...editForm, region: v })}>
-                <SelectTrigger><SelectValue placeholder="Choose a region" /></SelectTrigger>
-                <SelectContent>
-                  {regions.map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}
-                </SelectContent>
-              </Select>
+              <Popover open={editRegionOpen} onOpenChange={setEditRegionOpen}>
+                <PopoverTrigger asChild>
+                  <button
+                    type="button"
+                    className="w-full flex items-center justify-between h-9 px-3 py-2 text-sm rounded-md border border-input bg-background hover:bg-muted text-left cursor-pointer"
+                  >
+                    <span className={editForm.region ? "text-foreground" : "text-muted-foreground"}>
+                      {editForm.region || "Choose a region"}
+                    </span>
+                    <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="p-0 w-[240px] flex flex-col z-[100] bg-card border border-border rounded-md shadow-md" align="start">
+                  <div className="p-2 border-b border-border">
+                    <Input
+                      placeholder="Search region..."
+                      value={editSearch}
+                      onChange={(e) => setEditSearch(e.target.value)}
+                      className="h-8 text-xs focus-visible:ring-0"
+                      autoFocus
+                    />
+                  </div>
+                  <div className="overflow-y-auto flex-1 max-h-[200px] py-1">
+                    {regions
+                      .filter((r) => r.toLowerCase().includes(editSearch.toLowerCase()))
+                      .map((r) => (
+                        <button
+                          key={r}
+                          type="button"
+                          onClick={() => {
+                            setEditForm({ ...editForm, region: r });
+                            setEditRegionOpen(false);
+                            setEditSearch("");
+                          }}
+                          className="w-full text-left px-3 py-1.5 text-xs hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-between rounded-sm cursor-pointer"
+                        >
+                          <span className="text-slate-700 dark:text-slate-300">{r}</span>
+                          {editForm.region === r && (
+                            <span className="h-2 w-2 rounded-full bg-blue-500" />
+                          )}
+                        </button>
+                      ))}
+                    {regions.filter((r) => r.toLowerCase().includes(editSearch.toLowerCase())).length === 0 && (
+                      <div className="text-[10px] text-muted-foreground text-center py-2">No regions found</div>
+                    )}
+                  </div>
+                </PopoverContent>
+              </Popover>
             </div>
           </div>
           <DialogFooter>
