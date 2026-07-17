@@ -16,3 +16,4 @@ idna
 charset-normalizer
 typing_extensions
 alembic
+sentry-sdk

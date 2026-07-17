@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException, Request
+from fastapi import FastAPI, Depends, HTTPException, Request, BackgroundTasks
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from typing import List
@@ -6,6 +6,15 @@ from pydantic import BaseModel
 import uuid
 import asyncio
 import os
+import sentry_sdk
+
+sentry_dsn = os.getenv("SENTRY_DSN")
+if sentry_dsn:
+    sentry_sdk.init(
+        dsn=sentry_dsn,
+        traces_sample_rate=1.0,
+        profiles_sample_rate=1.0,
+    )
 
 from db import models, schemas
 from db.supabase_client import supabase_admin
@@ -175,7 +184,7 @@ def read_drivers(company_id: uuid.UUID, skip: int = 0, limit: int = 100, db: Ses
     return db.query(models.Driver).filter(models.Driver.company_id == company_id).offset(skip).limit(limit).all()
 
 @app.post("/api/drivers", response_model=schemas.Driver)
-def create_driver(driver: schemas.DriverCreate, db: Session = Depends(get_db)):
+def create_driver(driver: schemas.DriverCreate, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
 
     if supabase_admin and driver.email:
         try:
@@ -210,7 +219,7 @@ def create_driver(driver: schemas.DriverCreate, db: Session = Depends(get_db)):
     if driver.email and driver.password and driver.company_id:
         company = db.query(models.Company).filter(models.Company.id == driver.company_id).first()
         if company:
-            send_driver_credentials_email(driver, company)
+            background_tasks.add_task(send_driver_credentials_email, driver, company)
             
     return db_driver
 
@@ -350,7 +359,7 @@ def create_hotel(hotel: schemas.HotelCreate, db: Session = Depends(get_db)):
     return db_hotel
 
 @app.post("/api/itineraries/{itinerary_id}/send-hotel-booking")
-def send_hotel_email(itinerary_id: uuid.UUID, db: Session = Depends(get_db)):
+def send_hotel_email(itinerary_id: uuid.UUID, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     itinerary = db.query(models.TourItinerary).filter(models.TourItinerary.id == itinerary_id).first()
     if not itinerary:
         raise HTTPException(status_code=404, detail="Itinerary not found")
@@ -366,7 +375,7 @@ def send_hotel_email(itinerary_id: uuid.UUID, db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail="Missing linked records")
         
     try:
-        send_hotel_booking_email(hotel=hotel, company=company, itinerary=itinerary, tourist=tourist)
+        background_tasks.add_task(send_hotel_booking_email, hotel=hotel, company=company, itinerary=itinerary, tourist=tourist)
         itinerary.booking_email_sent = True
         db.commit()
         return {"message": "Email sent successfully"}
