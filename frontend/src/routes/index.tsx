@@ -1019,15 +1019,15 @@ function Console() {
         {!isDetailOpen && (
           <aside className="hidden w-[200px] shrink-0 flex-col border-l border-border bg-card/30 backdrop-blur-sm xl:flex">
             {/* Top section: Date */}
-            <div className="flex items-start gap-2.5 px-4 py-4">
+            <div className="flex items-center gap-3 px-4 py-4.5">
               <Popover open={calendarPopoverOpen} onOpenChange={setCalendarPopoverOpen}>
                 <PopoverTrigger asChild>
                   <button
                     type="button"
                     title="Open Calendar"
-                    className="grid h-8 w-8 shrink-0 place-items-center rounded-lg border border-primary/10 bg-primary/5 text-primary mt-0.5 hover:bg-primary/10 hover:border-primary/20 transition-all cursor-pointer"
+                    className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-primary/10 bg-primary/5 text-primary hover:bg-primary/10 hover:border-primary/20 transition-all cursor-pointer shadow-sm"
                   >
-                    <CalendarDays className="h-4 w-4" />
+                    <CalendarDays className="h-4.5 w-4.5" />
                   </button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0 z-[100] bg-card border border-border rounded-md shadow-md" align="start" side="bottom">
@@ -1040,9 +1040,9 @@ function Console() {
                 </PopoverContent>
               </Popover>
               <div className="min-w-0">
-                <h3 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Today</h3>
+                <h3 className="text-[10.5px] font-bold uppercase tracking-wider text-muted-foreground">Today</h3>
                 {currentTime ? (
-                  <div className="mt-0.5 text-[11px] font-semibold text-foreground leading-snug tabular-nums break-words">
+                  <div className="mt-0.5 text-[12.5px] font-bold text-foreground leading-tight tabular-nums break-words">
                     {formattedDate}
                   </div>
                 ) : (
