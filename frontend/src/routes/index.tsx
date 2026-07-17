@@ -1367,14 +1367,14 @@ function ToursWorkspace({
                     type="button"
                     onClick={() => setStatusFilter(tab.key as any)}
                     className={cn(
-                      "group flex items-center gap-1.5 px-3.5 py-1.5 text-[11px] font-semibold rounded-md transition-all duration-200 cursor-pointer border shadow-[none]",
+                      "group flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg transition-all duration-200 cursor-pointer border shadow-[none]",
                       active
                         ? cn("shadow-[0_2px_8px_-2px_rgba(0,0,0,0.06),0_1px_3px_rgba(0,0,0,0.04)]", tab.activeBorder, tab.activeText)
                         : "text-muted-foreground border-transparent hover:text-foreground hover:bg-background/50"
                     )}
                   >
                     <div className="relative flex items-center justify-center">
-                      <Icon className={cn("h-3 w-3 shrink-0 transition-transform duration-200 group-hover:scale-105", active ? tab.iconClass : "text-muted-foreground/60")} />
+                      <Icon className={cn("h-3.5 w-3.5 shrink-0 transition-transform duration-200 group-hover:scale-105", active ? tab.iconClass : "text-muted-foreground/60")} />
                       {hasAlert && (
                         <span className="absolute -top-0.5 -right-0.5 flex h-1.5 w-1.5">
                           <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-destructive opacity-75" />
