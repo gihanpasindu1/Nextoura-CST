@@ -43,6 +43,7 @@ import {
   CalendarDays,
   CalendarRange,
   Layers,
+  RotateCcw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -526,7 +527,7 @@ function Console() {
               setSelectedId("");
             }}>
               <SelectTrigger className={cn(
-                "h-9 flex-1 transition-all duration-200 focus:ring-blue-500/40",
+                "h-9 flex-1 rounded-lg transition-all duration-200 focus:ring-blue-500/40",
                 theme === "light"
                   ? "border-slate-300 bg-white text-slate-800 hover:bg-slate-50"
                   : "border-slate-700/60 bg-slate-800/60 text-slate-200 hover:bg-slate-800"
@@ -542,21 +543,24 @@ function Console() {
                 ))}
               </SelectContent>
             </Select>
-            <button
-              onClick={() => {
-                setAgentFilter("all");
-                setIsDetailOpen(false);
-                setSelectedId("");
-              }}
-              className={cn(
-                "h-9 rounded-md border px-3 text-xs font-medium transition-all duration-200",
-                theme === "light"
-                  ? "border-slate-300 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900"
-                  : "border-slate-700/60 bg-slate-800/60 text-slate-300 hover:bg-slate-700 hover:text-white"
-              )}
-            >
-              All Agents
-            </button>
+            {agentFilter !== "all" && (
+              <button
+                onClick={() => {
+                  setAgentFilter("all");
+                  setIsDetailOpen(false);
+                  setSelectedId("");
+                }}
+                title="Reset to all agents"
+                className={cn(
+                  "h-9 w-9 shrink-0 flex items-center justify-center rounded-lg border transition-all duration-200",
+                  theme === "light"
+                    ? "border-slate-300 bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-800"
+                    : "border-slate-700/60 bg-slate-800/60 text-slate-400 hover:bg-slate-700 hover:text-white"
+                )}
+              >
+                <RotateCcw className="h-3.5 w-3.5" />
+              </button>
+            )}
           </div>
         </div>
 
@@ -709,20 +713,20 @@ function Console() {
       <div className="flex min-w-0 flex-1">
         <main className="flex min-w-0 flex-1 flex-col">
           {/* Top bar */}
-          <header className="flex h-16 shrink-0 items-center justify-between border-b border-border bg-card/80 backdrop-blur-md px-7">
-            <div className="flex items-center gap-4">
-              {/* Icon with subtle tinted background and soft shadow */}
-              <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-primary/10 bg-primary/5 shadow-sm text-primary">
-                {nav === "agents" ? <Users className="h-5 w-5" /> :
-                  nav === "leads" ? <MessageCircle className="h-5 w-5" /> :
-                    nav === "dashboard" ? <LayoutDashboard className="h-5 w-5" /> :
-                      nav === "reports" ? <BarChart3 className="h-5 w-5" /> :
-                        nav === "settings" ? <Settings className="h-5 w-5" /> :
-                          nav === "drivers" ? <Car className="h-5 w-5" /> :
-                            <Plane className="h-5 w-5" />}
+          <header className="flex h-[60px] shrink-0 items-center justify-between border-b border-border bg-card/90 backdrop-blur-lg px-7">
+            <div className="flex items-center gap-3.5">
+              {/* Icon with subtle tinted background */}
+              <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-primary/10 bg-primary/5 text-primary">
+                {nav === "agents" ? <Users className="h-4.5 w-4.5" /> :
+                  nav === "leads" ? <MessageCircle className="h-4.5 w-4.5" /> :
+                    nav === "dashboard" ? <LayoutDashboard className="h-4.5 w-4.5" /> :
+                      nav === "reports" ? <BarChart3 className="h-4.5 w-4.5" /> :
+                        nav === "settings" ? <Settings className="h-4.5 w-4.5" /> :
+                          nav === "drivers" ? <Car className="h-4.5 w-4.5" /> :
+                            <Plane className="h-4.5 w-4.5" />}
               </div>
               <div>
-                <h1 className="text-[17px] font-bold tracking-tight text-foreground leading-none">
+                <h1 className="text-[15px] font-bold tracking-tight text-foreground leading-none">
                   {nav === "agents"
                     ? "Agent Management"
                     : nav === "leads"
@@ -737,7 +741,7 @@ function Console() {
                               ? "Drivers & Guides"
                               : "Active Tours"}
                 </h1>
-                <p className="text-[12.5px] text-muted-foreground mt-1 font-medium tracking-wide opacity-90">
+                <p className="text-[11px] text-muted-foreground mt-0.5 font-medium tracking-wide">
                   {nav === "agents"
                     ? "Manage your operations team and their assignments"
                     : nav === "leads"
@@ -754,31 +758,31 @@ function Console() {
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
               <Button
                 id="view-graphs-btn"
                 variant="outline"
                 size="sm"
                 onClick={() => router.navigate({ to: "/analytics" })}
-                className="flex items-center gap-1.5 h-9 rounded-lg border border-border px-3 text-xs font-semibold text-muted-foreground bg-card/50 transition-all hover:bg-accent hover:text-primary hover:border-primary/30 shadow-sm mr-1"
+                className="flex items-center gap-1.5 h-8 rounded-lg border border-border px-3 text-[11px] font-semibold text-muted-foreground bg-card/50 transition-all hover:bg-accent hover:text-primary hover:border-primary/30 shadow-sm"
               >
-                <BarChart3 className="h-4 w-4 text-primary" />
+                <BarChart3 className="h-3.5 w-3.5 text-primary" />
                 <span className="hidden sm:inline">View Graphs</span>
               </Button>
-              <div className="h-4 w-px bg-border mx-1" />
+              <div className="h-4 w-px bg-border mx-0.5" />
               <Button
                 variant="ghost"
                 size="icon"
                 aria-label="Toggle theme"
                 onClick={toggle}
-                className="h-9 w-9 rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                className="h-8 w-8 rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground transition-all duration-200"
               >
-                {theme === "light" ? <Moon className="h-4.5 w-4.5" /> : <Sun className="h-4.5 w-4.5" />}
+                {theme === "light" ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
               </Button>
-              <div className="h-4 w-px bg-border mx-1" />
-              <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground transition-colors relative">
-                <Bell className="h-4.5 w-4.5" />
-                <span className="absolute right-2 top-2 flex h-2 w-2">
+              <div className="h-4 w-px bg-border mx-0.5" />
+              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground transition-all duration-200 relative">
+                <Bell className="h-4 w-4" />
+                <span className="absolute right-1.5 top-1.5 flex h-2 w-2">
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-destructive opacity-75" />
                   <span className="relative inline-flex h-2 w-2 rounded-full bg-destructive" />
                 </span>
@@ -1013,7 +1017,7 @@ function Console() {
 
         {/* Right sidebar — show on all pages */}
         {!isDetailOpen && (
-          <aside className="hidden w-[200px] shrink-0 flex-col border-l border-border bg-sidebar/40 backdrop-blur-sm xl:flex">
+          <aside className="hidden w-[200px] shrink-0 flex-col border-l border-border bg-card/30 backdrop-blur-sm xl:flex">
             {/* Top section: Date */}
             <div className="flex items-start gap-2.5 px-4 py-4">
               <Popover open={calendarPopoverOpen} onOpenChange={setCalendarPopoverOpen}>
@@ -1021,7 +1025,7 @@ function Console() {
                   <button
                     type="button"
                     title="Open Calendar"
-                    className="grid h-8 w-8 shrink-0 place-items-center rounded-lg border border-primary/10 bg-primary/5 text-primary shadow-sm mt-0.5 hover:bg-primary/10 hover:border-primary/20 transition-all cursor-pointer"
+                    className="grid h-8 w-8 shrink-0 place-items-center rounded-lg border border-primary/10 bg-primary/5 text-primary mt-0.5 hover:bg-primary/10 hover:border-primary/20 transition-all cursor-pointer"
                   >
                     <CalendarDays className="h-4 w-4" />
                   </button>
@@ -1038,7 +1042,7 @@ function Console() {
               <div className="min-w-0">
                 <h3 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Today</h3>
                 {currentTime ? (
-                  <div className="mt-0.5 text-xs font-bold text-foreground leading-snug tabular-nums break-words">
+                  <div className="mt-0.5 text-[11px] font-semibold text-foreground leading-snug tabular-nums break-words">
                     {formattedDate}
                   </div>
                 ) : (
@@ -1049,20 +1053,20 @@ function Console() {
 
             {/* Center: Brand logo */}
             <div className="flex flex-1 flex-col items-center justify-center px-4">
-              <div className="grid h-12 w-12 place-items-center rounded-[14px] shadow-md" style={{
+              <div className="grid h-11 w-11 place-items-center rounded-xl" style={{
                 background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
-                boxShadow: '0 4px 12px rgba(59,130,246,0.15)',
+                boxShadow: '0 4px 16px rgba(59,130,246,0.15)',
               }}>
-                <MapPinned className="h-6 w-6 text-white" strokeWidth={2} />
+                <MapPinned className="h-5.5 w-5.5 text-white" strokeWidth={2} />
               </div>
             </div>
 
             {/* Pinned to the bottom of the sidebar: Live Time */}
             {currentTime && (
-              <div className="mt-auto p-4 border-t border-border bg-card/20">
-                <div className="flex flex-col items-center justify-center p-3 rounded-lg border border-border bg-card/50 shadow-sm">
-                  <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Local Time</span>
-                  <span className="text-sm font-bold tracking-tight text-primary tabular-nums">
+              <div className="mt-auto p-3">
+                <div className="flex flex-col items-center justify-center p-3 rounded-xl border border-border/60 bg-card/60 backdrop-blur-sm">
+                  <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground mb-1.5">Local Time</span>
+                  <span className="text-[15px] font-extrabold tracking-tight text-primary tabular-nums">
                     {formattedTime}
                   </span>
                 </div>
@@ -1384,28 +1388,28 @@ function ToursWorkspace({
           {/* Tourist List */}
           <div className="flex min-h-0 flex-1">
             <div className="flex w-full flex-col">
-              <div className="flex items-center justify-between border-b border-border bg-card px-5 py-2.5">
-                <div className="flex items-center gap-1.5 text-xs font-bold text-foreground">
+              <div className="flex items-center justify-between bg-accent/30 px-5 py-2">
+                <div className="flex items-center gap-1.5 text-[11px] font-semibold text-muted-foreground">
                   {nav === "leads" ? (
-                    <MessageCircle className="h-3.5 w-3.5 text-muted-foreground" />
+                    <MessageCircle className="h-3 w-3" />
                   ) : (
-                    <Users className="h-3.5 w-3.5 text-muted-foreground" />
+                    <Users className="h-3 w-3" />
                   )}
                   <span>
                     {tourists.length} {nav === "leads" ? (tourists.length === 1 ? "Inquiry" : "Inquiries") : (tourists.length === 1 ? "Tourist" : "Tourists")}
                   </span>
                 </div>
-                <div className="flex items-center gap-4">
-                  <div className="text-[11px] text-muted-foreground">Sorted by status</div>
-                  <Button size="sm" onClick={onAddClient} className="gap-2 h-7 px-3 text-xs">
+                <div className="flex items-center gap-3">
+                  <div className="text-[10px] text-muted-foreground/70 font-medium">Sorted by status</div>
+                  <Button size="sm" onClick={onAddClient} className="gap-1.5 h-7 px-3 text-[11px] rounded-lg shadow-sm">
                     {nav === "leads" ? (
                       <>
-                        <MessageCircle className="h-3.5 w-3.5" />
+                        <MessageCircle className="h-3 w-3" />
                         Add Inquiry
                       </>
                     ) : (
                       <>
-                        <UserPlus className="h-3.5 w-3.5" />
+                        <UserPlus className="h-3 w-3" />
                         Add Client
                       </>
                     )}
@@ -1414,31 +1418,41 @@ function ToursWorkspace({
               </div>
 
               <ScrollArea className="flex-1">
-                <ul>
+                <div className="space-y-2 p-4">
                   {[...tourists].sort((a, b) => {
                     const order: Record<string, number> = { Active: 0, "On Tour": 0, Upcoming: 1, Completed: 2, Cancelled: 3 };
                     return (order[a.status] ?? 4) - (order[b.status] ?? 4);
                   }).map((t) => {
                     const hasAlerts = (alertCounts[t.id] || 0) > 0;
                     const isEngaged = t.status === "Active" || t.status === "On Tour";
+                    const statusBorder = t.status === "Active" || t.status === "On Tour"
+                      ? "border-l-teal-500"
+                      : t.status === "Upcoming"
+                        ? "border-l-indigo-400"
+                        : t.status === "Completed"
+                          ? "border-l-purple-400"
+                          : t.status === "Cancelled"
+                            ? "border-l-orange-400"
+                            : "border-l-slate-300 dark:border-l-slate-600";
                     return (
-                      <li
+                      <div
                         key={t.id}
                         onClick={() => {
                           onSelect(t.id);
                           setIsDetailOpen(true);
                         }}
                         className={cn(
-                          "group cursor-pointer border-b px-6 py-4 transition-all duration-500 relative",
+                          "group cursor-pointer rounded-xl border border-border bg-card px-5 py-4 transition-all duration-300 relative border-l-[3px]",
+                          statusBorder,
                           hasAlerts
                             ? "animate-[alert-glow_3s_ease-in-out_infinite] z-10 hover:brightness-110"
-                            : "border-border hover:bg-accent/30",
-                          isEngaged && !hasAlerts && "border-l-[3px] border-l-teal-500 bg-teal-50/30 dark:bg-teal-950/10"
+                            : "hover:shadow-md hover:-translate-y-0.5 hover:border-border",
+                          isEngaged && !hasAlerts && "bg-teal-50/30 dark:bg-teal-950/10"
                         )}
                       >
                         <div className="flex items-center justify-between gap-4">
                           <div className="flex min-w-0 items-center gap-4">
-                            <div className="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-accent text-sm relative">
+                            <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-accent/60 text-sm relative border border-border/40">
                               {t.countryCode && t.countryCode !== "UN" ? (
                                 <img
                                   src={`https://flagcdn.com/w20/${t.countryCode.toLowerCase()}.png`}
@@ -1465,31 +1479,31 @@ function ToursWorkspace({
                             </div>
                             <div className="min-w-0">
                               <div className="flex items-center gap-3">
-                                <span className="truncate text-base font-semibold">{t.name}</span>
+                                <span className="truncate text-[14px] font-semibold text-foreground">{t.name}</span>
                                 <StatusPill status={t.status} />
                               </div>
-                              <div className="mt-1 truncate text-sm text-muted-foreground">
+                              <div className="mt-1 truncate text-xs text-muted-foreground">
                                 {t.country} · {t.pax} Pax · {t.duration}
                               </div>
                             </div>
                           </div>
                           <div className="shrink-0 text-right">
-                            <div className="flex items-center justify-end gap-1.5 text-sm font-medium">
-                              <MapPin className="h-4 w-4 text-muted-foreground" />
+                            <div className="flex items-center justify-end gap-1.5 text-xs font-medium text-foreground">
+                              <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
                               {t.currentLocation}
                             </div>
-                            <div className="mt-1 text-xs text-muted-foreground">Driver: {t.driver.split(" ")[0]}</div>
+                            <div className="mt-1 text-[11px] text-muted-foreground">Driver: {t.driver.split(" ")[0]}</div>
                           </div>
                         </div>
-                      </li>
+                      </div>
                     );
                   })}
                   {tourists.length === 0 && (
-                    <li className="p-10 text-center text-sm text-muted-foreground">
+                    <div className="p-10 text-center text-sm text-muted-foreground">
                       No tourists match these filters.
-                    </li>
+                    </div>
                   )}
-                </ul>
+                </div>
               </ScrollArea>
             </div>
           </div>
@@ -1503,33 +1517,33 @@ function StatusPill({ status }: { status: TourStatus }) {
   const displayStatus = status === "On Tour" ? "Active" : status;
   const config: Record<TourStatus, { color: string; icon: any }> = {
     Active: {
-      color: "bg-teal-500 text-white border-teal-600",
+      color: "bg-teal-50 text-teal-700 border-teal-200 dark:bg-teal-500/10 dark:text-teal-400 dark:border-teal-500/20",
       icon: Plane,
     },
     Upcoming: {
-      color: "bg-indigo-400 text-white border-indigo-500",
+      color: "bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-500/10 dark:text-indigo-400 dark:border-indigo-500/20",
       icon: Clock,
     },
     Completed: {
-      color: "bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-950/60 dark:text-white dark:border-purple-900/60",
+      color: "bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-500/10 dark:text-purple-400 dark:border-purple-500/20",
       icon: CheckCircle2,
     },
     "On Tour": {
-      color: "bg-violet-500 text-white border-violet-600",
+      color: "bg-violet-50 text-violet-700 border-violet-200 dark:bg-violet-500/10 dark:text-violet-400 dark:border-violet-500/20",
       icon: Navigation,
     },
     Cancelled: {
-      color: "bg-orange-400 text-white border-orange-500",
+      color: "bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-500/10 dark:text-orange-400 dark:border-orange-500/20",
       icon: XCircle,
     },
   };
 
-  const { color, icon: Icon } = config[displayStatus] || { color: "bg-slate-400 text-white border-slate-500", icon: Clock };
+  const { color, icon: Icon } = config[displayStatus] || { color: "bg-slate-50 text-slate-600 border-slate-200 dark:bg-slate-500/10 dark:text-slate-400 dark:border-slate-500/20", icon: Clock };
 
   return (
     <span
       className={cn(
-        "inline-flex h-5 items-center gap-1 rounded-full border px-2 text-[10px] font-semibold tracking-wide shadow-sm",
+        "inline-flex h-5 items-center gap-1 rounded-full border px-2 text-[10px] font-semibold tracking-wide",
         color
       )}
     >
