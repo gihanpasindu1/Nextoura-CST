@@ -2283,6 +2283,22 @@ function DriverManagement({
       toast.error("Name, phone, and email required");
       return;
     }
+    
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(form.email.trim())) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
+
+    // Sri Lankan phone number validation
+    const cleanPhone = form.phone.replace(/[\s\-\(\)]/g, "");
+    const slPhoneRegex = /^(?:\+94|94|0)?[1-9]\d{8}$/;
+    if (!slPhoneRegex.test(cleanPhone)) {
+      toast.error("Invalid phone number. Must be a valid Sri Lankan number (e.g., +94 77 123 4567 or 077 123 4567)");
+      return;
+    }
+
     try {
       await onAddDriver(form);
       setForm({ name: "", phone: "", email: "", password: "" });
@@ -2297,6 +2313,22 @@ function DriverManagement({
       toast.error("Name, phone, and email required");
       return;
     }
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(form.email.trim())) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
+
+    // Sri Lankan phone number validation
+    const cleanPhone = form.phone.replace(/[\s\-\(\)]/g, "");
+    const slPhoneRegex = /^(?:\+94|94|0)?[1-9]\d{8}$/;
+    if (!slPhoneRegex.test(cleanPhone)) {
+      toast.error("Invalid phone number. Must be a valid Sri Lankan number (e.g., +94 77 123 4567 or 077 123 4567)");
+      return;
+    }
+
     if (selectedDriver) {
       try {
         await onUpdateDriver(selectedDriver.id, form);
