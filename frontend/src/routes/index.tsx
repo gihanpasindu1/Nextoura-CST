@@ -1654,8 +1654,10 @@ function TouristDetail({
                 className="gap-2 rounded-lg h-8 text-xs"
                 onClick={() => {
                   if (t.phone) {
+                    const code = (t.country_code || '').replace(/[^0-9]/g, '');
                     const num = t.phone.replace(/[^0-9]/g, '');
-                    window.open(`https://wa.me/${num}`, '_blank');
+                    const fullNum = (code && !num.startsWith(code)) ? `${code}${num}` : num;
+                    window.open(`https://wa.me/${fullNum}`, '_blank');
                   }
                 }}
               >
