@@ -1611,11 +1611,21 @@ function TouristDetail({
                 <Settings2 className="h-4 w-4" />
                 Edit Profile
               </Button>
-              <Button variant="outline" size="sm" className="gap-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="gap-2"
+                onClick={() => {
+                  if (t.phone) {
+                    const num = t.phone.replace(/[^0-9]/g, '');
+                    window.open(`https://wa.me/${num}`, '_blank');
+                  }
+                }}
+              >
                 <WhatsAppIcon className="h-4 w-4 text-[#25D366]" />
                 WhatsApp
               </Button>
-              <Button variant="outline" size="sm" className="gap-2">
+              <Button variant="outline" size="sm" className="gap-2" onClick={() => t.email && (window.location.href = `mailto:${t.email}`)}>
                 <Mail className="h-4 w-4" />
                 Email
               </Button>
