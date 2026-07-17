@@ -16,7 +16,8 @@ from utils.ai_processor import parse_raw_itinerary
 from utils.image_search import search_images
 from utils.pdf_generator import generate_itinerary
 
-models.Base.metadata.create_all(bind=engine)
+# Alembic migrations are now used instead of create_all
+# models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Tour Management System API")
 
