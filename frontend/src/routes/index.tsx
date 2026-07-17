@@ -1244,35 +1244,35 @@ function ToursWorkspace({
       ) : (
         <>
           {/* Filter bar */}
-          <div className="flex flex-wrap items-center gap-2 border-b border-border bg-card px-6 py-3">
+          <div className="flex flex-wrap items-center gap-2 border-b border-border bg-card/60 backdrop-blur-md px-6 py-2.5">
             <div className="relative min-w-0 flex-1">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground/60" />
               <Input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search by name, country, or passport number…"
-                className="h-9 pl-9"
+                className="h-8.5 pl-9 rounded-lg border-border/80 bg-background/50 hover:bg-background/80 focus:bg-background shadow-none transition-all duration-200 focus-visible:ring-1 focus-visible:ring-primary/30 text-xs"
               />
             </div>
             <Popover open={driverPopoverOpen} onOpenChange={setDriverPopoverOpen}>
               <PopoverTrigger asChild>
                 <button
                   type="button"
-                  className="flex items-center justify-between h-9 w-[180px] px-3 rounded-md border border-input bg-background text-sm cursor-pointer hover:bg-muted/50 focus:outline-none focus:ring-1 focus:ring-ring"
+                  className="flex items-center justify-between h-8.5 w-[170px] px-3 rounded-lg border border-border/80 bg-background text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-accent/40 hover:border-border transition-all duration-200 cursor-pointer focus:outline-none"
                 >
                   <span className="truncate">
                     {driverFilter === "All Drivers" ? "Driver/Guide" : driverFilter}
                   </span>
-                  <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0 ml-2" />
+                  <ChevronDown className="h-3.5 w-3.5 text-muted-foreground/60 shrink-0 ml-2" />
                 </button>
               </PopoverTrigger>
-              <PopoverContent className="p-0 w-[200px] flex flex-col z-[100] bg-card border border-border rounded-md shadow-md" align="start">
+              <PopoverContent className="p-0 w-[200px] flex flex-col z-[100] bg-card border border-border rounded-lg shadow-md" align="end">
                 <div className="p-2 border-b border-border">
                   <Input
                     placeholder="Search driver..."
                     value={driverSearchQuery}
                     onChange={(e) => setDriverSearchQuery(e.target.value)}
-                    className="h-8 text-xs"
+                    className="h-8 text-xs focus-visible:ring-0"
                     autoFocus
                   />
                 </div>
@@ -1292,7 +1292,6 @@ function ToursWorkspace({
                   </button>
                   {filteredDriversForFilter.map((d: any) => (
                     <button
-                      key={d.id}
                       type="button"
                       onClick={() => {
                         setDriverFilter(d.name);
@@ -1315,42 +1314,47 @@ function ToursWorkspace({
           </div>
 
           {/* Status bar */}
-          <div className="flex items-center justify-center border-b border-border bg-slate-50/50 dark:bg-slate-950/20 px-6 py-3">
-            <div className="flex bg-slate-100/80 dark:bg-slate-900/60 p-1 rounded-xl border border-slate-200/60 dark:border-slate-800/50 gap-1.5 shadow-[inset_0_1px_3px_rgba(0,0,0,0.04)] backdrop-blur-sm">
+          <div className="flex items-center justify-center border-b border-border bg-accent/10 dark:bg-slate-950/10 px-6 py-2">
+            <div className="flex bg-muted/60 dark:bg-slate-900/40 p-0.5 rounded-lg border border-border/40 gap-1 shadow-sm">
               {[
                 {
                   key: "all",
                   label: "All Statuses",
                   icon: Layers,
-                  activeClass: "bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 border-slate-200/80 dark:border-slate-700/80 shadow-[0_2px_5px_rgba(0,0,0,0.06),0_0.5px_1.5px_rgba(0,0,0,0.04)]",
-                  iconClass: "text-slate-600 dark:text-slate-400"
+                  activeBorder: "border-border/60 dark:border-border/50",
+                  activeText: "text-foreground bg-background",
+                  iconClass: "text-muted-foreground/80 dark:text-muted-foreground/60"
                 },
                 {
                   key: "Active",
                   label: "Active",
                   icon: Plane,
-                  activeClass: "bg-white dark:bg-slate-800 text-teal-600 dark:text-teal-400 border-teal-200/60 dark:border-teal-900/40 shadow-[0_2.5px_8px_-1px_rgba(20,184,166,0.12),0_1px_3px_rgba(20,184,166,0.06)]",
+                  activeBorder: "border-teal-200/60 dark:border-teal-900/40",
+                  activeText: "text-teal-600 dark:text-teal-400 bg-background",
                   iconClass: "text-teal-600 dark:text-teal-400"
                 },
                 {
                   key: "Upcoming",
                   label: "Upcoming",
                   icon: Clock,
-                  activeClass: "bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 border-indigo-200/60 dark:border-indigo-900/40 shadow-[0_2.5px_8px_-1px_rgba(99,102,241,0.12),0_1px_3px_rgba(99,102,241,0.06)]",
+                  activeBorder: "border-indigo-200/60 dark:border-indigo-900/40",
+                  activeText: "text-indigo-600 dark:text-indigo-400 bg-background",
                   iconClass: "text-indigo-600 dark:text-indigo-400"
                 },
                 {
                   key: "Completed",
                   label: "Completed",
                   icon: CheckCircle2,
-                  activeClass: "bg-white dark:bg-slate-800 text-purple-600 dark:text-purple-400 border-purple-200/60 dark:border-purple-900/40 shadow-[0_2.5px_8px_-1px_rgba(168,85,247,0.12),0_1px_3px_rgba(168,85,247,0.06)]",
+                  activeBorder: "border-purple-200/60 dark:border-purple-900/40",
+                  activeText: "text-purple-600 dark:text-purple-400 bg-background",
                   iconClass: "text-purple-600 dark:text-purple-400"
                 },
                 {
                   key: "Cancelled",
                   label: "Cancelled",
                   icon: XCircle,
-                  activeClass: "bg-white dark:bg-slate-800 text-orange-600 dark:text-orange-400 border-orange-200/60 dark:border-orange-900/40 shadow-[0_2.5px_8px_-1px_rgba(249,115,22,0.12),0_1px_3px_rgba(249,115,22,0.06)]",
+                  activeBorder: "border-orange-200/60 dark:border-orange-900/40",
+                  activeText: "text-orange-600 dark:text-orange-400 bg-background",
                   iconClass: "text-orange-600 dark:text-orange-400"
                 },
               ].map((tab) => {
@@ -1363,14 +1367,14 @@ function ToursWorkspace({
                     type="button"
                     onClick={() => setStatusFilter(tab.key as any)}
                     className={cn(
-                      "group flex items-center gap-2 px-4 py-1.5 text-xs font-medium rounded-lg transition-all duration-200 cursor-pointer border border-transparent transform hover:scale-[1.02] active:scale-[0.98]",
+                      "group flex items-center gap-1.5 px-3.5 py-1.5 text-[11px] font-semibold rounded-md transition-all duration-200 cursor-pointer border shadow-[none]",
                       active
-                        ? tab.activeClass
-                        : "text-muted-foreground hover:text-foreground hover:bg-white/60 dark:hover:bg-slate-800/40"
+                        ? cn("shadow-[0_2px_8px_-2px_rgba(0,0,0,0.06),0_1px_3px_rgba(0,0,0,0.04)]", tab.activeBorder, tab.activeText)
+                        : "text-muted-foreground border-transparent hover:text-foreground hover:bg-background/50"
                     )}
                   >
                     <div className="relative flex items-center justify-center">
-                      <Icon className={cn("h-3.5 w-3.5 shrink-0 transition-transform duration-200 group-hover:scale-110", active ? tab.iconClass : "text-muted-foreground/70")} />
+                      <Icon className={cn("h-3 w-3 shrink-0 transition-transform duration-200 group-hover:scale-105", active ? tab.iconClass : "text-muted-foreground/60")} />
                       {hasAlert && (
                         <span className="absolute -top-0.5 -right-0.5 flex h-1.5 w-1.5">
                           <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-destructive opacity-75" />
