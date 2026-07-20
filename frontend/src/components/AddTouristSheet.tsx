@@ -475,13 +475,15 @@ export function AddTouristSheet({
               )?.hotel_name || "";
               return {
                 day: day.day_number || 1,
-                title: day.title || day.destination || "Day Tour",
+                title: day.ui_title || day.title || day.destination || "Day Tour",
                 hotel: hotelInfo,
                 hotelEmail: "",
                 destinations: [
                   {
-                    location: day.destination || "Various",
-                    activities: day.description ? [day.description] : []
+                    location: (day.ui_destinations && day.ui_destinations[0]) || day.ui_title || day.destination || "Various",
+                    activities: day.ui_activities && day.ui_activities.length > 0 
+                      ? day.ui_activities 
+                      : (day.description ? [day.description] : [])
                   }
                 ]
               };
