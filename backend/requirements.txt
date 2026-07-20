@@ -17,3 +17,4 @@ charset-normalizer
 typing_extensions
 alembic
 sentry-sdk
+python-multipart
