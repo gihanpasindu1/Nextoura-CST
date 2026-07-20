@@ -4,6 +4,8 @@ import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { Building2, Plus, Trash2, Loader2, Mail, User, Phone, Building, ChevronDown, Search } from "lucide-react";
 import { COUNTRIES } from "@/lib/countries";
+import { isValidPhoneNumber, parsePhoneNumber } from "libphonenumber-js";
+import type { CountryCode } from "libphonenumber-js";
 
 export const Route = createFileRoute("/onboarding")({
   component: OnboardingPage,
@@ -141,21 +143,16 @@ function OnboardingPage() {
     // Validate and format phone numbers
     const formattedPhones: string[] = [];
     for (const p of phoneNumbers) {
-      // Remove spaces, hyphens and non-digit characters
-      let cleanNumber = p.number.replace(/\D/g, '');
-      // Strip leading zero if typed
-      if (cleanNumber.startsWith('0')) {
-        cleanNumber = cleanNumber.substring(1);
-      }
+      const countryCode = p.code as CountryCode;
       
-      if (cleanNumber.length < 7 || cleanNumber.length > 15) {
+      if (!isValidPhoneNumber(p.number, countryCode)) {
         const country = COUNTRIES.find(c => c.code === p.code) || COUNTRIES[0];
         toast.error(`Please enter a valid phone number for ${country.name}`);
         return;
       }
       
-      const country = COUNTRIES.find(c => c.code === p.code) || COUNTRIES[0];
-      formattedPhones.push(`${country.dialCode}${cleanNumber}`);
+      const phoneNumber = parsePhoneNumber(p.number, countryCode);
+      formattedPhones.push(phoneNumber.number);
     }
 
     try {
