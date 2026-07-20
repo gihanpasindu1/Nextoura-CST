@@ -664,10 +664,10 @@ function Console() {
               <img 
                 src={companyProfile.logo_url} 
                 alt="Company Logo" 
-                className="h-11 w-11 shrink-0 rounded-full object-cover shadow-sm ring-1 ring-slate-200 dark:ring-slate-800" 
+                className="h-14 w-14 shrink-0 rounded-full object-cover shadow-sm ring-1 ring-slate-200 dark:ring-slate-800" 
               />
             ) : (
-              <div className="grid h-11 w-11 shrink-0 place-items-center rounded-full font-semibold text-xs text-white" style={{
+              <div className="grid h-14 w-14 shrink-0 place-items-center rounded-full font-semibold text-sm text-white" style={{
                 background: 'linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)',
                 boxShadow: '0 4px 12px rgba(99,102,241,0.25)',
               }}>
