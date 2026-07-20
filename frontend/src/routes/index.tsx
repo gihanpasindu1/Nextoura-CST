@@ -657,17 +657,17 @@ function Console() {
         {/* ── User profile & Sign out ── */}
         <div className="p-4 space-y-3">
           <div className={cn(
-            "flex items-center gap-3 rounded-xl p-2.5 transition-colors",
+            "flex items-center gap-3.5 rounded-xl p-3 transition-colors",
             theme === "light" ? "hover:bg-slate-200/50" : "hover:bg-white/[0.04]"
           )}>
             {companyProfile?.logo_url ? (
               <img 
                 src={companyProfile.logo_url} 
                 alt="Company Logo" 
-                className="h-9 w-9 shrink-0 rounded-full object-cover shadow-sm ring-1 ring-slate-200 dark:ring-slate-800" 
+                className="h-11 w-11 shrink-0 rounded-full object-cover shadow-sm ring-1 ring-slate-200 dark:ring-slate-800" 
               />
             ) : (
-              <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full font-semibold text-[11px] text-white" style={{
+              <div className="grid h-11 w-11 shrink-0 place-items-center rounded-full font-semibold text-xs text-white" style={{
                 background: 'linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)',
                 boxShadow: '0 4px 12px rgba(99,102,241,0.25)',
               }}>
@@ -676,11 +676,11 @@ function Console() {
             )}
             <div className="min-w-0 flex-1">
               <div className={cn(
-                "truncate text-[13px] font-medium transition-colors",
+                "truncate text-[14.5px] font-medium transition-colors",
                 theme === "light" ? "text-slate-800" : "text-slate-200"
               )}>{session?.user?.email || "Company Profile"}</div>
-              <div className="mt-0.5 flex items-center gap-1 text-[11px] text-slate-500">
-                <Shield className="h-3 w-3" />
+              <div className="mt-0.5 flex items-center gap-1.5 text-xs text-slate-500">
+                <Shield className="h-3.5 w-3.5" />
                 <span>Authorized</span>
               </div>
             </div>
