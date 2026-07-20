@@ -405,8 +405,15 @@ def get_my_company(user_id: uuid.UUID, db: Session = Depends(get_db)):
         "auth_user_id": db_company.auth_user_id,
         "ceo_name": db_company.ceo_name,
         "phone_numbers": json.loads(db_company.phone_numbers) if db_company.phone_numbers else [],
+        "logo_url": db_company.logo_url,
         "created_at": db_company.created_at
     }
+@app.get("/api/companies/by-email")
+def get_company_by_email(email: str, db: Session = Depends(get_db)):
+    company = db.query(models.Company).filter(models.Company.email == email).first()
+    if company:
+        return {"company_name": company.company_name, "logo_url": company.logo_url}
+    return {"company_name": None, "logo_url": None}
 
 @app.post("/api/companies/onboard", response_model=schemas.Company)
 def onboard_company(company: schemas.CompanyCreate, db: Session = Depends(get_db)):
@@ -420,7 +427,8 @@ def onboard_company(company: schemas.CompanyCreate, db: Session = Depends(get_db
         email=company.email,
         auth_user_id=company.auth_user_id,
         ceo_name=company.ceo_name,
-        phone_numbers=phone_numbers_str
+        phone_numbers=phone_numbers_str,
+        logo_url=company.logo_url
     )
     db.add(db_company)
     db.commit()
@@ -433,6 +441,7 @@ def onboard_company(company: schemas.CompanyCreate, db: Session = Depends(get_db
         "auth_user_id": db_company.auth_user_id,
         "ceo_name": db_company.ceo_name,
         "phone_numbers": json.loads(db_company.phone_numbers) if db_company.phone_numbers else [],
+        "logo_url": db_company.logo_url,
         "created_at": db_company.created_at
     }
 

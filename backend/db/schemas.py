@@ -10,6 +10,7 @@ class CompanyBase(BaseModel):
     auth_user_id: Optional[uuid.UUID] = None
     ceo_name: Optional[str] = None
     phone_numbers: Optional[List[str]] = []
+    logo_url: Optional[str] = None
 
 class CompanyCreate(CompanyBase):
     pass
