@@ -12,6 +12,7 @@ import { Loader2, Plus, UploadCloud, FileText, Settings2, Trash2, X, Users, Aler
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+import { Progress } from "@/components/ui/progress";
 
 const COUNTRIES = [
   { name: "Afghanistan", code: "AF", flag: "\ud83c\udde6\ud83c\uddeb", dialCode: "+93", pattern: /^[0-9]{9}$/, placeholder: "70 123 4567" },
@@ -234,6 +235,7 @@ export function AddTouristSheet({
   hotels?: any[];
 }) {
   const [isGenerating, setIsGenerating] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -419,65 +421,90 @@ export function AddTouristSheet({
           return;
         }
 
-        // Upload the PDF to the backend for text extraction + Gemini parsing
-        const formPayload = new FormData();
-        formPayload.append("file", pdfFile);
-
-        const response = await fetch("http://localhost:8000/api/itinerary/extract-from-pdf", {
-          method: "POST",
-          body: formPayload,
-        });
-
-        if (!response.ok) {
-          let errMsg = `Server error: ${response.status}`;
-          try {
-            const errData = await response.json();
-            errMsg = errData.detail || errMsg;
-          } catch (e) {}
-          throw new Error(errMsg);
-        }
-
-        const data = await response.json();
-
-        // Auto-fill form fields from extracted data (only if data is present)
-        setFormData(prev => ({
-          ...prev,
-          ...(data.guest_name ? { name: data.guest_name } : {}),
-          ...(data.duration ? { duration: data.duration } : {}),
-          ...(data.arrival ? { arrival: data.arrival } : {}),
-          ...(data.departure ? { departure: data.departure } : {}),
-        }));
-
-        // Auto-fill itinerary from extracted days
-        if (data.days && Array.isArray(data.days)) {
-          const formattedItinerary = data.days.map((day: any) => {
-            const hotelInfo = data.hotels?.find((h: any) =>
-              h.destination?.toLowerCase() === day.destination?.toLowerCase()
-            )?.hotel_name || "";
-            return {
-              day: day.day_number || 1,
-              title: day.title || day.destination || "Day Tour",
-              hotel: hotelInfo,
-              hotelEmail: "",
-              destinations: [
-                {
-                  location: day.destination || "Various",
-                  activities: day.description ? [day.description] : []
-                }
-              ]
-            };
+        setUploadProgress(0);
+        
+        // Simulate progress while waiting for the Gemini API
+        const progressInterval = setInterval(() => {
+          setUploadProgress(prev => {
+            // Fast up to 30% (upload phase)
+            if (prev < 30) return prev + 10;
+            // Slow up to 90% (AI parsing phase)
+            if (prev < 90) return prev + 2;
+            return prev;
           });
-          setItinerary(formattedItinerary);
-        }
+        }, 500);
 
-        // Clear the file and switch to manual tab to review
-        setPdfFile(null);
-        if (fileInputRef.current) fileInputRef.current.value = "";
-        setActiveTab("manual");
+        try {
+          // Upload the PDF to the backend for text extraction + Gemini parsing
+          const formPayload = new FormData();
+          formPayload.append("file", pdfFile);
+
+          const response = await fetch("http://localhost:8000/api/itinerary/extract-from-pdf", {
+            method: "POST",
+            body: formPayload,
+          });
+
+          clearInterval(progressInterval);
+          setUploadProgress(100);
+
+          if (!response.ok) {
+            let errMsg = `Server error: ${response.status}`;
+            try {
+              const errData = await response.json();
+              errMsg = errData.detail || errMsg;
+            } catch (e) {}
+            throw new Error(errMsg);
+          }
+
+          const data = await response.json();
+
+          // Auto-fill form fields from extracted data (only if data is present)
+          setFormData(prev => ({
+            ...prev,
+            ...(data.guest_name ? { name: data.guest_name } : {}),
+            ...(data.duration ? { duration: data.duration } : {}),
+            ...(data.arrival ? { arrival: data.arrival } : {}),
+            ...(data.departure ? { departure: data.departure } : {}),
+          }));
+
+          // Auto-fill itinerary from extracted days
+          if (data.days && Array.isArray(data.days)) {
+            const formattedItinerary = data.days.map((day: any) => {
+              const hotelInfo = data.hotels?.find((h: any) =>
+                h.destination?.toLowerCase() === day.destination?.toLowerCase()
+              )?.hotel_name || "";
+              return {
+                day: day.day_number || 1,
+                title: day.title || day.destination || "Day Tour",
+                hotel: hotelInfo,
+                hotelEmail: "",
+                destinations: [
+                  {
+                    location: day.destination || "Various",
+                    activities: day.description ? [day.description] : []
+                  }
+                ]
+              };
+            });
+            setItinerary(formattedItinerary);
+          }
+
+          // Clear the file and switch to manual tab to review
+          setTimeout(() => {
+            setPdfFile(null);
+            if (fileInputRef.current) fileInputRef.current.value = "";
+            setActiveTab("manual");
+            setUploadProgress(0);
+          }, 800);
+        } catch (error: any) {
+          clearInterval(progressInterval);
+          setUploadProgress(0);
+          throw error; // Re-throw to be caught by the outer catch
+        }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error generating itinerary:", error);
-      alert("Failed to generate itinerary. Please try again.");
+      alert(error.message || "Failed to generate itinerary. Please try again.");
     } finally {
       setIsGenerating(false);
     }
@@ -1383,17 +1410,28 @@ export function AddTouristSheet({
                       ) : (
                         <>
                           <p className="text-sm font-medium">Click to upload or drag and drop</p>
-                          <p className="text-xs text-muted-foreground mt-1">PDF itineraries (max 5MB)</p>
+                          <p className="text-xs text-muted-foreground mt-1">PDF itineraries (max 20MB)</p>
                         </>
                       )}
                     </div>
                   </div>
+                  
+                  {isGenerating && (
+                    <div className="space-y-2 pb-2">
+                      <div className="flex justify-between text-xs text-muted-foreground">
+                        <span>{uploadProgress < 100 ? "Analyzing itinerary..." : "Complete!"}</span>
+                        <span>{uploadProgress}%</span>
+                      </div>
+                      <Progress value={uploadProgress} className="h-2" />
+                    </div>
+                  )}
+
                   <Button
                     className="w-full"
                     onClick={() => handleGenerate('pdf')}
                     disabled={isGenerating || !pdfFile}
                   >
-                    {isGenerating ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Analyzing PDF...</> : "Upload & Extract"}
+                    {isGenerating ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Processing...</> : "Upload & Extract"}
                   </Button>
                 </TabsContent>
               </Tabs>

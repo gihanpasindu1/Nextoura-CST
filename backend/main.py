@@ -522,8 +522,8 @@ async def extract_from_pdf(file: UploadFile = File(...)):
         
         # Read PDF bytes
         pdf_bytes = await file.read()
-        if len(pdf_bytes) > 5 * 1024 * 1024:  # 5MB limit
-            raise HTTPException(status_code=400, detail="File too large. Maximum 5MB.")
+        if len(pdf_bytes) > 20 * 1024 * 1024:  # 20MB limit
+            raise HTTPException(status_code=400, detail="File too large. Maximum 20MB.")
         
         # Extract text from all pages using PyMuPDF
         doc = fitz.open(stream=pdf_bytes, filetype="pdf")
