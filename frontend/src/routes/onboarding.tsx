@@ -14,12 +14,12 @@ export const Route = createFileRoute("/onboarding")({
 function CountrySelector({ value, onChange }: { value: string, onChange: (val: string) => void }) {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState("");
-  
+
   const selected = COUNTRIES.find(c => c.code === value) || COUNTRIES[0];
   const filtered = COUNTRIES.filter(c => c.name.toLowerCase().includes(search.toLowerCase()) || c.dialCode.includes(search));
 
   const dropdownRef = useRef<HTMLDivElement>(null);
-  
+
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -32,8 +32,8 @@ function CountrySelector({ value, onChange }: { value: string, onChange: (val: s
 
   return (
     <div className="relative h-full flex items-center" ref={dropdownRef}>
-      <button 
-        type="button" 
+      <button
+        type="button"
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-1.5 h-full pl-3 pr-2 text-sm text-slate-300 hover:text-white transition-colors cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 rounded-l-xl"
       >
@@ -41,15 +41,15 @@ function CountrySelector({ value, onChange }: { value: string, onChange: (val: s
         <span className="font-medium">{selected.dialCode}</span>
         <ChevronDown className="h-3.5 w-3.5 opacity-50" />
       </button>
-      
+
       {isOpen && (
         <div className="absolute top-[110%] left-0 w-64 rounded-xl border border-slate-700 bg-slate-900 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.7)] z-50 overflow-hidden">
           <div className="p-2 border-b border-slate-800 relative">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
-            <input 
-              type="text" 
+            <input
+              type="text"
               autoFocus
-              placeholder="Search country or code..." 
+              placeholder="Search country or code..."
               value={search}
               onChange={e => setSearch(e.target.value)}
               className="w-full bg-slate-950/50 border border-slate-800 rounded-lg py-1.5 pl-9 pr-3 text-sm text-white placeholder:text-slate-600 outline-none focus:border-indigo-500 transition-colors"
@@ -146,20 +146,20 @@ function OnboardingPage() {
     const formattedPhones: string[] = [];
     for (const p of phoneNumbers) {
       const countryCode = p.code as CountryCode;
-      
+
       if (!isValidPhoneNumber(p.number, countryCode)) {
         const country = COUNTRIES.find(c => c.code === p.code) || COUNTRIES[0];
         toast.error(`Please enter a valid phone number for ${country.name}`);
         return;
       }
-      
+
       const phoneNumber = parsePhoneNumber(p.number, countryCode);
       formattedPhones.push(phoneNumber.number);
     }
 
     try {
       setSubmitting(true);
-      
+
       let logoUrl = null;
       if (logoFile) {
         const fileExt = logoFile.name.split('.').pop();
@@ -167,13 +167,13 @@ function OnboardingPage() {
         const { data, error } = await supabase.storage
           .from('company_logos')
           .upload(fileName, logoFile);
-          
+
         if (error) throw new Error("Error uploading logo: " + error.message);
-        
+
         const { data: publicUrlData } = supabase.storage
           .from('company_logos')
           .getPublicUrl(fileName);
-          
+
         logoUrl = publicUrlData.publicUrl;
       }
 
@@ -232,14 +232,20 @@ function OnboardingPage() {
               accept="image/*"
               onChange={(e) => {
                 if (e.target.files && e.target.files[0]) {
-                  setLogoFile(e.target.files[0]);
-                  setLogoPreview(URL.createObjectURL(e.target.files[0]));
+                  const file = e.target.files[0];
+                  if (file.size > 60 * 1024) {
+                    toast.error("Logo file size must be less than 60 KB.");
+                    e.target.value = "";
+                    return;
+                  }
+                  setLogoFile(file);
+                  setLogoPreview(URL.createObjectURL(file));
                 }
               }}
               className="hidden"
               id="logo-upload"
             />
-            <label 
+            <label
               htmlFor="logo-upload"
               className="relative flex h-20 w-20 cursor-pointer items-center justify-center rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 p-[1.5px] shadow-lg shadow-indigo-500/10 hover:shadow-indigo-500/30 hover:scale-105 transition-all duration-300"
             >
@@ -371,9 +377,9 @@ function OnboardingPage() {
                 return (
                   <div key={index} className="relative flex items-center space-x-2 group">
                     <div className="relative flex-1 flex items-stretch rounded-xl border border-slate-800 bg-slate-950/60 transition-all focus-within:border-indigo-500 focus-within:ring-4 focus-within:ring-indigo-500/10 focus-within:bg-slate-950/90 h-[42px]">
-                      <CountrySelector 
-                        value={phone.code} 
-                        onChange={(val) => handlePhoneCountryChange(index, val)} 
+                      <CountrySelector
+                        value={phone.code}
+                        onChange={(val) => handlePhoneCountryChange(index, val)}
                       />
                       <div className="my-2.5 w-px bg-slate-700/50" />
                       <input
