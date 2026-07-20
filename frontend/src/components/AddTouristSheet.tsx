@@ -375,35 +375,51 @@ export function AddTouristSheet({
 
   const [itinerary, setItinerary] = useState<any[]>([]);
   const [itineraryText, setItineraryText] = useState("");
+  const [activeTab, setActiveTab] = useState("text");
 
-  const handleGenerate = (type: 'text' | 'pdf') => {
+  const handleGenerate = async (type: 'text' | 'pdf') => {
     setIsGenerating(true);
-    // Mocking an AI generation delay
-    setTimeout(() => {
-      setItinerary([
-        {
-          day: 1,
-          title: "Arrival & City Tour",
-          hotel: "Galle Face Hotel",
-          hotelEmail: "reservations@gallefacehotel.net",
-          destinations: [
-            { location: "Airport", activities: "Meet & greet at BIA, transfer to hotel." },
-            { location: "Colombo", activities: "Evening city tour including Lotus Tower and Galle Face Green." }
-          ]
-        },
-        {
-          day: 2,
-          title: "Cultural Triangle",
-          hotel: "Heritance Kandalama",
-          hotelEmail: "kandalama@heritancehotels.com",
-          destinations: [
-            { location: "Dambulla", activities: "Visit Dambulla Cave Temple." },
-            { location: "Minneriya", activities: "Afternoon elephant safari at Minneriya National Park." }
-          ]
+    
+    try {
+      if (type === 'text') {
+        // Full pipeline: Raw text → Gemini parse → Pexels images → PDF download
+        // (Exactly like the sample project's /generate-from-raw endpoint)
+        const response = await fetch("http://localhost:8000/api/itinerary/generate-pdf", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ raw_text: itineraryText }),
+        });
+
+        if (!response.ok) {
+          let errMsg = `Server error: ${response.status}`;
+          try {
+            const errData = await response.json();
+            errMsg = errData.detail || errMsg;
+          } catch (e) {}
+          throw new Error(errMsg);
         }
-      ]);
+
+        // Backend returns a PDF file directly — download it
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `${formData.name || "Client"}_Itinerary.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      } else if (type === 'pdf') {
+        alert("PDF upload extraction is not implemented yet. Please use the Paste Text option.");
+      }
+    } catch (error) {
+      console.error("Error generating itinerary:", error);
+      alert("Failed to generate itinerary. Please try again.");
+    } finally {
       setIsGenerating(false);
-    }, 2000);
+    }
   };
 
   const handleSelectCountry = (country: typeof COUNTRIES[0]) => {
@@ -1046,7 +1062,7 @@ export function AddTouristSheet({
                 Itinerary Builder
               </h3>
               
-              <Tabs defaultValue="text" className="w-full">
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                 <TabsList className="grid w-full grid-cols-3">
                   <TabsTrigger value="manual">Manual Entry</TabsTrigger>
                   <TabsTrigger value="text">Auto (Text)</TabsTrigger>
@@ -1261,7 +1277,7 @@ export function AddTouristSheet({
                     onClick={() => handleGenerate('text')}
                     disabled={isGenerating || !itineraryText.trim()}
                   >
-                    {isGenerating ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Extracting Itinerary...</> : "Generate Itinerary"}
+                    {isGenerating ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generating...</> : "Generate Itinerary"}
                   </Button>
                 </TabsContent>
                 
