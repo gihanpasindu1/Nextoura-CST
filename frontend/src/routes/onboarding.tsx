@@ -233,8 +233,8 @@ function OnboardingPage() {
               onChange={(e) => {
                 if (e.target.files && e.target.files[0]) {
                   const file = e.target.files[0];
-                  if (file.size > 60 * 1024) {
-                    toast.error("Logo file size must be less than 60 KB.");
+                  if (file.size > 2 * 1024 * 1024) {
+                    toast.error("Logo file size must be less than 2 MB.");
                     e.target.value = "";
                     return;
                   }
