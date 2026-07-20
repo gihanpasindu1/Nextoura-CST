@@ -15,6 +15,13 @@ class CompanyBase(BaseModel):
 class CompanyCreate(CompanyBase):
     pass
 
+class CompanyUpdate(BaseModel):
+    company_name: Optional[str] = None
+    email: Optional[str] = None
+    ceo_name: Optional[str] = None
+    phone_numbers: Optional[List[str]] = None
+    logo_url: Optional[str] = None
+
 class Company(CompanyBase):
     id: uuid.UUID
     created_at: datetime

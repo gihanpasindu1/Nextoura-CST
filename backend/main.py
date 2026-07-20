@@ -445,6 +445,34 @@ def onboard_company(company: schemas.CompanyCreate, db: Session = Depends(get_db
         "created_at": db_company.created_at
     }
 
+@app.put("/api/companies/{company_id}", response_model=schemas.Company)
+def update_company(company_id: uuid.UUID, company_update: schemas.CompanyUpdate, db: Session = Depends(get_db)):
+    db_company = db.query(models.Company).filter(models.Company.id == company_id).first()
+    if not db_company:
+        raise HTTPException(status_code=404, detail="Company not found")
+        
+    update_data = company_update.dict(exclude_unset=True)
+    
+    if "phone_numbers" in update_data:
+        update_data["phone_numbers"] = json.dumps(update_data["phone_numbers"]) if update_data["phone_numbers"] else "[]"
+        
+    for key, value in update_data.items():
+        setattr(db_company, key, value)
+        
+    db.commit()
+    db.refresh(db_company)
+    
+    return {
+        "id": db_company.id,
+        "company_name": db_company.company_name,
+        "email": db_company.email,
+        "auth_user_id": db_company.auth_user_id,
+        "ceo_name": db_company.ceo_name,
+        "phone_numbers": json.loads(db_company.phone_numbers) if db_company.phone_numbers else [],
+        "logo_url": db_company.logo_url,
+        "created_at": db_company.created_at
+    }
+
 
 # ==================== AI ITINERARY GENERATOR ====================
 
