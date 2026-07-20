@@ -88,6 +88,7 @@ import {
 } from "@/lib/tourism-data";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { AddTouristSheet } from "@/components/AddTouristSheet";
+import SettingsView from "@/components/SettingsView";
 import { Calendar as UICalendar } from "@/components/ui/calendar";
 import { toast } from "sonner";
 
@@ -884,8 +885,10 @@ function Console() {
                 }
               }}
             />
-          ) : nav === "dashboard" || nav === "reports" || nav === "settings" ? (
+          ) : nav === "dashboard" || nav === "reports" ? (
             <DashboardOverview stats={stats} navLabel={nav} onNavigate={setNav} />
+          ) : nav === "settings" ? (
+            <SettingsView companyProfile={companyProfile} setCompanyProfile={setCompanyProfile} />
           ) : (
             <ToursWorkspace
               drivers={drivers}
@@ -2307,8 +2310,6 @@ function AgentManagement({ agents, onAddAgent, onEditAgent, onDeleteAgent }: {
     </div>
   );
 }
-
-
 
 /* ---------- Driver Management ---------- */
 
