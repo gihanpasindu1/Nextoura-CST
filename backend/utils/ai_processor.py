@@ -277,9 +277,20 @@ def parse_raw_itinerary(raw_text: str, api_key: str = None) -> dict:
                             "items": {"type": "STRING"},
                             "description": "ORDERED list of Pexels search queries (3-5 words each). Each entry MUST be a completely different category of image (e.g. one temple, one wildlife, one nature, one food/culture). NEVER two of the same type. The LAST slot is reserved for the hotel — do NOT include it here."
                         },
-                        "hotel_image_keyword": {"type": "STRING", "description": "A Pexels search keyword for the hotel/resort used on this day. Use the hotel knowledge base to find the right keyword. E.g. '98 Acres Resort Ella infinity pool valley'. If hotel is unknown use 'luxury Sri Lanka resort infinity pool'."}
+                        "hotel_image_keyword": {"type": "STRING", "description": "A Pexels search keyword for the hotel/resort used on this day. Use the hotel knowledge base to find the right keyword. E.g. '98 Acres Resort Ella infinity pool valley'. If hotel is unknown use 'luxury Sri Lanka resort infinity pool'."},
+                        "ui_title": {"type": "STRING", "description": "The main location name in normal casing, e.g. 'Galle'. Do not use spaced-out fancy text like 'G a l l e'."},
+                        "ui_destinations": {
+                            "type": "ARRAY",
+                            "items": {"type": "STRING"},
+                            "description": "Specific places to visit this day, e.g. ['Galle Fort', 'Dutch Hospital']"
+                        },
+                        "ui_activities": {
+                            "type": "ARRAY",
+                            "items": {"type": "STRING"},
+                            "description": "Short 1-2 word activities for this day, e.g. ['swimming', 'dancing', 'sightseeing']"
+                        }
                     },
-                    "required": ["day_number", "title", "date", "destination", "description", "image_keywords", "hotel_image_keyword"]
+                    "required": ["day_number", "title", "date", "destination", "description", "image_keywords", "hotel_image_keyword", "ui_title", "ui_destinations", "ui_activities"]
                 }
             },
             "hotels": {
