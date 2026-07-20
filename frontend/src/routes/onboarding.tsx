@@ -167,13 +167,15 @@ function OnboardingPage() {
         const { data, error } = await supabase.storage
           .from('company_logos')
           .upload(fileName, logoFile);
-
-        if (error) throw new Error("Error uploading logo: " + error.message);
-
+          
+        if (error) {
+          throw new Error("Logo Upload Failed: Please ensure your Supabase RLS policy for the 'company_logos' bucket is correctly configured to allow 'INSERT' for 'authenticated' users. Details: " + error.message);
+        }
+        
         const { data: publicUrlData } = supabase.storage
           .from('company_logos')
           .getPublicUrl(fileName);
-
+          
         logoUrl = publicUrlData.publicUrl;
       }
 
@@ -192,6 +194,12 @@ function OnboardingPage() {
 
       if (!res.ok) {
         const errorData = await res.json();
+        // If they already created a profile, just take them to the dashboard!
+        if (res.status === 400 && errorData.detail === "Company already exists for this user") {
+          toast.success("Profile already exists! Redirecting...");
+          router.navigate({ to: "/" });
+          return;
+        }
         throw new Error(errorData.detail || "Failed to onboard company");
       }
 
