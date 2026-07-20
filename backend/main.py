@@ -45,7 +45,15 @@ def read_root():
 # ==================== TOURISTS ====================
 @app.get("/api/tourists", response_model=List[schemas.Tourist])
 def read_tourists(company_id: uuid.UUID, skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    tourists = db.query(models.ForeignTourist).filter(models.ForeignTourist.company_id == company_id).offset(skip).limit(limit).all()
+    from sqlalchemy.orm import selectinload
+    tourists = db.query(models.ForeignTourist)\
+        .filter(models.ForeignTourist.company_id == company_id)\
+        .options(
+            selectinload(models.ForeignTourist.group_members),
+            selectinload(models.ForeignTourist.itineraries).selectinload(models.TourItinerary.destinations),
+            selectinload(models.ForeignTourist.itineraries).selectinload(models.TourItinerary.hotel)
+        )\
+        .offset(skip).limit(limit).all()
     return tourists
 
 @app.post("/api/tourists", response_model=schemas.Tourist)
