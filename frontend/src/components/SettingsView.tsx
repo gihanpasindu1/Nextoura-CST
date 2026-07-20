@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Building2, Mail, User, Phone, ImagePlus, X, Loader2, Save, AlertCircle } from "lucide-react";
+import { Building2, Mail, User, Phone, ImagePlus, X, Loader2, Save, AlertCircle, Bell } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -134,18 +134,72 @@ export default function SettingsView({
     }
   };
 
+  const [currentView, setCurrentView] = useState<"menu" | "company">("menu");
+
+  if (currentView === "menu") {
+    return (
+      <div className="flex-1 overflow-auto p-6 sm:p-10">
+        <div className="mx-auto max-w-5xl">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <button
+              onClick={() => setCurrentView("company")}
+              className="group flex items-start gap-4 rounded-xl border border-border bg-card p-5 text-left transition-all hover:border-foreground/20 hover:shadow-sm"
+            >
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground transition-colors group-hover:bg-primary/10 group-hover:text-primary">
+                <Building2 className="h-5 w-5" />
+              </div>
+              <div className="flex flex-col gap-1">
+                <h3 className="font-medium text-foreground">Company Profile</h3>
+                <p className="text-[13px] leading-relaxed text-muted-foreground">Update company details, logo, and contact info.</p>
+              </div>
+            </button>
+
+            <button className="group flex items-start gap-4 rounded-xl border border-border bg-card p-5 text-left transition-all opacity-50 cursor-not-allowed">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+                <User className="h-5 w-5" />
+              </div>
+              <div className="flex flex-col gap-1">
+                <h3 className="font-medium text-foreground">Account & Security</h3>
+                <p className="text-[13px] leading-relaxed text-muted-foreground">Manage password and security preferences.</p>
+              </div>
+            </button>
+            
+            <button className="group flex items-start gap-4 rounded-xl border border-border bg-card p-5 text-left transition-all opacity-50 cursor-not-allowed">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+                <Bell className="h-5 w-5" />
+              </div>
+              <div className="flex flex-col gap-1">
+                <h3 className="font-medium text-foreground">Notifications</h3>
+                <p className="text-[13px] leading-relaxed text-muted-foreground">Email and push notification alerts.</p>
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex-1 overflow-auto bg-slate-950/50 p-6 sm:p-8">
-      <div className="mx-auto max-w-4xl space-y-8">
+    <div className="flex-1 overflow-auto p-6 sm:p-8">
+      <div className="mx-auto max-w-4xl space-y-6">
         
         {/* Header Section */}
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white">Company Settings</h1>
-          <p className="text-sm text-slate-400 mt-1">Manage your business profile and contact information.</p>
+        <div className="flex items-center gap-4">
+          <Button 
+            variant="ghost" 
+            onClick={() => setCurrentView("menu")}
+            className="h-9 w-9 p-0 rounded-full text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+          </Button>
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">Company Profile</h1>
+            <p className="text-sm text-muted-foreground mt-1">Manage your business profile and contact information.</p>
+          </div>
         </div>
 
         {/* Main Settings Card */}
-        <div className="rounded-2xl border border-slate-800/80 bg-slate-900/50 p-6 backdrop-blur-xl shadow-xl">
+        <div className="rounded-2xl border border-border bg-card p-6 sm:p-8 shadow-sm">
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             
@@ -153,7 +207,7 @@ export default function SettingsView({
             <div className="space-y-6">
               
               <div className="space-y-2 group">
-                <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                <label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
                   Company Logo
                 </label>
                 <div className="relative group w-fit">
@@ -164,13 +218,13 @@ export default function SettingsView({
                     className="absolute inset-0 z-50 h-full w-full cursor-pointer opacity-0"
                   />
                   <div className={cn(
-                    "flex h-24 w-24 flex-col items-center justify-center rounded-xl border-2 border-dashed bg-slate-800/50 transition-all group-hover:bg-slate-800",
-                    logoPreview ? "border-transparent" : "border-slate-700 group-hover:border-indigo-500"
+                    "flex h-24 w-24 flex-col items-center justify-center rounded-xl border-2 border-dashed bg-muted/50 transition-all group-hover:bg-muted",
+                    logoPreview ? "border-transparent" : "border-border group-hover:border-primary/50"
                   )}>
                     {logoPreview ? (
-                      <img src={logoPreview} alt="Logo" className="h-full w-full rounded-xl object-cover shadow-md ring-1 ring-slate-800" />
+                      <img src={logoPreview} alt="Logo" className="h-full w-full rounded-xl object-cover shadow-sm ring-1 ring-border" />
                     ) : (
-                      <div className="flex flex-col items-center text-slate-400 group-hover:text-indigo-400 transition-colors">
+                      <div className="flex flex-col items-center text-muted-foreground group-hover:text-primary/70 transition-colors">
                         <ImagePlus className="mb-1.5 h-6 w-6" />
                         <span className="text-[10px] font-medium">Upload</span>
                       </div>
@@ -185,41 +239,41 @@ export default function SettingsView({
                         setLogoFile(null);
                         setLogoPreview(null);
                       }}
-                      className="absolute -right-2 -top-2 z-50 rounded-full bg-red-500 p-1 text-white shadow-lg transition-transform hover:scale-110 hover:bg-red-600"
+                      className="absolute -right-2 -top-2 z-50 rounded-full bg-destructive p-1 text-destructive-foreground shadow-sm transition-transform hover:scale-110 hover:bg-destructive/90"
                     >
                       <X className="h-3.5 w-3.5" />
                     </button>
                   )}
                 </div>
-                <p className="text-[11px] text-slate-500">Recommended: Square image, max 2MB.</p>
+                <p className="text-[11px] text-muted-foreground">Recommended: Square image, max 2MB.</p>
               </div>
 
               <div className="space-y-2">
-                <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                <label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
                   Company Name
                 </label>
                 <div className="relative">
-                  <Building2 className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+                  <Building2 className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <input
                     type="text"
                     value={formData.companyName}
                     onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
-                    className="w-full rounded-xl border border-slate-700/50 bg-slate-950/50 py-2.5 pl-10 pr-4 text-sm text-white placeholder-slate-500 transition-all focus:border-indigo-500 focus:bg-slate-900 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                    className="w-full rounded-xl border border-input bg-background py-2.5 pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground transition-all focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                <label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
                   Primary Email
                 </label>
                 <div className="relative">
-                  <Mail className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+                  <Mail className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <input
                     type="email"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="w-full rounded-xl border border-slate-700/50 bg-slate-950/50 py-2.5 pl-10 pr-4 text-sm text-white placeholder-slate-500 transition-all focus:border-indigo-500 focus:bg-slate-900 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                    className="w-full rounded-xl border border-input bg-background py-2.5 pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground transition-all focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                   />
                 </div>
               </div>
@@ -230,30 +284,30 @@ export default function SettingsView({
             <div className="space-y-6">
               
               <div className="space-y-2">
-                <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                <label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
                   CEO / Founder Name
                 </label>
                 <div className="relative">
-                  <User className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+                  <User className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <input
                     type="text"
                     value={formData.ceoName}
                     onChange={(e) => setFormData({ ...formData, ceoName: e.target.value })}
-                    className="w-full rounded-xl border border-slate-700/50 bg-slate-950/50 py-2.5 pl-10 pr-4 text-sm text-white placeholder-slate-500 transition-all focus:border-indigo-500 focus:bg-slate-900 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                    className="w-full rounded-xl border border-input bg-background py-2.5 pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground transition-all focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                   />
                 </div>
               </div>
 
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                  <label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
                     Phone Numbers
                   </label>
                   <Button 
                     variant="ghost" 
                     size="sm" 
                     onClick={addPhoneField}
-                    className="h-6 px-2 text-[10px] text-indigo-400 hover:text-indigo-300 hover:bg-indigo-500/10"
+                    className="h-6 px-2 text-[10px] text-primary hover:text-primary hover:bg-primary/10"
                   >
                     + Add Another
                   </Button>
@@ -263,13 +317,13 @@ export default function SettingsView({
                   {formData.phoneNumbers.map((phone, idx) => (
                     <div key={idx} className="flex gap-2">
                       <div className="relative flex-1">
-                        <Phone className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+                        <Phone className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                         <input
                           type="text"
                           value={phone}
                           onChange={(e) => handlePhoneChange(idx, e.target.value)}
                           placeholder="e.g. +94 77 123 4567"
-                          className="w-full rounded-xl border border-slate-700/50 bg-slate-950/50 py-2 pl-10 pr-4 text-sm text-white placeholder-slate-600 transition-all focus:border-indigo-500 focus:bg-slate-900 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                          className="w-full rounded-xl border border-input bg-background py-2 pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground transition-all focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                         />
                       </div>
                       {formData.phoneNumbers.length > 1 && (
@@ -277,7 +331,7 @@ export default function SettingsView({
                           variant="ghost" 
                           size="icon" 
                           onClick={() => removePhoneField(idx)}
-                          className="h-9 w-9 shrink-0 text-slate-500 hover:bg-red-500/10 hover:text-red-400 rounded-xl"
+                          className="h-9 w-9 shrink-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive rounded-xl"
                         >
                           <X className="h-4 w-4" />
                         </Button>
@@ -290,15 +344,15 @@ export default function SettingsView({
             </div>
           </div>
 
-          <div className="mt-8 pt-6 border-t border-slate-800/60 flex items-center justify-between">
-            <div className="flex items-center gap-2 text-[11px] text-slate-400">
+          <div className="mt-8 pt-6 border-t border-border flex items-center justify-between">
+            <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
               <AlertCircle className="h-3.5 w-3.5" />
               <span>Changes will immediately reflect across your workspace.</span>
             </div>
             <Button 
               onClick={handleSave} 
               disabled={isSubmitting}
-              className="min-w-[120px] bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl shadow-lg shadow-indigo-500/20 transition-all font-medium h-9"
+              className="min-w-[120px] rounded-xl font-medium h-9"
             >
               {isSubmitting ? (
                 <>
