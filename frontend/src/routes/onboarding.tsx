@@ -2,7 +2,7 @@ import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
-import { Building2, Plus, Trash2, Loader2, Mail, User, Phone, Building, ChevronDown, Search, ImagePlus, X } from "lucide-react";
+import { Building2, Plus, Trash2, Loader2, Mail, User, Phone, Building, ChevronDown, Search, ImagePlus, X, MapPinned } from "lucide-react";
 import { COUNTRIES } from "@/lib/countries";
 import { isValidPhoneNumber, parsePhoneNumber } from "libphonenumber-js";
 import type { CountryCode } from "libphonenumber-js";
@@ -225,59 +225,9 @@ function OnboardingPage() {
       {/* Card Container */}
       <div className="relative z-10 w-full max-w-[420px] rounded-2xl border border-slate-800/80 bg-slate-900/40 p-8 sm:p-10 backdrop-blur-xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] transition-all duration-300 hover:border-slate-800">
         <div className="flex flex-col items-center text-center">
-          {/* Logo Upload Component */}
-          <div className="relative group">
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => {
-                if (e.target.files && e.target.files[0]) {
-                  const file = e.target.files[0];
-                  if (file.size > 2 * 1024 * 1024) {
-                    toast.error("Logo file size must be less than 2 MB.");
-                    e.target.value = "";
-                    return;
-                  }
-                  setLogoFile(file);
-                  setLogoPreview(URL.createObjectURL(file));
-                }
-              }}
-              className="hidden"
-              id="logo-upload"
-            />
-            <label
-              htmlFor="logo-upload"
-              className="relative flex h-20 w-20 cursor-pointer items-center justify-center rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 p-[1.5px] shadow-lg shadow-indigo-500/10 hover:shadow-indigo-500/30 hover:scale-105 transition-all duration-300"
-            >
-              <div className="flex h-full w-full items-center justify-center rounded-[14px] bg-slate-950 overflow-hidden relative">
-                {logoPreview ? (
-                  <>
-                    <img src={logoPreview} alt="Logo preview" className="h-full w-full object-cover" />
-                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                      <ImagePlus className="h-6 w-6 text-white" />
-                    </div>
-                  </>
-                ) : (
-                  <div className="flex flex-col items-center justify-center text-slate-500 group-hover:text-indigo-400 transition-colors">
-                    <Building2 className="h-6 w-6 mb-1" strokeWidth={1.5} />
-                    <span className="text-[8px] font-bold uppercase tracking-wider">Upload</span>
-                  </div>
-                )}
-              </div>
-            </label>
-            {logoPreview && (
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  setLogoFile(null);
-                  setLogoPreview(null);
-                }}
-                className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-slate-800 border border-slate-600 flex items-center justify-center text-slate-300 hover:text-white hover:bg-red-500 hover:border-red-500 transition-colors z-20 cursor-pointer shadow-md"
-              >
-                <X className="h-3.5 w-3.5" />
-              </button>
-            )}
+          <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg shadow-indigo-500/20">
+            <div className="absolute inset-0 rounded-2xl bg-white/20 blur-sm mix-blend-overlay" />
+            <MapPinned className="relative h-8 w-8 text-white drop-shadow-md" strokeWidth={2} />
           </div>
 
           <h2 className="mt-5 text-2xl font-extrabold tracking-tight text-white">
@@ -412,6 +362,65 @@ function OnboardingPage() {
               <Plus className="h-4 w-4" />
               Add Another Phone Number
             </button>
+          </div>
+
+          <div className="space-y-1.5 group">
+            <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+              Company Logo (Optional)
+            </label>
+            <div className="relative group w-fit">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  if (e.target.files && e.target.files[0]) {
+                    const file = e.target.files[0];
+                    if (file.size > 2 * 1024 * 1024) {
+                      toast.error("Logo file size must be less than 2 MB.");
+                      e.target.value = "";
+                      return;
+                    }
+                    setLogoFile(file);
+                    setLogoPreview(URL.createObjectURL(file));
+                  }
+                }}
+                className="hidden"
+                id="logo-upload"
+              />
+              <label
+                htmlFor="logo-upload"
+                className="relative flex h-20 w-20 cursor-pointer items-center justify-center rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 p-[1.5px] shadow-lg shadow-indigo-500/10 hover:shadow-indigo-500/30 hover:scale-105 transition-all duration-300"
+              >
+                <div className="flex h-full w-full items-center justify-center rounded-[14px] bg-slate-950 overflow-hidden relative">
+                  {logoPreview ? (
+                    <>
+                      <img src={logoPreview} alt="Logo preview" className="h-full w-full object-cover" />
+                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <ImagePlus className="h-6 w-6 text-white" />
+                      </div>
+                    </>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center text-slate-500 group-hover:text-indigo-400 transition-colors">
+                      <Building2 className="h-6 w-6 mb-1" strokeWidth={1.5} />
+                      <span className="text-[8px] font-bold uppercase tracking-wider">Upload</span>
+                    </div>
+                  )}
+                </div>
+              </label>
+              {logoPreview && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setLogoFile(null);
+                    setLogoPreview(null);
+                  }}
+                  className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-slate-800 border border-slate-600 flex items-center justify-center text-slate-300 hover:text-white hover:bg-red-500 hover:border-red-500 transition-colors z-20 cursor-pointer shadow-md"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
           </div>
 
           <button
