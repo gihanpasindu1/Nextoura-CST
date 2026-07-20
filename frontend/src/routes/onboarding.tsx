@@ -3,36 +3,11 @@ import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { Building2, Plus, Trash2, Loader2, Mail, User, Phone, Building, ChevronDown, Search } from "lucide-react";
+import { COUNTRIES } from "@/lib/countries";
 
 export const Route = createFileRoute("/onboarding")({
   component: OnboardingPage,
 });
-
-const COUNTRIES = [
-  { name: "Sri Lanka", code: "LK", dialCode: "+94", flag: "🇱🇰" },
-  { name: "United States", code: "US", dialCode: "+1", flag: "🇺🇸" },
-  { name: "United Kingdom", code: "GB", dialCode: "+44", flag: "🇬🇧" },
-  { name: "Australia", code: "AU", dialCode: "+61", flag: "🇦🇺" },
-  { name: "Canada", code: "CA", dialCode: "+1", flag: "🇨🇦" },
-  { name: "India", code: "IN", dialCode: "+91", flag: "🇮🇳" },
-  { name: "Germany", code: "DE", dialCode: "+49", flag: "🇩🇪" },
-  { name: "France", code: "FR", dialCode: "+33", flag: "🇫🇷" },
-  { name: "Japan", code: "JP", dialCode: "+81", flag: "🇯🇵" },
-  { name: "China", code: "CN", dialCode: "+86", flag: "🇨🇳" },
-  { name: "Brazil", code: "BR", dialCode: "+55", flag: "🇧🇷" },
-  { name: "South Africa", code: "ZA", dialCode: "+27", flag: "🇿🇦" },
-  { name: "United Arab Emirates", code: "AE", dialCode: "+971", flag: "🇦🇪" },
-  { name: "Singapore", code: "SG", dialCode: "+65", flag: "🇸🇬" },
-  { name: "Malaysia", code: "MY", dialCode: "+60", flag: "🇲🇾" },
-  { name: "New Zealand", code: "NZ", dialCode: "+64", flag: "🇳🇿" },
-  { name: "Italy", code: "IT", dialCode: "+39", flag: "🇮🇹" },
-  { name: "Spain", code: "ES", dialCode: "+34", flag: "🇪🇸" },
-  { name: "Netherlands", code: "NL", dialCode: "+31", flag: "🇳🇱" },
-  { name: "Switzerland", code: "CH", dialCode: "+41", flag: "🇨🇭" },
-  { name: "Sweden", code: "SE", dialCode: "+46", flag: "🇸🇪" },
-  { name: "South Korea", code: "KR", dialCode: "+82", flag: "🇰🇷" },
-  { name: "Mexico", code: "MX", dialCode: "+52", flag: "🇲🇽" }
-];
 
 function CountrySelector({ value, onChange }: { value: string, onChange: (val: string) => void }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -303,34 +278,66 @@ function OnboardingPage() {
           <div className="space-y-1.5">
             <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Phone Numbers</label>
             <div className="space-y-2">
-              {phoneNumbers.map((phone, index) => (
-                <div key={index} className="relative flex items-center space-x-2 group">
-                  <div className="relative flex-1 flex items-stretch rounded-xl border border-slate-800 bg-slate-950/60 transition-all focus-within:border-indigo-500 focus-within:ring-4 focus-within:ring-indigo-500/10 focus-within:bg-slate-950/90 h-[42px]">
-                    <CountrySelector 
-                      value={phone.code} 
-                      onChange={(val) => handlePhoneCountryChange(index, val)} 
-                    />
-                    <div className="my-2.5 w-px bg-slate-700/50" />
-                    <input
-                      placeholder="77 123 4567"
-                      value={phone.number}
-                      onChange={(e) => handlePhoneChange(index, e.target.value)}
-                      className="w-full bg-transparent py-2.5 pl-3 pr-4 text-sm text-slate-100 placeholder:text-slate-600 outline-none"
-                      required
-                    />
+              {phoneNumbers.map((phone, index) => {
+                const getPlaceholder = (code: string) => {
+                  const formats: Record<string, string> = {
+                    LK: "77 123 4567",
+                    US: "202 555 0123",
+                    GB: "7400 123456",
+                    AU: "400 123 456",
+                    IN: "98765 43210",
+                    CA: "416 555 0123",
+                    DE: "151 23456789",
+                    FR: "6 12 34 56 78",
+                    JP: "90 1234 5678",
+                    CN: "139 1234 5678",
+                    BR: "11 98765-4321",
+                    ZA: "82 123 4567",
+                    AE: "50 123 4567",
+                    SG: "8123 4567",
+                    MY: "12 345 6789",
+                    NZ: "21 123 4567",
+                    IT: "312 345 6789",
+                    ES: "612 345 678",
+                    NL: "6 12345678",
+                    CH: "79 123 45 67",
+                    SE: "70 123 45 67",
+                    KR: "10-1234-5678",
+                    MX: "55 1234 5678",
+                  };
+                  return formats[code] || "12 345 6789";
+                };
+
+                return (
+                  <div key={index} className="relative flex items-center space-x-2 group">
+                    <div className="relative flex-1 flex items-stretch rounded-xl border border-slate-800 bg-slate-950/60 transition-all focus-within:border-indigo-500 focus-within:ring-4 focus-within:ring-indigo-500/10 focus-within:bg-slate-950/90 h-[42px]">
+                      <CountrySelector 
+                        value={phone.code} 
+                        onChange={(val) => handlePhoneCountryChange(index, val)} 
+                      />
+                      <div className="my-2.5 w-px bg-slate-700/50" />
+                      <input
+                        placeholder={getPlaceholder(phone.code)}
+                        value={phone.number}
+                        onChange={(e) => handlePhoneChange(index, e.target.value)}
+                        className="w-full bg-transparent py-2.5 pl-3 pr-4 text-sm text-slate-100 placeholder:text-slate-600 outline-none"
+                        required
+                      />
+                    </div>
+                    {phoneNumbers.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => handleRemovePhone(index)}
+                        className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-xl border border-slate-800 bg-slate-950/60 text-slate-500 hover:bg-red-500/10 hover:text-red-500 hover:border-red-500/50 transition-colors cursor-pointer"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    )}
                   </div>
-                  {phoneNumbers.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => handleRemovePhone(index)}
-                      className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-xl border border-slate-800 bg-slate-950/60 text-slate-500 hover:bg-red-500/10 hover:text-red-500 hover:border-red-500/50 transition-colors cursor-pointer"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  )}
-                </div>
-              ))}
+                );
+              })}
             </div>
+
             <button
               type="button"
               onClick={handleAddPhone}
