@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetFooter, SheetClose } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -234,6 +234,8 @@ export function AddTouristSheet({
   hotels?: any[];
 }) {
   const [isGenerating, setIsGenerating] = useState(false);
+  const [pdfFile, setPdfFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [selectedCountry, setSelectedCountry] = useState(() => COUNTRIES.find(c => c.code === "GB") || COUNTRIES[0]);
   const [popoverOpen, setPopoverOpen] = useState(false);
@@ -412,7 +414,66 @@ export function AddTouristSheet({
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
       } else if (type === 'pdf') {
-        alert("PDF upload extraction is not implemented yet. Please use the Paste Text option.");
+        if (!pdfFile) {
+          alert("Please select a PDF file first.");
+          return;
+        }
+
+        // Upload the PDF to the backend for text extraction + Gemini parsing
+        const formPayload = new FormData();
+        formPayload.append("file", pdfFile);
+
+        const response = await fetch("http://localhost:8000/api/itinerary/extract-from-pdf", {
+          method: "POST",
+          body: formPayload,
+        });
+
+        if (!response.ok) {
+          let errMsg = `Server error: ${response.status}`;
+          try {
+            const errData = await response.json();
+            errMsg = errData.detail || errMsg;
+          } catch (e) {}
+          throw new Error(errMsg);
+        }
+
+        const data = await response.json();
+
+        // Auto-fill form fields from extracted data (only if data is present)
+        setFormData(prev => ({
+          ...prev,
+          ...(data.guest_name ? { name: data.guest_name } : {}),
+          ...(data.duration ? { duration: data.duration } : {}),
+          ...(data.arrival ? { arrival: data.arrival } : {}),
+          ...(data.departure ? { departure: data.departure } : {}),
+        }));
+
+        // Auto-fill itinerary from extracted days
+        if (data.days && Array.isArray(data.days)) {
+          const formattedItinerary = data.days.map((day: any) => {
+            const hotelInfo = data.hotels?.find((h: any) =>
+              h.destination?.toLowerCase() === day.destination?.toLowerCase()
+            )?.hotel_name || "";
+            return {
+              day: day.day_number || 1,
+              title: day.title || day.destination || "Day Tour",
+              hotel: hotelInfo,
+              hotelEmail: "",
+              destinations: [
+                {
+                  location: day.destination || "Various",
+                  activities: day.description ? [day.description] : []
+                }
+              ]
+            };
+          });
+          setItinerary(formattedItinerary);
+        }
+
+        // Clear the file and switch to manual tab to review
+        setPdfFile(null);
+        if (fileInputRef.current) fileInputRef.current.value = "";
+        setActiveTab("manual");
       }
     } catch (error) {
       console.error("Error generating itinerary:", error);
@@ -1282,19 +1343,55 @@ export function AddTouristSheet({
                 </TabsContent>
                 
                 <TabsContent value="pdf" className="pt-4 space-y-4">
-                  <div className="border-2 border-dashed border-border rounded-lg p-10 flex flex-col items-center justify-center text-center space-y-3 hover:bg-accent/30 transition-colors cursor-pointer">
-                    <div className="p-3 bg-primary/10 rounded-full">
-                      <UploadCloud className="h-6 w-6 text-primary" />
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".pdf"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) setPdfFile(file);
+                    }}
+                  />
+                  <div
+                    className={cn(
+                      "border-2 border-dashed rounded-lg p-10 flex flex-col items-center justify-center text-center space-y-3 transition-colors cursor-pointer",
+                      pdfFile ? "border-primary bg-primary/5" : "border-border hover:bg-accent/30"
+                    )}
+                    onClick={() => fileInputRef.current?.click()}
+                    onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      const file = e.dataTransfer.files?.[0];
+                      if (file && file.name.toLowerCase().endsWith(".pdf")) {
+                        setPdfFile(file);
+                      } else {
+                        alert("Please drop a PDF file.");
+                      }
+                    }}
+                  >
+                    <div className={cn("p-3 rounded-full", pdfFile ? "bg-primary/20" : "bg-primary/10")}>
+                      <UploadCloud className={cn("h-6 w-6", pdfFile ? "text-primary" : "text-primary")} />
                     </div>
                     <div>
-                      <p className="text-sm font-medium">Click to upload or drag and drop</p>
-                      <p className="text-xs text-muted-foreground mt-1">PDF itineraries (max 5MB)</p>
+                      {pdfFile ? (
+                        <>
+                          <p className="text-sm font-medium text-primary">{pdfFile.name}</p>
+                          <p className="text-xs text-muted-foreground mt-1">{(pdfFile.size / 1024).toFixed(0)} KB — Click to change</p>
+                        </>
+                      ) : (
+                        <>
+                          <p className="text-sm font-medium">Click to upload or drag and drop</p>
+                          <p className="text-xs text-muted-foreground mt-1">PDF itineraries (max 5MB)</p>
+                        </>
+                      )}
                     </div>
                   </div>
-                  <Button 
-                    className="w-full" 
+                  <Button
+                    className="w-full"
                     onClick={() => handleGenerate('pdf')}
-                    disabled={isGenerating}
+                    disabled={isGenerating || !pdfFile}
                   >
                     {isGenerating ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Analyzing PDF...</> : "Upload & Extract"}
                   </Button>

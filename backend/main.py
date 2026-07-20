@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException, Request, BackgroundTasks
+from fastapi import FastAPI, Depends, HTTPException, Request, BackgroundTasks, UploadFile, File
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from typing import List
@@ -498,6 +498,40 @@ async def generate_text_from_raw(payload: RawItineraryRequest):
     try:
         parsed_data = parse_raw_itinerary(payload.raw_text)
         return parsed_data
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/itinerary/extract-from-pdf")
+async def extract_from_pdf(file: UploadFile = File(...)):
+    """Upload a PDF → extract text with PyMuPDF → Gemini parse → return structured JSON."""
+    try:
+        import fitz  # PyMuPDF
+        
+        # Validate file type
+        if not file.filename.lower().endswith(".pdf"):
+            raise HTTPException(status_code=400, detail="Only PDF files are accepted.")
+        
+        # Read PDF bytes
+        pdf_bytes = await file.read()
+        if len(pdf_bytes) > 5 * 1024 * 1024:  # 5MB limit
+            raise HTTPException(status_code=400, detail="File too large. Maximum 5MB.")
+        
+        # Extract text from all pages using PyMuPDF
+        doc = fitz.open(stream=pdf_bytes, filetype="pdf")
+        raw_text = ""
+        for page in doc:
+            raw_text += page.get_text() + "\n"
+        doc.close()
+        
+        if not raw_text.strip():
+            raise HTTPException(status_code=400, detail="Could not extract any text from this PDF.")
+        
+        # Send extracted text to Gemini for structured parsing
+        parsed_data = parse_raw_itinerary(raw_text)
+        return parsed_data
+        
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
