@@ -13,6 +13,7 @@ class Company(Base):
     email = Column(String)
     ceo_name = Column(String)
     phone_numbers = Column(String)
+    logo_url = Column(String, nullable=True)
 
 class ForeignTourAgent(Base):
     __tablename__ = "foreign_tour_agents"
