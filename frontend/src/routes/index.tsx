@@ -171,6 +171,7 @@ function Console() {
   const [hotels, setHotels] = useState<any[]>([]);
   const [session, setSession] = useState<any>(null);
   const [companyId, setCompanyId] = useState<string | null>(null);
+  const [companyProfile, setCompanyProfile] = useState<any>(null);
   const [isLoadingAuth, setIsLoadingAuth] = useState(true);
   const router = useRouter();
 
@@ -215,6 +216,7 @@ function Console() {
         } else if (res.ok) {
           const data = await res.json();
           setCompanyId(data.id);
+          setCompanyProfile(data);
           loadData(data.id);
         } else {
           console.error("Failed to fetch company profile");
@@ -658,12 +660,20 @@ function Console() {
             "flex items-center gap-3 rounded-xl p-2.5 transition-colors",
             theme === "light" ? "hover:bg-slate-200/50" : "hover:bg-white/[0.04]"
           )}>
-            <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full font-semibold text-[11px] text-white" style={{
-              background: 'linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)',
-              boxShadow: '0 4px 12px rgba(99,102,241,0.25)',
-            }}>
-              {session?.user?.email?.substring(0, 2).toUpperCase() || "CP"}
-            </div>
+            {companyProfile?.logo_url ? (
+              <img 
+                src={companyProfile.logo_url} 
+                alt="Company Logo" 
+                className="h-9 w-9 shrink-0 rounded-full object-cover shadow-sm ring-1 ring-slate-200 dark:ring-slate-800" 
+              />
+            ) : (
+              <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full font-semibold text-[11px] text-white" style={{
+                background: 'linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)',
+                boxShadow: '0 4px 12px rgba(99,102,241,0.25)',
+              }}>
+                {session?.user?.email?.substring(0, 2).toUpperCase() || "CP"}
+              </div>
+            )}
             <div className="min-w-0 flex-1">
               <div className={cn(
                 "truncate text-[13px] font-medium transition-colors",
