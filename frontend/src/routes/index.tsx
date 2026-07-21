@@ -127,7 +127,7 @@ const NAV_SECTIONS: NavSection[] = [
     title: "Main",
     items: [
       { key: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-      { key: "tours", label: "Active Tours", icon: Plane },
+      { key: "tours", label: "Tour Category", icon: Plane },
       { key: "leads", label: "Inquiries", icon: MessageCircle },
     ],
   },
@@ -662,10 +662,10 @@ function Console() {
             theme === "light" ? "hover:bg-slate-200/50" : "hover:bg-white/[0.04]"
           )}>
             {companyProfile?.logo_url ? (
-              <img 
-                src={companyProfile.logo_url} 
-                alt="Company Logo" 
-                className="h-14 w-14 shrink-0 rounded-full object-cover shadow-sm ring-1 ring-slate-200 dark:ring-slate-800" 
+              <img
+                src={companyProfile.logo_url}
+                alt="Company Logo"
+                className="h-14 w-14 shrink-0 rounded-full object-cover shadow-sm ring-1 ring-slate-200 dark:ring-slate-800"
               />
             ) : (
               <div className="grid h-14 w-14 shrink-0 place-items-center rounded-full font-semibold text-sm text-white" style={{
@@ -1651,9 +1651,9 @@ function TouristDetail({
                 <Settings2 className="h-3.5 w-3.5" />
                 Edit Profile
               </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
+              <Button
+                variant="outline"
+                size="sm"
                 className="gap-2 rounded-lg h-8 text-xs"
                 onClick={() => {
                   if (t.phone) {
@@ -1740,7 +1740,7 @@ function TouristDetail({
         <Tabs defaultValue="contact" className="px-7 py-5">
           <TabsList>
             <TabsTrigger value="contact">Contact</TabsTrigger>
-            <TabsTrigger value="group">Group ({t.group.length + 1})</TabsTrigger>
+            <TabsTrigger value="group">Pax ({t.group.length + 1})</TabsTrigger>
             <TabsTrigger value="itinerary">Itinerary</TabsTrigger>
           </TabsList>
 
@@ -2325,7 +2325,7 @@ function DriverManagement({
       toast.error("Name, phone, and email required");
       return;
     }
-    
+
     // Email validation
     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     if (!emailRegex.test(form.email.trim())) {
