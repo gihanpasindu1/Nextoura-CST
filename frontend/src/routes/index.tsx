@@ -289,13 +289,13 @@ function Console() {
         });
         let loc = "Not Started";
         for (const i of sortedItinerary) {
-          if (i.driver_status === 'Completed') {
+          if (i.driver_status === 'Completed' || i.driver_status === 'Arrived') {
             loc = i.location_name || i.day_title || "TBD";
           }
           if (i.destinations && i.destinations.length > 0) {
             const sortedDests = [...i.destinations].sort((a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
             for (const d of sortedDests) {
-              if (d.driver_status === 'Completed') {
+              if (d.driver_status === 'Completed' || d.driver_status === 'Arrived') {
                 loc = d.location_name;
               }
             }

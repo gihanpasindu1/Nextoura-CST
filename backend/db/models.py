@@ -88,7 +88,7 @@ class TourItinerary(Base):
     stop_order = Column(Integer)
     location_name = Column(String)
     is_hotel_stay = Column(Boolean)
-    driver_status = Column(String)
+    driver_status = Column(String, default="Pending")
     hotel_driver_status = Column(String, default="Pending")
     tourist_id = Column(UUID(as_uuid=True), ForeignKey("foreign_tourists.id"))
     hotel_id = Column(UUID(as_uuid=True), ForeignKey("hotels.id"))

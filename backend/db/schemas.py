@@ -116,7 +116,7 @@ class ItineraryBase(BaseModel):
     stop_order: int
     location_name: str
     is_hotel_stay: bool = False
-    driver_status: Optional[str] = None
+    driver_status: Optional[str] = "Pending"
     hotel_driver_status: Optional[str] = "Pending"
     hotel_id: Optional[uuid.UUID] = None
     booking_email_sent: bool = False

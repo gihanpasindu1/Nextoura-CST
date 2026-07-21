@@ -13,6 +13,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { Progress } from "@/components/ui/progress";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const COUNTRIES = [
   { name: "Afghanistan", code: "AF", flag: "\ud83c\udde6\ud83c\uddeb", dialCode: "+93", pattern: /^[0-9]{9}$/, placeholder: "70 123 4567" },
@@ -1154,9 +1155,34 @@ export function AddTouristSheet({
               
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                 <TabsList className="grid w-full grid-cols-3">
-                  <TabsTrigger value="manual">Manual Entry</TabsTrigger>
-                  <TabsTrigger value="text">Auto (Text)</TabsTrigger>
-                  <TabsTrigger value="pdf">Auto (PDF)</TabsTrigger>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <TabsTrigger value="manual">Manual Entry</TabsTrigger>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom" className="z-[200]">
+                        <p className="text-xs max-w-[200px] text-center">Manually build the itinerary day by day by filling out the details.</p>
+                      </TooltipContent>
+                    </Tooltip>
+
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <TabsTrigger value="text">Auto (Text)</TabsTrigger>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom" className="z-[200]">
+                        <p className="text-xs max-w-[200px] text-center">Generate the itinerary automatically from rough text notes using AI.</p>
+                      </TooltipContent>
+                    </Tooltip>
+
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <TabsTrigger value="pdf">Auto (PDF)</TabsTrigger>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom" className="z-[200]">
+                        <p className="text-xs max-w-[200px] text-center">Extract the itinerary automatically from an uploaded PDF document using AI.</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 </TabsList>
                 
                 <TabsContent value="manual" className="pt-4 space-y-4">

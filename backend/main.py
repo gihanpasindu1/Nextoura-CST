@@ -112,8 +112,18 @@ def create_tourist(tourist: schemas.TouristCreate, db: Session = Depends(get_db)
                     db.add(db_dest)
                     
     db.commit()
-    db.refresh(db_tourist)
-    return db_tourist
+    
+    # Reload with relationships
+    from sqlalchemy.orm import selectinload
+    reloaded_tourist = db.query(models.ForeignTourist)\
+        .filter(models.ForeignTourist.id == db_tourist.id)\
+        .options(
+            selectinload(models.ForeignTourist.group_members),
+            selectinload(models.ForeignTourist.itineraries).selectinload(models.TourItinerary.destinations),
+            selectinload(models.ForeignTourist.itineraries).selectinload(models.TourItinerary.hotel)
+        ).first()
+        
+    return reloaded_tourist
 
 @app.put("/api/tourists/{tourist_id}", response_model=schemas.Tourist)
 def update_tourist(tourist_id: uuid.UUID, tourist: schemas.TouristCreate, db: Session = Depends(get_db)):
@@ -279,7 +289,15 @@ def verify_driver(email: str, db: Session = Depends(get_db)):
 
 @app.get("/api/drivers/{driver_id}/tours", response_model=List[schemas.Tourist])
 def get_driver_tours(driver_id: uuid.UUID, db: Session = Depends(get_db)):
-    tours = db.query(models.ForeignTourist).filter(models.ForeignTourist.driver_id == driver_id).all()
+    from sqlalchemy.orm import selectinload
+    tours = db.query(models.ForeignTourist)\
+        .filter(models.ForeignTourist.driver_id == driver_id)\
+        .options(
+            selectinload(models.ForeignTourist.group_members),
+            selectinload(models.ForeignTourist.itineraries).selectinload(models.TourItinerary.destinations),
+            selectinload(models.ForeignTourist.itineraries).selectinload(models.TourItinerary.hotel)
+        )\
+        .all()
     return tours
 
 
