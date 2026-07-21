@@ -1,6 +1,79 @@
 import React, { useState, useEffect } from "react";
-import { Building2, Mail, User, Phone, ImagePlus, X, Loader2, Save, AlertCircle, Bell, Moon, Sun } from "lucide-react";
+import { Building2, Mail, User, Phone, ImagePlus, X, Loader2, Save, AlertCircle, Bell, Moon, Sun, ChevronDown, Search } from "lucide-react";
 import { useTheme } from "@/lib/theme";
+import { COUNTRIES } from "@/lib/countries";
+import { parsePhoneNumber, isValidPhoneNumber } from "libphonenumber-js";
+import type { CountryCode } from "libphonenumber-js";
+
+function SettingsCountrySelector({ value, onChange }: { value: string, onChange: (val: string) => void }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const selected = COUNTRIES.find(c => c.code === value) || COUNTRIES[0];
+  const filtered = COUNTRIES.filter(c => c.name.toLowerCase().includes(search.toLowerCase()) || c.dialCode.includes(search));
+  const dropdownRef = React.useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  return (
+    <div className="relative h-full flex items-center" ref={dropdownRef}>
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center gap-1.5 h-full pl-3 pr-2 text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-primary rounded-l-xl"
+      >
+        <span className="text-base leading-none">{selected.flag}</span>
+        <span className="font-medium">{selected.dialCode}</span>
+        <ChevronDown className="h-3.5 w-3.5 opacity-50" />
+      </button>
+
+      {isOpen && (
+        <div className="absolute top-[110%] left-0 w-64 rounded-xl border border-border bg-popover shadow-md z-50 overflow-hidden">
+          <div className="p-2 border-b border-border relative">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <input
+              type="text"
+              autoFocus
+              placeholder="Search country or code..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="w-full bg-muted/50 border border-border rounded-lg py-1.5 pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors"
+            />
+          </div>
+          <div className="max-h-60 overflow-y-auto p-1 scrollbar-thin">
+            {filtered.length === 0 ? (
+              <div className="py-3 text-center text-xs text-muted-foreground">No countries found</div>
+            ) : (
+              filtered.map(c => (
+                <button
+                  key={c.code}
+                  type="button"
+                  onClick={() => {
+                    onChange(c.code);
+                    setIsOpen(false);
+                    setSearch("");
+                  }}
+                  className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors cursor-pointer ${c.code === selected.code ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-accent hover:text-accent-foreground'}`}
+                >
+                  <span className="text-base leading-none">{c.flag}</span>
+                  <span className="font-medium text-muted-foreground w-10 text-left">{c.dialCode}</span>
+                  <span className="truncate">{c.name}</span>
+                </button>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -13,11 +86,16 @@ export default function SettingsView({
   companyProfile: any; 
   setCompanyProfile: (profile: any) => void;
 }) {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    companyName: string;
+    email: string;
+    ceoName: string;
+    phoneNumbers: { code: string; number: string }[];
+  }>({
     companyName: "",
     email: "",
     ceoName: "",
-    phoneNumbers: [""],
+    phoneNumbers: [{ code: "LK", number: "" }],
   });
   
   const [logoFile, setLogoFile] = useState<File | null>(null);
@@ -32,8 +110,15 @@ export default function SettingsView({
         email: companyProfile.email || "",
         ceoName: companyProfile.ceo_name || "",
         phoneNumbers: companyProfile.phone_numbers && companyProfile.phone_numbers.length > 0 
-          ? companyProfile.phone_numbers 
-          : [""],
+          ? companyProfile.phone_numbers.map((num: string) => {
+              try {
+                const parsed = parsePhoneNumber(num);
+                return { code: parsed.country || "LK", number: parsed.formatNational() };
+              } catch (e) {
+                return { code: "LK", number: num };
+              }
+            })
+          : [{ code: "LK", number: "" }],
       });
       setLogoPreview(companyProfile.logo_url || null);
     }
@@ -41,17 +126,23 @@ export default function SettingsView({
 
   const handlePhoneChange = (index: number, value: string) => {
     const newPhones = [...formData.phoneNumbers];
-    newPhones[index] = value;
+    newPhones[index].number = value;
+    setFormData({ ...formData, phoneNumbers: newPhones });
+  };
+
+  const handlePhoneCountryChange = (index: number, value: string) => {
+    const newPhones = [...formData.phoneNumbers];
+    newPhones[index].code = value;
     setFormData({ ...formData, phoneNumbers: newPhones });
   };
 
   const addPhoneField = () => {
-    setFormData({ ...formData, phoneNumbers: [...formData.phoneNumbers, ""] });
+    setFormData({ ...formData, phoneNumbers: [...formData.phoneNumbers, { code: "LK", number: "" }] });
   };
 
   const removePhoneField = (index: number) => {
     const newPhones = formData.phoneNumbers.filter((_, i) => i !== index);
-    if (newPhones.length === 0) newPhones.push("");
+    if (newPhones.length === 0) newPhones.push({ code: "LK", number: "" });
     setFormData({ ...formData, phoneNumbers: newPhones });
   };
 
@@ -77,6 +168,31 @@ export default function SettingsView({
     
     setIsSubmitting(true);
     try {
+      // Validate email
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.email)) {
+        toast.error("Please enter a valid email address");
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Validate and format phone numbers
+      const formattedPhones: string[] = [];
+      for (const p of formData.phoneNumbers) {
+        if (!p.number.trim()) continue;
+        const countryCode = p.code as CountryCode;
+
+        if (!isValidPhoneNumber(p.number, countryCode)) {
+          const country = COUNTRIES.find(c => c.code === p.code) || COUNTRIES[0];
+          toast.error(`Please enter a valid phone number for ${country.name}`);
+          setIsSubmitting(false);
+          return;
+        }
+
+        const phoneNumber = parsePhoneNumber(p.number, countryCode);
+        formattedPhones.push(phoneNumber.number);
+      }
+
       let finalLogoUrl = companyProfile.logo_url;
 
       // Handle Logo Upload if changed
@@ -107,7 +223,7 @@ export default function SettingsView({
         company_name: formData.companyName,
         email: formData.email,
         ceo_name: formData.ceoName,
-        phone_numbers: formData.phoneNumbers.filter(p => p.trim() !== ""),
+        phone_numbers: formattedPhones,
         logo_url: finalLogoUrl
       };
 
@@ -388,15 +504,19 @@ export default function SettingsView({
                 
                 <div className="space-y-2.5">
                   {formData.phoneNumbers.map((phone, idx) => (
-                    <div key={idx} className="flex gap-2">
-                      <div className="relative flex-1">
-                        <Phone className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <div key={idx} className="flex gap-2 group">
+                      <div className="relative flex-1 flex items-stretch rounded-xl border border-input bg-background transition-all focus-within:border-primary focus-within:ring-1 focus-within:ring-primary h-[42px]">
+                        <SettingsCountrySelector
+                          value={phone.code}
+                          onChange={(val) => handlePhoneCountryChange(idx, val)}
+                        />
+                        <div className="my-2.5 w-px bg-border mx-1" />
                         <input
                           type="text"
-                          value={phone}
+                          value={phone.number}
                           onChange={(e) => handlePhoneChange(idx, e.target.value)}
-                          placeholder="e.g. +94 77 123 4567"
-                          className="w-full rounded-xl border border-input bg-background py-2 pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground transition-all focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                          placeholder="e.g. 77 123 4567"
+                          className="w-full bg-transparent py-2 pl-3 pr-4 text-sm text-foreground placeholder:text-muted-foreground outline-none"
                         />
                       </div>
                       {formData.phoneNumbers.length > 1 && (
@@ -404,7 +524,7 @@ export default function SettingsView({
                           variant="ghost" 
                           size="icon" 
                           onClick={() => removePhoneField(idx)}
-                          className="h-9 w-9 shrink-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive rounded-xl"
+                          className="h-[42px] w-[42px] shrink-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive rounded-xl border border-border"
                         >
                           <X className="h-4 w-4" />
                         </Button>
