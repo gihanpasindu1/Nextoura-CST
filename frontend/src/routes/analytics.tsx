@@ -226,20 +226,6 @@ function AnalyticsPage() {
             <TrendingUp className="h-3.5 w-3.5 text-primary" />
             <span>{confirmed.length} confirmed tours</span>
           </div>
-          {/* Theme toggle */}
-          <button
-            id="analytics-theme-toggle"
-            type="button"
-            title={theme === "light" ? "Switch to dark mode" : "Switch to light mode"}
-            onClick={toggle}
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-card text-muted-foreground transition-all duration-200 hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
-          >
-            {theme === "light" ? (
-              <Moon className="h-4 w-4" />
-            ) : (
-              <Sun className="h-4 w-4" />
-            )}
-          </button>
         </div>
       </header>
 

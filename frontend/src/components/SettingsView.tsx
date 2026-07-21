@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { Building2, Mail, User, Phone, ImagePlus, X, Loader2, Save, AlertCircle, Bell } from "lucide-react";
+import { Building2, Mail, User, Phone, ImagePlus, X, Loader2, Save, AlertCircle, Bell, Moon, Sun } from "lucide-react";
+import { useTheme } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -134,7 +135,8 @@ export default function SettingsView({
     }
   };
 
-  const [currentView, setCurrentView] = useState<"menu" | "company">("menu");
+  const { theme, toggle } = useTheme();
+  const [currentView, setCurrentView] = useState<"menu" | "company" | "theme">("menu");
 
   if (currentView === "menu") {
     return (
@@ -173,6 +175,77 @@ export default function SettingsView({
                 <p className="text-[13px] leading-relaxed text-muted-foreground">Email and push notification alerts.</p>
               </div>
             </button>
+
+            <button
+              onClick={() => setCurrentView("theme")}
+              className="group flex items-start gap-4 rounded-xl border border-border bg-card p-5 text-left transition-all hover:border-foreground/20 hover:shadow-sm"
+            >
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground transition-colors group-hover:bg-primary/10 group-hover:text-primary">
+                {theme === "light" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+              </div>
+              <div className="flex flex-col gap-1">
+                <h3 className="font-medium text-foreground">Theme Settings</h3>
+                <p className="text-[13px] leading-relaxed text-muted-foreground">Switch between Light and Dark mode.</p>
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (currentView === "theme") {
+    return (
+      <div className="flex-1 overflow-auto p-6 sm:p-8">
+        <div className="mx-auto max-w-4xl space-y-6">
+          <div className="flex items-center gap-4">
+            <Button 
+              variant="ghost" 
+              onClick={() => setCurrentView("menu")}
+              className="h-9 w-9 p-0 rounded-full text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+            </Button>
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight text-foreground">Theme Settings</h1>
+              <p className="text-sm text-muted-foreground mt-1">Customize the appearance of the application.</p>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-border bg-card p-6 sm:p-8 shadow-sm">
+            <div className="space-y-4 max-w-md">
+              <label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                Application Theme
+              </label>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <button
+                  onClick={() => theme !== "light" && toggle()}
+                  className={cn(
+                    "flex flex-col items-center justify-center gap-3 rounded-xl border-2 p-6 transition-all",
+                    theme === "light" 
+                      ? "border-primary bg-primary/5 text-primary" 
+                      : "border-border bg-card hover:border-primary/50 text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  <Sun className="h-8 w-8" />
+                  <span className="font-semibold">Light Mode</span>
+                </button>
+
+                <button
+                  onClick={() => theme !== "dark" && toggle()}
+                  className={cn(
+                    "flex flex-col items-center justify-center gap-3 rounded-xl border-2 p-6 transition-all",
+                    theme === "dark" 
+                      ? "border-primary bg-primary/5 text-primary" 
+                      : "border-border bg-card hover:border-primary/50 text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  <Moon className="h-8 w-8" />
+                  <span className="font-semibold">Dark Mode</span>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>

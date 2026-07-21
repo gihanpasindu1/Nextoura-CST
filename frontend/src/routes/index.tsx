@@ -781,16 +781,6 @@ function Console() {
                 <span className="hidden sm:inline">View Graphs</span>
               </Button>
               <div className="h-4 w-px bg-border mx-0.5" />
-              <Button
-                variant="ghost"
-                size="icon"
-                aria-label="Toggle theme"
-                onClick={toggle}
-                className="h-8 w-8 rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground transition-all duration-200"
-              >
-                {theme === "light" ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
-              </Button>
-              <div className="h-4 w-px bg-border mx-0.5" />
               <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground transition-all duration-200 relative">
                 <Bell className="h-4 w-4" />
                 <span className="absolute right-1.5 top-1.5 flex h-2 w-2">
