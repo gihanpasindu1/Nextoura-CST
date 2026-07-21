@@ -1732,7 +1732,7 @@ function TouristDetail({
                 <Mail className="h-3.5 w-3.5" />
                 Email
               </Button>
-              <Button size="sm" className="rounded-lg shadow-sm h-8 text-xs">Open Booking</Button>
+
             </div>
           </div>
         </div>
