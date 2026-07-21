@@ -1314,6 +1314,7 @@ export function AddTouristSheet({
                                 <div key={actIdx} className="flex items-center gap-1.5">
                                   <span className="text-muted-foreground text-xs mt-0.5">•</span>
                                   <Input
+                                    autoFocus={act === ""}
                                     className="h-7 text-xs flex-1 bg-muted/30"
                                     placeholder="Activity description..."
                                     value={act}
