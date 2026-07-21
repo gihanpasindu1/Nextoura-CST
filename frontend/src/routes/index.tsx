@@ -741,7 +741,7 @@ function Console() {
                   {nav === "agents"
                     ? "Agent Management"
                     : nav === "leads"
-                      ? "Inquiries & Leads"
+                      ? "Inquiries"
                       : nav === "dashboard"
                         ? "Dashboard"
                         : nav === "reports"
@@ -750,7 +750,7 @@ function Console() {
                             ? "Settings"
                             : nav === "drivers"
                               ? "Drivers & Guides"
-                              : "Active Tours"}
+                              : "Tour Category"}
                 </h1>
                 <p className="text-[11px] text-muted-foreground mt-0.5 font-medium tracking-wide">
                   {nav === "agents"
