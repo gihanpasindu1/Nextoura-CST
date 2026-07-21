@@ -86,6 +86,12 @@ import {
   type Tourist,
   type TourStatus,
 } from "@/lib/tourism-data";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { AddTouristSheet } from "@/components/AddTouristSheet";
 import SettingsView from "@/components/SettingsView";
@@ -897,6 +903,24 @@ function Console() {
               statusAlertCounts={statusAlertCounts}
               notifications={notifications}
               nav={nav}
+              onStatusChange={async (id, status) => {
+                try {
+                  const res = await fetch(`http://localhost:8000/api/tourists/${id}/status`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status })
+                  });
+                  if (res.ok) {
+                    setTouristsList(prev => prev.map(t => t.id === id ? { ...t, status } : t));
+                    if (companyId) loadData(companyId);
+                    toast.success("Status updated");
+                  } else {
+                    toast.error("Failed to update status");
+                  }
+                } catch (e) {
+                  toast.error("Error updating status");
+                }
+              }}
               onResolveAlert={async (id) => {
                 try {
                   await fetch(`http://localhost:8000/api/notifications/${id}/resolve`, { method: "PATCH" });
@@ -1192,6 +1216,7 @@ function ToursWorkspace({
   onConfirmTour,
   onDeleteClient,
   nav,
+  onStatusChange,
 }: {
   drivers: any[];
   query: string;
@@ -1213,6 +1238,7 @@ function ToursWorkspace({
   onConfirmTour: (t: Tourist) => void;
   onDeleteClient: (id: string) => void;
   nav: string;
+  onStatusChange?: (id: string, status: TourStatus) => void;
 }) {
   const wsRouter = useRouter();
   const [driverPopoverOpen, setDriverPopoverOpen] = useState(false);
@@ -1242,6 +1268,7 @@ function ToursWorkspace({
             onConfirmTour={() => onConfirmTour(selected)}
             onEditClient={() => onConfirmTour(selected)}
             onDeleteClient={() => onDeleteClient(selected.id)}
+            onStatusChange={onStatusChange}
           />
         </div>
       ) : (
@@ -1520,7 +1547,7 @@ function ToursWorkspace({
   );
 }
 
-function StatusPill({ status }: { status: TourStatus }) {
+function StatusPill({ status, onChange }: { status: TourStatus, onChange?: (status: TourStatus) => void }) {
   const displayStatus = status === "On Tour" ? "Active" : status;
   const config: Record<TourStatus, { color: string; icon: any }> = {
     Active: {
@@ -1547,16 +1574,45 @@ function StatusPill({ status }: { status: TourStatus }) {
 
   const { color, icon: Icon } = config[displayStatus] || { color: "bg-slate-50 text-slate-600 border-slate-200 dark:bg-slate-500/10 dark:text-slate-400 dark:border-slate-500/20", icon: Clock };
 
-  return (
+  const pill = (
     <span
       className={cn(
         "inline-flex h-5 items-center gap-1 rounded-full border px-2 text-[10px] font-semibold tracking-wide",
-        color
+        color,
+        onChange && "cursor-pointer hover:opacity-80 transition-opacity"
       )}
     >
       <Icon className="h-2.5 w-2.5" strokeWidth={2.5} />
       {displayStatus}
     </span>
+  );
+
+  if (!onChange) return pill;
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger className="focus:outline-none">
+        {pill}
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="min-w-[120px]">
+        {(["Upcoming", "Active", "Completed", "Cancelled"] as TourStatus[]).map((s) => {
+          const { icon: MenuIcon } = config[s];
+          return (
+            <DropdownMenuItem 
+              key={s} 
+              onClick={(e) => {
+                e.stopPropagation();
+                onChange(s);
+              }}
+              className="text-xs gap-2 cursor-pointer"
+            >
+              <MenuIcon className="h-3 w-3" />
+              {s}
+            </DropdownMenuItem>
+          );
+        })}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
@@ -1567,7 +1623,8 @@ function TouristDetail({
   onResolveAlert,
   onConfirmTour,
   onEditClient,
-  onDeleteClient
+  onDeleteClient,
+  onStatusChange
 }: {
   t: Tourist;
   onBack?: () => void;
@@ -1576,6 +1633,7 @@ function TouristDetail({
   onConfirmTour: () => void;
   onEditClient?: () => void;
   onDeleteClient: () => void;
+  onStatusChange?: (id: string, status: TourStatus) => void;
 }) {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const personAlerts = notifications.filter((n) => n.touristId === t.id || n.touristId === "all");
@@ -1627,7 +1685,10 @@ function TouristDetail({
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
                   <h2 className="truncate text-[16px] font-bold tracking-tight text-foreground">{t.name}</h2>
-                  <StatusPill status={t.status} />
+                  <StatusPill 
+                    status={t.status} 
+                    onChange={onStatusChange ? (newStatus) => onStatusChange(t.id, newStatus) : undefined} 
+                  />
                 </div>
                 <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
                   <div className="flex items-center gap-1.5">

@@ -184,6 +184,20 @@ def update_tourist(tourist_id: uuid.UUID, tourist: schemas.TouristCreate, db: Se
     db.refresh(db_tourist)
     return db_tourist
 
+class StatusUpdate(BaseModel):
+    status: str
+
+@app.patch("/api/tourists/{tourist_id}/status")
+def update_tourist_status(tourist_id: uuid.UUID, update_data: StatusUpdate, db: Session = Depends(get_db)):
+    db_tourist = db.query(models.ForeignTourist).filter(models.ForeignTourist.id == tourist_id).first()
+    if not db_tourist:
+        raise HTTPException(status_code=404, detail="Tourist not found")
+    
+    db_tourist.status = update_data.status
+    db.commit()
+    db.refresh(db_tourist)
+    return {"message": "Status updated successfully", "status": db_tourist.status}
+
 @app.delete("/api/tourists/{tourist_id}")
 def delete_tourist(tourist_id: uuid.UUID, db: Session = Depends(get_db)):
     db_tourist = db.query(models.ForeignTourist).filter(models.ForeignTourist.id == tourist_id).first()
