@@ -13,37 +13,7 @@ function LoginPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [logoUrl, setLogoUrl] = useState<string | null>(null);
-  const [companyName, setCompanyName] = useState("Horizon Travel");
   const router = useRouter();
-
-  useEffect(() => {
-    const fetchCompany = async () => {
-      if (!email || !email.includes("@")) {
-        setLogoUrl(null);
-        setCompanyName("Horizon Travel");
-        return;
-      }
-      try {
-        const res = await fetch(`http://localhost:8000/api/companies/by-email?email=${encodeURIComponent(email)}`);
-        if (res.ok) {
-          const data = await res.json();
-          if (data.company_name) {
-            setCompanyName(data.company_name);
-            setLogoUrl(data.logo_url);
-          } else {
-            setCompanyName("Horizon Travel");
-            setLogoUrl(null);
-          }
-        }
-      } catch (err) {
-        console.error("Failed to fetch company details:", err);
-      }
-    };
-    
-    const timer = setTimeout(fetchCompany, 500);
-    return () => clearTimeout(timer);
-  }, [email]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -91,16 +61,12 @@ function LoginPage() {
           {/* Logo container with gradient border and subtle pulse */}
           <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 via-indigo-500 to-indigo-600 p-[1.5px] shadow-lg shadow-indigo-500/20">
             <div className="flex h-full w-full items-center justify-center rounded-[14px] bg-slate-950 overflow-hidden">
-              {logoUrl ? (
-                <img src={logoUrl} alt={companyName} className="h-full w-full object-cover" />
-              ) : (
-                <MapPinned className="h-6.5 w-6.5 text-indigo-400" strokeWidth={2} />
-              )}
+              <MapPinned className="h-6.5 w-6.5 text-indigo-400" strokeWidth={2} />
             </div>
           </div>
 
           <h2 className="mt-5 text-2xl font-extrabold tracking-tight text-white transition-all duration-300">
-            {companyName}
+            Horizon Travel
           </h2>
           <p className="mt-2 text-xs font-semibold uppercase tracking-widest text-slate-400">
             Operations Console
