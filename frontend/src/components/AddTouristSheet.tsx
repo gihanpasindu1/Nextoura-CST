@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { Progress } from "@/components/ui/progress";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { toast } from "sonner";
 
 const COUNTRIES = [
   { name: "Afghanistan", code: "AF", flag: "\ud83c\udde6\ud83c\uddeb", dialCode: "+93", pattern: /^[0-9]{9}$/, placeholder: "70 123 4567" },
@@ -644,6 +645,9 @@ export function AddTouristSheet({
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
+      toast.error("Unable to save", {
+        description: "Please check the form for errors and missing required fields.",
+      });
       return;
     }
 
