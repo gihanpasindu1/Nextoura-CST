@@ -2182,7 +2182,7 @@ function AgentManagement({ agents, onAddAgent, onEditAgent, onDeleteAgent }: {
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Add new agent</DialogTitle>
-              <DialogDescription>Create a profile for a new team member.</DialogDescription>
+              <DialogDescription>Create a profile for a new agent.</DialogDescription>
             </DialogHeader>
             <div className="space-y-3">
               <div>
