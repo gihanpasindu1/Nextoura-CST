@@ -672,14 +672,14 @@ function Console() {
                 background: 'linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)',
                 boxShadow: '0 4px 12px rgba(99,102,241,0.25)',
               }}>
-                {session?.user?.email?.substring(0, 2).toUpperCase() || "CP"}
+                {companyProfile?.company_name?.substring(0, 2).toUpperCase() || session?.user?.email?.substring(0, 2).toUpperCase() || "CP"}
               </div>
             )}
             <div className="min-w-0 flex-1">
               <div className={cn(
                 "truncate text-[14.5px] font-medium transition-colors",
                 theme === "light" ? "text-slate-800" : "text-slate-200"
-              )}>{session?.user?.email || "Company Profile"}</div>
+              )}>{companyProfile?.company_name || session?.user?.email || "Company Profile"}</div>
               <div className="mt-0.5 flex items-center gap-1.5 text-xs text-slate-500">
                 <Shield className="h-3.5 w-3.5" />
                 <span>Authorized</span>
