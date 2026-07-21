@@ -218,31 +218,31 @@ export default function SettingsView({
                 Application Theme
               </label>
               
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-3 max-w-[320px]">
                 <button
                   onClick={() => theme !== "light" && toggle()}
                   className={cn(
-                    "flex flex-col items-center justify-center gap-3 rounded-xl border-2 p-6 transition-all",
+                    "flex flex-col items-center justify-center gap-2 rounded-xl border-2 p-4 transition-all duration-200",
                     theme === "light" 
-                      ? "border-primary bg-primary/5 text-primary" 
-                      : "border-border bg-card hover:border-primary/50 text-muted-foreground hover:text-foreground"
+                      ? "border-primary bg-primary/5 text-primary shadow-sm" 
+                      : "border-border bg-card hover:border-primary/40 text-muted-foreground hover:text-foreground hover:bg-accent/50"
                   )}
                 >
-                  <Sun className="h-8 w-8" />
-                  <span className="font-semibold">Light Mode</span>
+                  <Sun className="h-5 w-5" />
+                  <span className="text-[13px] font-medium">Light Mode</span>
                 </button>
 
                 <button
                   onClick={() => theme !== "dark" && toggle()}
                   className={cn(
-                    "flex flex-col items-center justify-center gap-3 rounded-xl border-2 p-6 transition-all",
+                    "flex flex-col items-center justify-center gap-2 rounded-xl border-2 p-4 transition-all duration-200",
                     theme === "dark" 
-                      ? "border-primary bg-primary/5 text-primary" 
-                      : "border-border bg-card hover:border-primary/50 text-muted-foreground hover:text-foreground"
+                      ? "border-primary bg-primary/5 text-primary shadow-sm" 
+                      : "border-border bg-card hover:border-primary/40 text-muted-foreground hover:text-foreground hover:bg-accent/50"
                   )}
                 >
-                  <Moon className="h-8 w-8" />
-                  <span className="font-semibold">Dark Mode</span>
+                  <Moon className="h-5 w-5" />
+                  <span className="text-[13px] font-medium">Dark Mode</span>
                 </button>
               </div>
             </div>
