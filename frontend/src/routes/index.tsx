@@ -663,35 +663,105 @@ function Console() {
 
         {/* ── User profile & Sign out ── */}
         <div className="p-4 space-y-3">
-          <div className={cn(
-            "flex items-center gap-3.5 rounded-xl p-3 transition-colors",
-            theme === "light" ? "hover:bg-slate-200/50" : "hover:bg-white/[0.04]"
-          )}>
-            {companyProfile?.logo_url ? (
-              <img
-                src={companyProfile.logo_url}
-                alt="Company Logo"
-                className="h-14 w-14 shrink-0 rounded-full object-cover shadow-sm ring-1 ring-slate-200 dark:ring-slate-800"
-              />
-            ) : (
-              <div className="grid h-14 w-14 shrink-0 place-items-center rounded-full font-semibold text-sm text-white" style={{
-                background: 'linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)',
-                boxShadow: '0 4px 12px rgba(99,102,241,0.25)',
-              }}>
-                {companyProfile?.company_name?.substring(0, 2).toUpperCase() || session?.user?.email?.substring(0, 2).toUpperCase() || "CP"}
-              </div>
-            )}
-            <div className="min-w-0 flex-1">
+          <Dialog>
+            <DialogTrigger asChild>
               <div className={cn(
-                "truncate text-[14.5px] font-medium transition-colors",
-                theme === "light" ? "text-slate-800" : "text-slate-200"
-              )}>{companyProfile?.company_name || session?.user?.email || "Company Profile"}</div>
-              <div className="mt-0.5 flex items-center gap-1.5 text-xs text-slate-500">
-                <Shield className="h-3.5 w-3.5" />
-                <span>Authorized</span>
+                "flex items-center gap-3.5 rounded-xl p-3 transition-colors cursor-pointer",
+                theme === "light" ? "hover:bg-slate-200/50" : "hover:bg-white/[0.04]"
+              )}>
+                {companyProfile?.logo_url ? (
+                  <img
+                    src={companyProfile.logo_url}
+                    alt="Company Logo"
+                    className="h-14 w-14 shrink-0 rounded-full object-cover shadow-sm ring-1 ring-slate-200 dark:ring-slate-800"
+                  />
+                ) : (
+                  <div className="grid h-14 w-14 shrink-0 place-items-center rounded-full font-semibold text-sm text-white" style={{
+                    background: 'linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)',
+                    boxShadow: '0 4px 12px rgba(99,102,241,0.25)',
+                  }}>
+                    {companyProfile?.company_name?.substring(0, 2).toUpperCase() || session?.user?.email?.substring(0, 2).toUpperCase() || "CP"}
+                  </div>
+                )}
+                <div className="min-w-0 flex-1">
+                  <div className={cn(
+                    "truncate text-[14.5px] font-medium transition-colors",
+                    theme === "light" ? "text-slate-800" : "text-slate-200"
+                  )}>{companyProfile?.company_name || session?.user?.email || "Company Profile"}</div>
+                  <div className="mt-0.5 flex items-center gap-1.5 text-xs text-slate-500">
+                    <Shield className="h-3.5 w-3.5" />
+                    <span>Authorized</span>
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md bg-card">
+              <DialogHeader className="sr-only">
+                <DialogTitle>Company Profile</DialogTitle>
+              </DialogHeader>
+              <div className="flex flex-col gap-6 py-2">
+                <div className="flex items-center gap-5 border-b border-border/50 pb-5">
+                  {companyProfile?.logo_url ? (
+                    <img
+                      src={companyProfile.logo_url}
+                      alt="Company Logo"
+                      className="h-16 w-16 shrink-0 rounded-full object-cover shadow-sm ring-1 ring-slate-200 dark:ring-slate-800"
+                    />
+                  ) : (
+                    <div className="grid h-16 w-16 shrink-0 place-items-center rounded-full font-semibold text-lg text-white" style={{
+                      background: 'linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)',
+                      boxShadow: '0 4px 12px rgba(99,102,241,0.25)',
+                    }}>
+                      {companyProfile?.company_name?.substring(0, 2).toUpperCase() || session?.user?.email?.substring(0, 2).toUpperCase() || "CP"}
+                    </div>
+                  )}
+                  <div>
+                    <h4 className="font-semibold text-lg text-foreground mb-1">{companyProfile?.company_name || "Company Profile"}</h4>
+                    <div className="flex items-center gap-1.5 text-sm text-teal-600 dark:text-teal-400 font-medium bg-teal-50 dark:bg-teal-950/30 px-2.5 py-0.5 rounded-full w-fit">
+                      <Shield className="h-4 w-4" /> Authorized Partner
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="space-y-4 text-[14px]">
+                  <div className="flex items-center gap-3.5 text-muted-foreground">
+                    <div className="grid h-8 w-8 place-items-center rounded-full bg-accent text-foreground/70">
+                      <Mail className="h-4 w-4" />
+                    </div>
+                    <span className="truncate">{companyProfile?.email || session?.user?.email || "No email provided"}</span>
+                  </div>
+                  <div className="flex items-center gap-3.5 text-muted-foreground">
+                    <div className="grid h-8 w-8 place-items-center rounded-full bg-accent text-foreground/70">
+                      <Building2 className="h-4 w-4" />
+                    </div>
+                    <span className="truncate">CEO: {companyProfile?.ceo_name || "Not specified"}</span>
+                  </div>
+                  {companyProfile?.phone_numbers && (
+                    <div className="flex items-center gap-3.5 text-muted-foreground">
+                      <div className="grid h-8 w-8 place-items-center rounded-full bg-accent text-foreground/70">
+                        <Phone className="h-4 w-4" />
+                      </div>
+                      <span className="truncate">
+                        {typeof companyProfile.phone_numbers === 'string' 
+                          ? (() => {
+                              try {
+                                const parsed = JSON.parse(companyProfile.phone_numbers);
+                                if (Array.isArray(parsed) && parsed.length > 0) {
+                                  return `+${parsed[0].code} ${parsed[0].number}`;
+                                }
+                                return companyProfile.phone_numbers;
+                              } catch {
+                                return companyProfile.phone_numbers;
+                              }
+                            })()
+                          : "No phone provided"}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
 
           <AlertDialog>
             <AlertDialogTrigger asChild>
