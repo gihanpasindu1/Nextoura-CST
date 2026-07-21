@@ -205,9 +205,9 @@ function AnalyticsPage() {
       {/* ── header ── */}
       <header className="flex h-[60px] shrink-0 items-center justify-between border-b border-border bg-card/90 backdrop-blur-lg px-7">
         <div className="flex items-center gap-3.5">
-          <Button id="analytics-back" variant="ghost" size="sm"
+          <Button id="analytics-back" variant="outline" size="sm"
             onClick={() => router.navigate({ to: "/" })}
-            className="gap-2 -ml-1 text-muted-foreground hover:text-foreground rounded-lg transition-all duration-200 h-8 text-xs">
+            className="gap-1.5 bg-primary/5 text-primary border-primary/20 hover:bg-primary/10 hover:border-primary/30 rounded-lg transition-all duration-200 h-8 px-3 text-xs font-semibold shadow-sm">
             <ArrowLeft className="h-3.5 w-3.5" /> Back to Console
           </Button>
           <div className="h-4 w-px bg-border mx-1" />
