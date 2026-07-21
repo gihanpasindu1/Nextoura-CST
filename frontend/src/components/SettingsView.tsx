@@ -168,8 +168,8 @@ export default function SettingsView({
     
     setIsSubmitting(true);
     try {
-      // Validate email
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      // Validate email with stricter regex to catch invalid TLDs like .com3333
+      const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
       if (!emailRegex.test(formData.email)) {
         toast.error("Please enter a valid email address");
         setIsSubmitting(false);
