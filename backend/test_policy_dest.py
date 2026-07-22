@@ -1,7 +1,0 @@
-import psycopg2
-
-url = 'postgresql://postgres.snqmtozcyimcdkwyxeia:Ceylonsignature%401@aws-1-ap-northeast-1.pooler.supabase.com:6543/postgres'
-conn = psycopg2.connect(url)
-cur = conn.cursor()
-cur.execute("SELECT polname, pg_get_expr(polqual, polrelid) as qual FROM pg_policy WHERE polrelid = 'itinerary_destinations'::regclass;")
-print(cur.fetchall())
