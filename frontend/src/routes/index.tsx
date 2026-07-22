@@ -1,5 +1,6 @@
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { supabase } from "@/lib/supabase";
+import logoUrl from "@/assets/logo.png";
 import { useMemo, useState, useEffect } from "react";
 import {
   LayoutDashboard,
@@ -496,13 +497,8 @@ function Console() {
               : 'radial-gradient(circle, rgba(59,130,246,0.12) 0%, transparent 70%)'
           }} />
           <div className="flex items-center gap-3.5 mb-1 px-1">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[18px] relative overflow-hidden transition-all duration-300 hover:scale-105" style={{
-              background: 'linear-gradient(135deg, #2dd4bf 0%, #6366f1 45%, #ec4899 75%, #f97316 100%)',
-              boxShadow: theme === "light"
-                ? '0 6px 20px rgba(99,102,241,0.25), inset 0 2px 4px rgba(255,255,255,0.3)'
-                : '0 8px 24px rgba(99,102,241,0.35), inset 0 2px 4px rgba(255,255,255,0.2)',
-            }}>
-              <Plane className="h-5 w-5 text-white" strokeWidth={2.5} />
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center relative transition-all duration-300 hover:scale-105">
+              <img src={logoUrl} alt="Nex Toura Logo" className="h-full w-full object-contain" />
             </div>
             <div className="min-w-0">
               <div className={cn(
@@ -721,7 +717,7 @@ function Console() {
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="space-y-4 text-[14px]">
                   <div className="flex items-center gap-3.5 text-muted-foreground">
                     <div className="grid h-8 w-8 place-items-center rounded-full bg-accent text-foreground/70">
@@ -741,18 +737,18 @@ function Console() {
                         <Phone className="h-4 w-4" />
                       </div>
                       <span className="truncate">
-                        {typeof companyProfile.phone_numbers === 'string' 
+                        {typeof companyProfile.phone_numbers === 'string'
                           ? (() => {
-                              try {
-                                const parsed = JSON.parse(companyProfile.phone_numbers);
-                                if (Array.isArray(parsed) && parsed.length > 0) {
-                                  return `+${parsed[0].code} ${parsed[0].number}`;
-                                }
-                                return companyProfile.phone_numbers;
-                              } catch {
-                                return companyProfile.phone_numbers;
+                            try {
+                              const parsed = JSON.parse(companyProfile.phone_numbers);
+                              if (Array.isArray(parsed) && parsed.length > 0) {
+                                return `+${parsed[0].code} ${parsed[0].number}`;
                               }
-                            })()
+                              return companyProfile.phone_numbers;
+                            } catch {
+                              return companyProfile.phone_numbers;
+                            }
+                          })()
                           : "No phone provided"}
                       </span>
                     </div>
@@ -1667,8 +1663,8 @@ function StatusPill({ status, onChange }: { status: TourStatus, onChange?: (stat
         {(["Upcoming", "Active", "Completed", "Cancelled"] as TourStatus[]).map((s) => {
           const { icon: MenuIcon } = config[s];
           return (
-            <DropdownMenuItem 
-              key={s} 
+            <DropdownMenuItem
+              key={s}
               onClick={(e) => {
                 e.stopPropagation();
                 onChange(s);
@@ -1754,9 +1750,9 @@ function TouristDetail({
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
                   <h2 className="truncate text-[16px] font-bold tracking-tight text-foreground">{t.name}</h2>
-                  <StatusPill 
-                    status={t.status} 
-                    onChange={onStatusChange ? (newStatus) => onStatusChange(t.id, newStatus) : undefined} 
+                  <StatusPill
+                    status={t.status}
+                    onChange={onStatusChange ? (newStatus) => onStatusChange(t.id, newStatus) : undefined}
                   />
                 </div>
                 <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
