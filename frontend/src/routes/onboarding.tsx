@@ -179,7 +179,7 @@ function OnboardingPage() {
         logoUrl = publicUrlData.publicUrl;
       }
 
-      const res = await fetch("http://localhost:8000/api/companies/onboard", {
+      const res = await fetch("https://cst-tour-management-system.onrender.com/api/companies/onboard", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

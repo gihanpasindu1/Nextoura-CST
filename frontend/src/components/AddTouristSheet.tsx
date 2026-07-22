@@ -419,7 +419,7 @@ export function AddTouristSheet({
         });
 
         // Send this prompt to the AI generator to get the rich descriptions and images
-        const response = await fetch("http://localhost:8000/api/itinerary/generate-pdf", {
+        const response = await fetch("https://cst-tour-management-system.onrender.com/api/itinerary/generate-pdf", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -448,7 +448,7 @@ export function AddTouristSheet({
       } else if (type === 'text') {
         // Full pipeline: Raw text → Gemini parse → Pexels images → PDF download
         // (Exactly like the sample project's /generate-from-raw endpoint)
-        const response = await fetch("http://localhost:8000/api/itinerary/generate-pdf", {
+        const response = await fetch("https://cst-tour-management-system.onrender.com/api/itinerary/generate-pdf", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -499,7 +499,7 @@ export function AddTouristSheet({
           const formPayload = new FormData();
           formPayload.append("file", pdfFile);
 
-          const response = await fetch("http://localhost:8000/api/itinerary/extract-from-pdf", {
+          const response = await fetch("https://cst-tour-management-system.onrender.com/api/itinerary/extract-from-pdf", {
             method: "POST",
             body: formPayload,
           });

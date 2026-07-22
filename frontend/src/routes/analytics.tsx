@@ -142,13 +142,13 @@ function AnalyticsPage() {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) { router.navigate({ to: "/login" }); return; }
-        const meRes = await fetch(`http://localhost:8000/api/companies/me?user_id=${session.user.id}`);
+        const meRes = await fetch(`https://cst-tour-management-system.onrender.com/api/companies/me?user_id=${session.user.id}`);
         if (!meRes.ok) { router.navigate({ to: "/" }); return; }
         const { id: cid } = await meRes.json();
         const [tRes, aRes, dRes] = await Promise.all([
-          fetch(`http://localhost:8000/api/tourists?company_id=${cid}`),
-          fetch(`http://localhost:8000/api/agents?company_id=${cid}`),
-          fetch(`http://localhost:8000/api/drivers?company_id=${cid}`),
+          fetch(`https://cst-tour-management-system.onrender.com/api/tourists?company_id=${cid}`),
+          fetch(`https://cst-tour-management-system.onrender.com/api/agents?company_id=${cid}`),
+          fetch(`https://cst-tour-management-system.onrender.com/api/drivers?company_id=${cid}`),
         ]);
         const [tData, aData, dData] = await Promise.all([tRes.json(), aRes.json(), dRes.json()]);
         setTourists(Array.isArray(tData) ? tData : []);

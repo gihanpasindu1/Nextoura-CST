@@ -227,7 +227,7 @@ export default function SettingsView({
         logo_url: finalLogoUrl
       };
 
-      const res = await fetch(`http://localhost:8000/api/companies/${companyProfile.id}`, {
+      const res = await fetch(`https://cst-tour-management-system.onrender.com/api/companies/${companyProfile.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
