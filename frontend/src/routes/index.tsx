@@ -1371,7 +1371,7 @@ function ToursWorkspace({
                     autoFocus
                   />
                 </div>
-                <div className="overflow-y-auto flex-1 max-h-[200px] py-1">
+                <div className="overflow-y-auto flex-1 max-h-[200px] py-1" style={{ scrollbarWidth: 'thin' }} onWheel={(e) => e.stopPropagation()} onTouchMove={(e) => e.stopPropagation()}>
                   <button
                     type="button"
                     onClick={() => {
@@ -2213,7 +2213,7 @@ function AgentManagement({ agents, onAddAgent, onEditAgent, onDeleteAgent }: {
                         autoFocus
                       />
                     </div>
-                    <div className="overflow-y-auto flex-1 max-h-[200px] py-1">
+                    <div className="overflow-y-auto flex-1 max-h-[200px] py-1" style={{ scrollbarWidth: 'thin' }} onWheel={(e) => e.stopPropagation()} onTouchMove={(e) => e.stopPropagation()}>
                       {regions
                         .filter((r) => r.toLowerCase().includes(addSearch.toLowerCase()))
                         .map((r) => (
@@ -2289,7 +2289,7 @@ function AgentManagement({ agents, onAddAgent, onEditAgent, onDeleteAgent }: {
                       autoFocus
                     />
                   </div>
-                  <div className="overflow-y-auto flex-1 max-h-[200px] py-1">
+                  <div className="overflow-y-auto flex-1 max-h-[200px] py-1" style={{ scrollbarWidth: 'thin' }} onWheel={(e) => e.stopPropagation()} onTouchMove={(e) => e.stopPropagation()}>
                     {regions
                       .filter((r) => r.toLowerCase().includes(editSearch.toLowerCase()))
                       .map((r) => (
