@@ -517,7 +517,8 @@ function Console() {
         </div>
 
         {/* ── Agent filter ── */}
-        <div className="px-5 pb-4">
+        {(nav === "tours" || nav === "leads") && (
+          <div className="px-5 pb-4">
           <Label className={cn(
             "mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.18em] transition-colors",
             theme === "light" ? "text-slate-500/80" : "text-slate-500"
@@ -567,6 +568,7 @@ function Console() {
             )}
           </div>
         </div>
+        )}
 
         {/* ── Divider ── */}
         <div className={cn(
