@@ -2083,6 +2083,7 @@ function AgentManagement({ agents, onAddAgent, onEditAgent, onDeleteAgent }: {
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [editingAgent, setEditingAgent] = useState<any>(null);
+  const [searchQuery, setSearchQuery] = useState("");
   const [form, setForm] = useState({ name: "", email: "", region: "" });
   const [editForm, setEditForm] = useState({ name: "", email: "", region: "" });
 
@@ -2166,8 +2167,18 @@ function AgentManagement({ agents, onAddAgent, onEditAgent, onDeleteAgent }: {
             {agents.length} Agents · {agents.reduce((s, a) => s + (a.clients || 0), 0)} Clients Under Management
           </span>
         </div>
-        <Dialog open={addOpen} onOpenChange={setAddOpen}>
-          <DialogTrigger asChild>
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+            <Input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search agents..."
+              className="h-8 w-[200px] md:w-[250px] pl-8 text-xs bg-background"
+            />
+          </div>
+          <Dialog open={addOpen} onOpenChange={setAddOpen}>
+            <DialogTrigger asChild>
             <Button size="sm" className="gap-1.5 rounded-lg shadow-sm text-xs h-8">
               <UserPlus className="h-3.5 w-3.5" />
               Add Agent
@@ -2246,6 +2257,7 @@ function AgentManagement({ agents, onAddAgent, onEditAgent, onDeleteAgent }: {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       {/* Edit Dialog */}
@@ -2346,7 +2358,7 @@ function AgentManagement({ agents, onAddAgent, onEditAgent, onDeleteAgent }: {
 
       <ScrollArea className="flex-1">
         <div className="grid gap-4 p-6 sm:grid-cols-2 xl:grid-cols-3">
-          {agents.map((a: any) => {
+          {agents.filter(a => (a.agent_name || a.name || "").toLowerCase().includes(searchQuery.toLowerCase()) || (a.email || "").toLowerCase().includes(searchQuery.toLowerCase())).map((a: any) => {
             const initials = (a.agent_name || a.name || "?")
               .split(" ")
               .map((p: any) => p[0])
@@ -2442,6 +2454,7 @@ function DriverManagement({
   const [open, setOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const [form, setForm] = useState({ name: "", phone: "", email: "", password: "" });
   const [selectedDriver, setSelectedDriver] = useState<any>(null);
 
@@ -2567,8 +2580,18 @@ function DriverManagement({
             {drivers.length} Drivers & Guides
           </span>
         </div>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+            <Input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search drivers..."
+              className="h-8 w-[200px] md:w-[250px] pl-8 text-xs bg-background"
+            />
+          </div>
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
             <Button size="sm" className="gap-1.5 rounded-lg shadow-sm text-xs h-8">
               <UserPlus className="h-3.5 w-3.5" />
               Add Driver / Guide
@@ -2641,12 +2664,13 @@ function DriverManagement({
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
 
       <ScrollArea className="flex-1">
         <div className="grid gap-4 p-6 sm:grid-cols-2 xl:grid-cols-3">
-          {drivers.map((d: any) => {
+          {drivers.filter(d => (d.name || "").toLowerCase().includes(searchQuery.toLowerCase()) || (d.email || "").toLowerCase().includes(searchQuery.toLowerCase()) || (d.phone || "").toLowerCase().includes(searchQuery.toLowerCase())).map((d: any) => {
             const initials = (d.name || "?")
               .split(" ")
               .map((p: any) => p[0])
