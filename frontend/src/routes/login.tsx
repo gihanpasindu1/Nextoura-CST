@@ -60,8 +60,8 @@ function LoginPage() {
       <div className="relative z-10 w-full max-w-[420px] rounded-2xl border border-slate-800/80 bg-slate-900/40 p-8 sm:p-10 backdrop-blur-xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] transition-all duration-300 hover:border-slate-800">
         <div className="flex flex-col items-center text-center">
           {/* Logo container with gradient border and subtle pulse */}
-          <div className="relative flex h-16 w-16 items-center justify-center transition-all duration-300">
-            <img src={logoUrl} alt="Nex Toura Logo" className="h-full w-full object-contain" />
+          <div className="relative flex h-16 w-16 items-center justify-center transition-all duration-300 rounded-full overflow-hidden bg-white shadow-lg shadow-indigo-500/10 ring-1 ring-slate-800">
+            <img src={logoUrl} alt="Nex Toura Logo" className="h-full w-full object-cover scale-[1.05]" />
           </div>
 
           <h2 className="mt-5 text-2xl font-extrabold tracking-tight text-white transition-all duration-300">

@@ -497,8 +497,8 @@ function Console() {
               : 'radial-gradient(circle, rgba(59,130,246,0.12) 0%, transparent 70%)'
           }} />
           <div className="flex items-center gap-3.5 mb-1 px-1">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center relative transition-all duration-300 hover:scale-105">
-              <img src={logoUrl} alt="Nex Toura Logo" className="h-full w-full object-contain" />
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center relative transition-all duration-300 hover:scale-105 rounded-full overflow-hidden bg-white shadow-sm ring-1 ring-border/50">
+              <img src={logoUrl} alt="Nex Toura Logo" className="h-full w-full object-cover scale-[1.05]" />
             </div>
             <div className="min-w-0">
               <div className={cn(
