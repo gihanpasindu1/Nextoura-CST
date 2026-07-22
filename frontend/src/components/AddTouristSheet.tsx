@@ -831,7 +831,7 @@ export function AddTouristSheet({
                           autoFocus
                         />
                       </div>
-                      <div className="overflow-y-auto flex-1 max-h-[200px] py-1">
+                      <div className="overflow-y-auto flex-1 max-h-[200px] py-1" style={{ scrollbarWidth: 'thin' }} onWheel={(e) => e.stopPropagation()} onTouchMove={(e) => e.stopPropagation()}>
                         {filteredCountryList.map((c) => (
                           <button
                             key={c.code}
@@ -916,7 +916,7 @@ export function AddTouristSheet({
                             autoFocus
                           />
                         </div>
-                        <div className="overflow-y-auto flex-1 max-h-[200px] py-1">
+                        <div className="overflow-y-auto flex-1 max-h-[200px] py-1" style={{ scrollbarWidth: 'thin' }} onWheel={(e) => e.stopPropagation()} onTouchMove={(e) => e.stopPropagation()}>
                           {filteredCountries.map((c) => (
                             <button
                               key={c.code}
@@ -1113,7 +1113,7 @@ export function AddTouristSheet({
                                     autoFocus
                                   />
                                 </div>
-                                <div className="overflow-y-auto flex-1 max-h-[200px] py-1">
+                                <div className="overflow-y-auto flex-1 max-h-[200px] py-1" style={{ scrollbarWidth: 'thin' }} onWheel={(e) => e.stopPropagation()} onTouchMove={(e) => e.stopPropagation()}>
                                   {COUNTRIES.filter(c => 
                                     c.name.toLowerCase().includes((memberSearchQuery[i] || "").toLowerCase()) ||
                                     c.dialCode.includes(memberSearchQuery[i] || "") ||
