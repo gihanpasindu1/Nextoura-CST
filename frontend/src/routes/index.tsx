@@ -496,13 +496,13 @@ function Console() {
               : 'radial-gradient(circle, rgba(59,130,246,0.12) 0%, transparent 70%)'
           }} />
           <div className="flex items-center gap-3.5 mb-1 px-1">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl relative overflow-hidden transition-all duration-300 hover:scale-105" style={{
-              background: 'linear-gradient(135deg, #10b981 0%, #6366f1 50%, #f97316 100%)',
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[18px] relative overflow-hidden transition-all duration-300 hover:scale-105" style={{
+              background: 'linear-gradient(135deg, #2dd4bf 0%, #6366f1 45%, #ec4899 75%, #f97316 100%)',
               boxShadow: theme === "light"
-                ? '0 6px 16px rgba(99,102,241,0.2), inset 0 1px 0 rgba(255,255,255,0.2)'
-                : '0 8px 24px rgba(99,102,241,0.3), inset 0 1px 0 rgba(255,255,255,0.15)',
+                ? '0 6px 20px rgba(99,102,241,0.25), inset 0 2px 4px rgba(255,255,255,0.3)'
+                : '0 8px 24px rgba(99,102,241,0.35), inset 0 2px 4px rgba(255,255,255,0.2)',
             }}>
-              <Plane className="h-[21px] w-[21px] text-white" strokeWidth={2.2} />
+              <Plane className="h-5 w-5 text-white" strokeWidth={2.5} />
             </div>
             <div className="min-w-0">
               <div className={cn(
