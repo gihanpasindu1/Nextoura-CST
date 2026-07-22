@@ -101,7 +101,7 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Horizon Travel — Operations Console" },
+      { title: "Nex Toura — Operations Console" },
       { name: "description", content: "Tour operator dashboard for managing tourists, agents and itineraries." },
     ],
   }),
@@ -495,30 +495,29 @@ function Console() {
               ? 'radial-gradient(circle, rgba(59,130,246,0.06) 0%, transparent 70%)'
               : 'radial-gradient(circle, rgba(59,130,246,0.12) 0%, transparent 70%)'
           }} />
-          <div className="relative flex items-center gap-3.5">
-            <div className="grid h-11 w-11 shrink-0 place-items-center rounded-[13px] shadow-lg" style={{
-              background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
+          <div className="flex items-center gap-3.5 mb-1 px-1">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl relative overflow-hidden transition-all duration-300 hover:scale-105" style={{
+              background: 'linear-gradient(135deg, #10b981 0%, #6366f1 50%, #f97316 100%)',
               boxShadow: theme === "light"
-                ? '0 6px 16px rgba(59,130,246,0.2), inset 0 1px 0 rgba(255,255,255,0.2)'
-                : '0 8px 24px rgba(59,130,246,0.3), inset 0 1px 0 rgba(255,255,255,0.15)',
+                ? '0 6px 16px rgba(99,102,241,0.2), inset 0 1px 0 rgba(255,255,255,0.2)'
+                : '0 8px 24px rgba(99,102,241,0.3), inset 0 1px 0 rgba(255,255,255,0.15)',
             }}>
-              <MapPinned className="h-[21px] w-[21px] text-white" strokeWidth={2.2} />
+              <Plane className="h-[21px] w-[21px] text-white" strokeWidth={2.2} />
             </div>
             <div className="min-w-0">
               <div className={cn(
                 "flex items-baseline gap-1 text-[20px] font-extrabold leading-none tracking-tight transition-colors duration-300",
                 theme === "light" ? "text-slate-900" : "text-white"
               )}>
-                Horizon <span className={cn("font-medium transition-colors", theme === "light" ? "text-blue-600" : "text-blue-400")}>Travel</span>
+                NEX <span className={cn("font-medium transition-colors", theme === "light" ? "text-indigo-600" : "text-indigo-400")}>TOURA</span>
               </div>
               <div className={cn(
                 "mt-1.5 text-[9px] font-semibold uppercase tracking-[0.25em] transition-colors",
                 theme === "light" ? "text-slate-500" : "text-slate-400"
               )}>
-                Operations Console
+                Since 2026
               </div>
-            </div>
-          </div>
+            </div>      </div>
         </div>
 
         {/* ── Agent filter ── */}
@@ -779,7 +778,7 @@ function Console() {
               <AlertDialogHeader>
                 <AlertDialogTitle>Are you sure you want to sign out?</AlertDialogTitle>
                 <AlertDialogDescription>
-                  This will end your current session. You will need to enter your email and password again to access the Operations Console.
+                  This will end your current session. You will need to enter your email and password again to access the Nex Toura platform.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>

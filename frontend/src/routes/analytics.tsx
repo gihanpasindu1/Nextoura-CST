@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/analytics")({
   head: () => ({
     meta: [
-      { title: "Analytics — Horizon Travel" },
+      { title: "Analytics — Nex Toura" },
       { name: "description", content: "Tour analytics and performance graphs." },
     ],
   }),
@@ -517,7 +517,7 @@ function AnalyticsPage() {
                   pdf.setFont("helvetica", "normal");
                   pdf.setFontSize(9.5);
                   pdf.text(
-                    "This report outlines the current operational workload and tour distribution for Horizon Travels. It aggregates confirmed tour statuses, agent assignments, and driver capacities to deliver an overall health index of active operations.",
+                    "This report outlines the current operational workload and tour distribution for Nex Toura. It aggregates confirmed tour statuses, agent assignments, and driver capacities to deliver an overall health index of active operations.",
                     margin,
                     y,
                     { maxWidth: contentWidth, lineHeightFactor: 1.4 }

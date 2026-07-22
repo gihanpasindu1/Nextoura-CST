@@ -255,7 +255,7 @@ function OnboardingPage() {
               <Building className="absolute left-3.5 h-4 w-4 text-slate-500 transition-colors group-focus-within:text-indigo-400" />
               <input
                 id="companyName"
-                placeholder="Horizon Travel Agency"
+                placeholder="Nex Toura"
                 value={companyName}
                 onChange={(e) => setCompanyName(e.target.value)}
                 className="w-full rounded-xl border border-slate-800 bg-slate-950/60 py-2.5 pl-11 pr-4 text-sm text-slate-100 placeholder:text-slate-600 outline-none transition-all focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 focus:bg-slate-950/90"

@@ -79,7 +79,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Horizon Travel — Operations Console" },
+      { title: "Nex Toura — Operations Console" },
       { name: "description", content: "B2B travel management dashboard for tour operators." },
     ],
     links: [{ rel: "stylesheet", href: appCss }],

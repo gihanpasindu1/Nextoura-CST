@@ -2,7 +2,7 @@ import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { supabase } from "../lib/supabase";
 import { toast } from "sonner";
-import { MapPinned, Mail, Lock, Eye, EyeOff, Loader2, Shield } from "lucide-react";
+import { Plane, MapPinned, Mail, Lock, Eye, EyeOff, Loader2, Shield } from "lucide-react";
 
 export const Route = createFileRoute("/login")({
   component: LoginPage,
@@ -59,17 +59,17 @@ function LoginPage() {
       <div className="relative z-10 w-full max-w-[420px] rounded-2xl border border-slate-800/80 bg-slate-900/40 p-8 sm:p-10 backdrop-blur-xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] transition-all duration-300 hover:border-slate-800">
         <div className="flex flex-col items-center text-center">
           {/* Logo container with gradient border and subtle pulse */}
-          <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 via-indigo-500 to-indigo-600 p-[1.5px] shadow-lg shadow-indigo-500/20">
+          <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-green-500 via-indigo-500 to-orange-500 p-[1.5px] shadow-lg shadow-indigo-500/20">
             <div className="flex h-full w-full items-center justify-center rounded-[14px] bg-slate-950 overflow-hidden">
-              <MapPinned className="h-6.5 w-6.5 text-indigo-400" strokeWidth={2} />
+              <Plane className="h-6.5 w-6.5 text-indigo-400" strokeWidth={2} />
             </div>
           </div>
 
           <h2 className="mt-5 text-2xl font-extrabold tracking-tight text-white transition-all duration-300">
-            Horizon Travel
+            NEX TOURA
           </h2>
-          <p className="mt-2 text-xs font-semibold uppercase tracking-widest text-slate-400">
-            Operations Console
+          <p className="mt-2 text-xs font-semibold uppercase tracking-[0.3em] text-indigo-400/80">
+            Since 2026
           </p>
         </div>
 
