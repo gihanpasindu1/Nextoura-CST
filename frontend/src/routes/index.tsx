@@ -1368,7 +1368,7 @@ function ToursWorkspace({
               <PopoverContent className="p-0 w-[200px] flex flex-col z-[100] bg-card border border-border rounded-lg shadow-md" align="end">
                 <div className="p-2 border-b border-border">
                   <Input
-                    placeholder="Search driver..."
+                    placeholder="Search driver / guide..."
                     value={driverSearchQuery}
                     onChange={(e) => setDriverSearchQuery(e.target.value)}
                     className="h-8 text-xs focus-visible:ring-0"
@@ -1387,7 +1387,7 @@ function ToursWorkspace({
                       driverFilter === "All Drivers" && "font-semibold bg-accent/50"
                     )}
                   >
-                    All Drivers
+                    All Drivers / Guides
                   </button>
                   {filteredDriversForFilter.map((d: any) => (
                     <button
