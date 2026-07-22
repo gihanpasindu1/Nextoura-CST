@@ -67,8 +67,8 @@ function LoginPage() {
           <h2 className="mt-5 text-2xl font-extrabold tracking-tight text-white transition-all duration-300">
             NEX TOURA
           </h2>
-          <p className="mt-2 text-xs font-semibold uppercase tracking-[0.3em] text-indigo-400/80">
-            Since 2026
+          <p className="mt-2 text-[10px] font-bold uppercase tracking-[0.25em] text-indigo-400/80">
+            Operations Console
           </p>
         </div>
 

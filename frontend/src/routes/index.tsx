@@ -508,10 +508,10 @@ function Console() {
                 NEX <span className={cn("font-medium transition-colors", theme === "light" ? "text-indigo-600" : "text-indigo-400")}>TOURA</span>
               </div>
               <div className={cn(
-                "mt-1.5 text-[9px] font-semibold uppercase tracking-[0.25em] transition-colors",
+                "mt-1 text-[9.5px] font-bold uppercase tracking-[0.2em] transition-colors",
                 theme === "light" ? "text-slate-500" : "text-slate-400"
               )}>
-                Since 2026
+                Operations Console
               </div>
             </div>      </div>
         </div>
