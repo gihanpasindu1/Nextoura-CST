@@ -383,11 +383,69 @@ export function AddTouristSheet({
   const [itineraryText, setItineraryText] = useState("");
   const [activeTab, setActiveTab] = useState("text");
 
-  const handleGenerate = async (type: 'text' | 'pdf') => {
+  const handleGenerate = async (type: 'text' | 'pdf' | 'manual_pdf') => {
     setIsGenerating(true);
     
     try {
-      if (type === 'text') {
+      if (type === 'manual_pdf') {
+        if (!itinerary || itinerary.length === 0) {
+          alert("Please add at least one day to the itinerary before generating a PDF.");
+          return;
+        }
+
+        // Convert the manual itinerary into a clear text prompt for Gemini to expand
+        let promptText = `Please generate an itinerary for the following guest based EXACTLY on these details:\n\n`;
+        promptText += `Guest Name: ${formData.name || "Client"}\n`;
+        if (formData.arrival) promptText += `Arrival: ${formData.arrival}\n`;
+        if (formData.departure) promptText += `Departure: ${formData.departure}\n`;
+        if (formData.duration) promptText += `Duration: ${formData.duration}\n\n`;
+
+        itinerary.forEach((day: any) => {
+          promptText += `Day ${day.day}: ${day.title || ""}\n`;
+          promptText += `Hotel: ${day.hotel || "Please assign a suitable luxury hotel"}\n`;
+          promptText += `Locations and Activities:\n`;
+          if (day.destinations && day.destinations.length > 0) {
+            day.destinations.forEach((d: any) => {
+              promptText += `- Location: ${d.location || "Various"}\n`;
+              if (d.activities && d.activities.length > 0) {
+                const acts = Array.isArray(d.activities) ? d.activities : [d.activities];
+                acts.forEach((act: string) => {
+                  if (act.trim()) promptText += `  * ${act}\n`;
+                });
+              }
+            });
+          }
+          promptText += `\n`;
+        });
+
+        // Send this prompt to the AI generator to get the rich descriptions and images
+        const response = await fetch("http://localhost:8000/api/itinerary/generate-pdf", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ raw_text: promptText }),
+        });
+
+        if (!response.ok) {
+          let errMsg = `Server error: ${response.status}`;
+          try {
+            const errData = await response.json();
+            errMsg = errData.detail || errMsg;
+          } catch (e) {}
+          throw new Error(errMsg);
+        }
+
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `${formData.name || "Client"}_Itinerary.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      } else if (type === 'text') {
         // Full pipeline: Raw text → Gemini parse → Pexels images → PDF download
         // (Exactly like the sample project's /generate-from-raw endpoint)
         const response = await fetch("http://localhost:8000/api/itinerary/generate-pdf", {
@@ -1383,6 +1441,20 @@ export function AddTouristSheet({
                     <Plus className="h-4 w-4" />
                     Add Day
                   </Button>
+                  
+                  {itinerary.length > 0 && (
+                    <div className="pt-2">
+                      <Button 
+                        variant="default" 
+                        className="w-full gap-2 bg-primary/90 hover:bg-primary" 
+                        onClick={() => handleGenerate('manual_pdf')}
+                        disabled={isGenerating}
+                      >
+                        {isGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}
+                        {isGenerating ? "Generating PDF..." : "Download Graphical PDF"}
+                      </Button>
+                    </div>
+                  )}
                 </TabsContent>
                 
                 <TabsContent value="text" className="pt-4 space-y-4">
