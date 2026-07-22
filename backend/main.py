@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException, Request
+from fastapi import FastAPI, Depends, HTTPException, Request, BackgroundTasks, UploadFile, File
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from typing import List
@@ -6,6 +6,15 @@ from pydantic import BaseModel
 import uuid
 import asyncio
 import os
+import sentry_sdk
+
+sentry_dsn = os.getenv("SENTRY_DSN")
+if sentry_dsn:
+    sentry_sdk.init(
+        dsn=sentry_dsn,
+        traces_sample_rate=1.0,
+        profiles_sample_rate=1.0,
+    )
 
 from db import models, schemas
 from db.supabase_client import supabase_admin
@@ -16,7 +25,8 @@ from utils.ai_processor import parse_raw_itinerary
 from utils.image_search import search_images
 from utils.pdf_generator import generate_itinerary
 
-models.Base.metadata.create_all(bind=engine)
+# Alembic migrations are now used instead of create_all
+# models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Tour Management System API")
 
@@ -35,7 +45,15 @@ def read_root():
 # ==================== TOURISTS ====================
 @app.get("/api/tourists", response_model=List[schemas.Tourist])
 def read_tourists(company_id: uuid.UUID, skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    tourists = db.query(models.ForeignTourist).filter(models.ForeignTourist.company_id == company_id).offset(skip).limit(limit).all()
+    from sqlalchemy.orm import selectinload
+    tourists = db.query(models.ForeignTourist)\
+        .filter(models.ForeignTourist.company_id == company_id)\
+        .options(
+            selectinload(models.ForeignTourist.group_members),
+            selectinload(models.ForeignTourist.itineraries).selectinload(models.TourItinerary.destinations),
+            selectinload(models.ForeignTourist.itineraries).selectinload(models.TourItinerary.hotel)
+        )\
+        .offset(skip).limit(limit).all()
     return tourists
 
 @app.post("/api/tourists", response_model=schemas.Tourist)
@@ -94,8 +112,18 @@ def create_tourist(tourist: schemas.TouristCreate, db: Session = Depends(get_db)
                     db.add(db_dest)
                     
     db.commit()
-    db.refresh(db_tourist)
-    return db_tourist
+    
+    # Reload with relationships
+    from sqlalchemy.orm import selectinload
+    reloaded_tourist = db.query(models.ForeignTourist)\
+        .filter(models.ForeignTourist.id == db_tourist.id)\
+        .options(
+            selectinload(models.ForeignTourist.group_members),
+            selectinload(models.ForeignTourist.itineraries).selectinload(models.TourItinerary.destinations),
+            selectinload(models.ForeignTourist.itineraries).selectinload(models.TourItinerary.hotel)
+        ).first()
+        
+    return reloaded_tourist
 
 @app.put("/api/tourists/{tourist_id}", response_model=schemas.Tourist)
 def update_tourist(tourist_id: uuid.UUID, tourist: schemas.TouristCreate, db: Session = Depends(get_db)):
@@ -156,6 +184,20 @@ def update_tourist(tourist_id: uuid.UUID, tourist: schemas.TouristCreate, db: Se
     db.refresh(db_tourist)
     return db_tourist
 
+class StatusUpdate(BaseModel):
+    status: str
+
+@app.patch("/api/tourists/{tourist_id}/status")
+def update_tourist_status(tourist_id: uuid.UUID, update_data: StatusUpdate, db: Session = Depends(get_db)):
+    db_tourist = db.query(models.ForeignTourist).filter(models.ForeignTourist.id == tourist_id).first()
+    if not db_tourist:
+        raise HTTPException(status_code=404, detail="Tourist not found")
+    
+    db_tourist.status = update_data.status
+    db.commit()
+    db.refresh(db_tourist)
+    return {"message": "Status updated successfully", "status": db_tourist.status}
+
 @app.delete("/api/tourists/{tourist_id}")
 def delete_tourist(tourist_id: uuid.UUID, db: Session = Depends(get_db)):
     db_tourist = db.query(models.ForeignTourist).filter(models.ForeignTourist.id == tourist_id).first()
@@ -174,14 +216,11 @@ def read_drivers(company_id: uuid.UUID, skip: int = 0, limit: int = 100, db: Ses
     return db.query(models.Driver).filter(models.Driver.company_id == company_id).offset(skip).limit(limit).all()
 
 @app.post("/api/drivers", response_model=schemas.Driver)
-def create_driver(driver: schemas.DriverCreate, db: Session = Depends(get_db)):
+def create_driver(driver: schemas.DriverCreate, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
 
     if supabase_admin and driver.email:
         try:
-            # Check if user already exists
-            existing_users = supabase_admin.auth.admin.list_users()
-            # Note: list_users is paginated in real apps, but for this small app it works or we just try-except
-            # Or better, just try creating and catch the error if it exists.
+            # Note: list_users might not be supported in all SDK versions, we'll just try creating and catch the error if it exists.
             
 
             auth_payload = {
@@ -196,8 +235,12 @@ def create_driver(driver: schemas.DriverCreate, db: Session = Depends(get_db)):
             supabase_admin.auth.admin.create_user(auth_payload)
 
         except Exception as e:
-            print("Auth user creation failed (might already exist):", e)
-            
+            error_msg = str(e)
+            print("Auth user creation failed:", error_msg)
+            # If the error is not that the user already exists, we should raise an exception
+            # so we don't end up with a driver in the DB that can't log in.
+            if "already exists" not in error_msg.lower() and "user_already_exists" not in error_msg.lower():
+                raise HTTPException(status_code=400, detail=f"Failed to create driver auth account: {error_msg}")
     db_driver = models.Driver(**driver.model_dump(exclude={"password"}))
 
     db.add(db_driver)
@@ -208,7 +251,7 @@ def create_driver(driver: schemas.DriverCreate, db: Session = Depends(get_db)):
     if driver.email and driver.password and driver.company_id:
         company = db.query(models.Company).filter(models.Company.id == driver.company_id).first()
         if company:
-            send_driver_credentials_email(driver, company)
+            background_tasks.add_task(send_driver_credentials_email, driver, company)
             
     return db_driver
 
@@ -260,7 +303,15 @@ def verify_driver(email: str, db: Session = Depends(get_db)):
 
 @app.get("/api/drivers/{driver_id}/tours", response_model=List[schemas.Tourist])
 def get_driver_tours(driver_id: uuid.UUID, db: Session = Depends(get_db)):
-    tours = db.query(models.ForeignTourist).filter(models.ForeignTourist.driver_id == driver_id).all()
+    from sqlalchemy.orm import selectinload
+    tours = db.query(models.ForeignTourist)\
+        .filter(models.ForeignTourist.driver_id == driver_id)\
+        .options(
+            selectinload(models.ForeignTourist.group_members),
+            selectinload(models.ForeignTourist.itineraries).selectinload(models.TourItinerary.destinations),
+            selectinload(models.ForeignTourist.itineraries).selectinload(models.TourItinerary.hotel)
+        )\
+        .all()
     return tours
 
 
@@ -278,6 +329,19 @@ def create_agent(agent: schemas.AgentCreate, db: Session = Depends(get_db)):
         company_id=agent.company_id
     )
     db.add(db_agent)
+    db.commit()
+    db.refresh(db_agent)
+    return db_agent
+
+@app.put("/api/agents/{agent_id}", response_model=schemas.Agent)
+def update_agent(agent_id: uuid.UUID, agent: schemas.AgentCreate, db: Session = Depends(get_db)):
+    db_agent = db.query(models.ForeignTourAgent).filter(models.ForeignTourAgent.id == agent_id).first()
+    if not db_agent:
+        raise HTTPException(status_code=404, detail="Agent not found")
+    db_agent.agent_name = agent.agent_name
+    db_agent.email = agent.email
+    db_agent.region = agent.region
+    db_agent.company_id = agent.company_id
     db.commit()
     db.refresh(db_agent)
     return db_agent
@@ -335,7 +399,7 @@ def create_hotel(hotel: schemas.HotelCreate, db: Session = Depends(get_db)):
     return db_hotel
 
 @app.post("/api/itineraries/{itinerary_id}/send-hotel-booking")
-def send_hotel_email(itinerary_id: uuid.UUID, db: Session = Depends(get_db)):
+def send_hotel_email(itinerary_id: uuid.UUID, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     itinerary = db.query(models.TourItinerary).filter(models.TourItinerary.id == itinerary_id).first()
     if not itinerary:
         raise HTTPException(status_code=404, detail="Itinerary not found")
@@ -351,7 +415,7 @@ def send_hotel_email(itinerary_id: uuid.UUID, db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail="Missing linked records")
         
     try:
-        send_hotel_booking_email(hotel=hotel, company=company, itinerary=itinerary, tourist=tourist)
+        background_tasks.add_task(send_hotel_booking_email, hotel=hotel, company=company, itinerary=itinerary, tourist=tourist)
         itinerary.booking_email_sent = True
         db.commit()
         return {"message": "Email sent successfully"}
@@ -373,8 +437,15 @@ def get_my_company(user_id: uuid.UUID, db: Session = Depends(get_db)):
         "auth_user_id": db_company.auth_user_id,
         "ceo_name": db_company.ceo_name,
         "phone_numbers": json.loads(db_company.phone_numbers) if db_company.phone_numbers else [],
+        "logo_url": db_company.logo_url,
         "created_at": db_company.created_at
     }
+@app.get("/api/companies/by-email")
+def get_company_by_email(email: str, db: Session = Depends(get_db)):
+    company = db.query(models.Company).filter(models.Company.email == email).first()
+    if company:
+        return {"company_name": company.company_name, "logo_url": company.logo_url}
+    return {"company_name": None, "logo_url": None}
 
 @app.post("/api/companies/onboard", response_model=schemas.Company)
 def onboard_company(company: schemas.CompanyCreate, db: Session = Depends(get_db)):
@@ -388,7 +459,8 @@ def onboard_company(company: schemas.CompanyCreate, db: Session = Depends(get_db
         email=company.email,
         auth_user_id=company.auth_user_id,
         ceo_name=company.ceo_name,
-        phone_numbers=phone_numbers_str
+        phone_numbers=phone_numbers_str,
+        logo_url=company.logo_url
     )
     db.add(db_company)
     db.commit()
@@ -401,6 +473,35 @@ def onboard_company(company: schemas.CompanyCreate, db: Session = Depends(get_db
         "auth_user_id": db_company.auth_user_id,
         "ceo_name": db_company.ceo_name,
         "phone_numbers": json.loads(db_company.phone_numbers) if db_company.phone_numbers else [],
+        "logo_url": db_company.logo_url,
+        "created_at": db_company.created_at
+    }
+
+@app.put("/api/companies/{company_id}", response_model=schemas.Company)
+def update_company(company_id: uuid.UUID, company_update: schemas.CompanyUpdate, db: Session = Depends(get_db)):
+    db_company = db.query(models.Company).filter(models.Company.id == company_id).first()
+    if not db_company:
+        raise HTTPException(status_code=404, detail="Company not found")
+        
+    update_data = company_update.dict(exclude_unset=True)
+    
+    if "phone_numbers" in update_data:
+        update_data["phone_numbers"] = json.dumps(update_data["phone_numbers"]) if update_data["phone_numbers"] else "[]"
+        
+    for key, value in update_data.items():
+        setattr(db_company, key, value)
+        
+    db.commit()
+    db.refresh(db_company)
+    
+    return {
+        "id": db_company.id,
+        "company_name": db_company.company_name,
+        "email": db_company.email,
+        "auth_user_id": db_company.auth_user_id,
+        "ceo_name": db_company.ceo_name,
+        "phone_numbers": json.loads(db_company.phone_numbers) if db_company.phone_numbers else [],
+        "logo_url": db_company.logo_url,
         "created_at": db_company.created_at
     }
 
@@ -466,6 +567,40 @@ async def generate_text_from_raw(payload: RawItineraryRequest):
     try:
         parsed_data = parse_raw_itinerary(payload.raw_text)
         return parsed_data
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/itinerary/extract-from-pdf")
+async def extract_from_pdf(file: UploadFile = File(...)):
+    """Upload a PDF → extract text with PyMuPDF → Gemini parse → return structured JSON."""
+    try:
+        import fitz  # PyMuPDF
+        
+        # Validate file type
+        if not file.filename.lower().endswith(".pdf"):
+            raise HTTPException(status_code=400, detail="Only PDF files are accepted.")
+        
+        # Read PDF bytes
+        pdf_bytes = await file.read()
+        if len(pdf_bytes) > 20 * 1024 * 1024:  # 20MB limit
+            raise HTTPException(status_code=400, detail="File too large. Maximum 20MB.")
+        
+        # Extract text from all pages using PyMuPDF
+        doc = fitz.open(stream=pdf_bytes, filetype="pdf")
+        raw_text = ""
+        for page in doc:
+            raw_text += page.get_text() + "\n"
+        doc.close()
+        
+        if not raw_text.strip():
+            raise HTTPException(status_code=400, detail="Could not extract any text from this PDF.")
+        
+        # Send extracted text to Gemini for structured parsing
+        parsed_data = parse_raw_itinerary(raw_text)
+        return parsed_data
+        
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

@@ -10,9 +10,17 @@ class CompanyBase(BaseModel):
     auth_user_id: Optional[uuid.UUID] = None
     ceo_name: Optional[str] = None
     phone_numbers: Optional[List[str]] = []
+    logo_url: Optional[str] = None
 
 class CompanyCreate(CompanyBase):
     pass
+
+class CompanyUpdate(BaseModel):
+    company_name: Optional[str] = None
+    email: Optional[str] = None
+    ceo_name: Optional[str] = None
+    phone_numbers: Optional[List[str]] = None
+    logo_url: Optional[str] = None
 
 class Company(CompanyBase):
     id: uuid.UUID
@@ -108,7 +116,7 @@ class ItineraryBase(BaseModel):
     stop_order: int
     location_name: str
     is_hotel_stay: bool = False
-    driver_status: Optional[str] = None
+    driver_status: Optional[str] = "Pending"
     hotel_driver_status: Optional[str] = "Pending"
     hotel_id: Optional[uuid.UUID] = None
     booking_email_sent: bool = False
