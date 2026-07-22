@@ -1145,11 +1145,8 @@ function Console() {
 
             {/* Center: Brand logo */}
             <div className="flex flex-1 flex-col items-center justify-center px-4">
-              <div className="grid h-11 w-11 place-items-center rounded-xl" style={{
-                background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
-                boxShadow: '0 4px 16px rgba(59,130,246,0.15)',
-              }}>
-                <MapPinned className="h-5.5 w-5.5 text-white" strokeWidth={2} />
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center relative transition-all duration-300 hover:scale-105 rounded-full overflow-hidden bg-white shadow-sm ring-1 ring-border/50">
+                <img src={logoUrl} alt="Nex Toura Logo" className="h-full w-full object-cover scale-[1.05]" />
               </div>
             </div>
 
