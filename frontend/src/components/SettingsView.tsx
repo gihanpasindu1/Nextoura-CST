@@ -252,7 +252,27 @@ export default function SettingsView({
   };
 
   const { theme, toggle } = useTheme();
-  const [currentView, setCurrentView] = useState<"company" | "theme">("company");
+  const [currentView, setCurrentView] = useState<"company" | "theme" | "security">("company");
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) {
+        setUserEmail(user.email ?? null);
+      }
+    });
+  }, []);
+
+  const handlePasswordReset = async () => {
+    if (!userEmail) return;
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(userEmail);
+      if (error) throw error;
+      toast.success("Password reset email sent!");
+    } catch (e: any) {
+      toast.error(e.message || "Failed to send reset email");
+    }
+  };
 
   return (
     <div className="flex h-full w-full overflow-hidden bg-background">
@@ -277,8 +297,13 @@ export default function SettingsView({
           </button>
           
           <button
-            disabled
-            className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground opacity-50 cursor-not-allowed"
+            onClick={() => setCurrentView("security")}
+            className={cn(
+              "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+              currentView === "security"
+                ? "bg-primary/10 text-primary"
+                : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
+            )}
           >
             <User className="h-4 w-4" />
             Account & Security
@@ -349,6 +374,61 @@ export default function SettingsView({
                     <span className="text-[13px] font-medium">Dark Mode</span>
                   </button>
                 </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {currentView === "security" && (
+          <div className="p-6 sm:p-8 max-w-4xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-200">
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight text-foreground">Account & Security</h1>
+              <p className="text-sm text-muted-foreground mt-1">Manage your account credentials and security preferences.</p>
+            </div>
+
+            <div className="rounded-2xl border border-border bg-card p-6 sm:p-8 shadow-sm">
+              <div className="space-y-8 max-w-md">
+                
+                <div className="space-y-4">
+                  <h3 className="text-sm font-medium text-foreground">Account Information</h3>
+                  <div className="grid gap-2">
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                      Email Address
+                    </label>
+                    <div className="flex items-center gap-3 rounded-xl border border-border bg-muted/50 px-4 py-3">
+                      <Mail className="h-5 w-5 text-muted-foreground" />
+                      <span className="text-sm font-medium">{userEmail || "Loading..."}</span>
+                    </div>
+                    <p className="text-[13px] text-muted-foreground">
+                      This is the email address you use to log in to the application.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="h-px w-full bg-border" />
+
+                <div className="space-y-4">
+                  <h3 className="text-sm font-medium text-foreground">Security</h3>
+                  <div className="grid gap-4">
+                    <div className="flex flex-col gap-3">
+                      <label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                        Password
+                      </label>
+                      <Button 
+                        variant="outline" 
+                        className="w-fit hover:bg-accent hover:text-accent-foreground"
+                        onClick={handlePasswordReset}
+                        disabled={!userEmail}
+                      >
+                        Send Password Reset Email
+                      </Button>
+                      <p className="text-[13px] text-muted-foreground">
+                        We'll send you a link to your email address to reset your password.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
               </div>
             </div>
           </div>
