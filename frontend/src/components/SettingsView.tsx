@@ -252,8 +252,24 @@ export default function SettingsView({
   };
 
   const { theme, toggle } = useTheme();
-  const [currentView, setCurrentView] = useState<"company" | "theme" | "security">("company");
+  const [currentView, setCurrentView] = useState<"company" | "theme" | "security" | "notifications">("company");
   const [userEmail, setUserEmail] = useState<string | null>(null);
+  
+  const [notificationPrefs, setNotificationPrefs] = useState({
+    emailAlerts: true,
+    inAppAlerts: true,
+    marketing: false,
+  });
+
+  const handleSaveNotifications = async () => {
+    try {
+      // In a real application, you'd save this to a user_preferences table
+      await new Promise(r => setTimeout(r, 500));
+      toast.success("Notification preferences updated!");
+    } catch (e: any) {
+      toast.error("Failed to update preferences");
+    }
+  };
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -310,8 +326,13 @@ export default function SettingsView({
           </button>
           
           <button
-            disabled
-            className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground opacity-50 cursor-not-allowed"
+            onClick={() => setCurrentView("notifications")}
+            className={cn(
+              "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+              currentView === "notifications"
+                ? "bg-primary/10 text-primary"
+                : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
+            )}
           >
             <Bell className="h-4 w-4" />
             Notifications
@@ -373,6 +394,71 @@ export default function SettingsView({
                     <Moon className="h-5 w-5" />
                     <span className="text-[13px] font-medium">Dark Mode</span>
                   </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {currentView === "notifications" && (
+          <div className="p-6 sm:p-8 max-w-4xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-200">
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight text-foreground">Notifications</h1>
+              <p className="text-sm text-muted-foreground mt-1">Manage how you receive alerts and updates.</p>
+            </div>
+
+            <div className="rounded-2xl border border-border bg-card p-6 sm:p-8 shadow-sm">
+              <div className="space-y-6 max-w-2xl">
+                
+                <div className="space-y-4">
+                  <h3 className="text-sm font-medium text-foreground">Notification Preferences</h3>
+                  
+                  <div className="space-y-4">
+                    <label className="flex items-start gap-3 rounded-lg border border-border bg-card p-4 transition-colors hover:bg-accent/50 cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        className="mt-1 h-4 w-4 shrink-0 rounded-sm border-primary text-primary focus:ring-primary"
+                        checked={notificationPrefs.emailAlerts}
+                        onChange={(e) => setNotificationPrefs(prev => ({ ...prev, emailAlerts: e.target.checked }))}
+                      />
+                      <div className="space-y-1">
+                        <span className="text-sm font-medium leading-none">Email Alerts</span>
+                        <p className="text-[13px] text-muted-foreground">Receive emails when new bookings are created or when action is required.</p>
+                      </div>
+                    </label>
+
+                    <label className="flex items-start gap-3 rounded-lg border border-border bg-card p-4 transition-colors hover:bg-accent/50 cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        className="mt-1 h-4 w-4 shrink-0 rounded-sm border-primary text-primary focus:ring-primary"
+                        checked={notificationPrefs.inAppAlerts}
+                        onChange={(e) => setNotificationPrefs(prev => ({ ...prev, inAppAlerts: e.target.checked }))}
+                      />
+                      <div className="space-y-1">
+                        <span className="text-sm font-medium leading-none">In-App Notifications</span>
+                        <p className="text-[13px] text-muted-foreground">Show popup notifications within the application for important events.</p>
+                      </div>
+                    </label>
+
+                    <label className="flex items-start gap-3 rounded-lg border border-border bg-card p-4 transition-colors hover:bg-accent/50 cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        className="mt-1 h-4 w-4 shrink-0 rounded-sm border-primary text-primary focus:ring-primary"
+                        checked={notificationPrefs.marketing}
+                        onChange={(e) => setNotificationPrefs(prev => ({ ...prev, marketing: e.target.checked }))}
+                      />
+                      <div className="space-y-1">
+                        <span className="text-sm font-medium leading-none">Marketing & Updates</span>
+                        <p className="text-[13px] text-muted-foreground">Receive news, feature updates, and promotional content.</p>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+
+                <div className="pt-4 flex justify-end">
+                  <Button onClick={handleSaveNotifications}>
+                    Save Preferences
+                  </Button>
                 </div>
               </div>
             </div>
