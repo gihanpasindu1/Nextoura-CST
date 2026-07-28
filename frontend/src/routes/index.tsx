@@ -1907,71 +1907,102 @@ function TouristDetail({
             </div>
           </TabsContent>
 
-          <TabsContent value="itinerary" className="mt-5">
-            <ol className="relative ml-3 space-y-5 border-l border-border pl-6">
-              {t.itinerary.map((d) => (
-                <li key={d.day} className="relative">
-                  <span className="absolute -left-[31px] top-0.5 grid h-6 w-6 place-items-center rounded-full border-2 border-background bg-primary text-[10px] font-semibold text-primary-foreground">
-                    {d.day.toString().padStart(2, "0")}
-                  </span>
-                  <div className="rounded-xl border border-border bg-card p-4 transition-all hover:shadow-sm">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <div className="flex flex-wrap items-center gap-3">
-                        <div>
-                          <div className="text-xs uppercase tracking-wider text-muted-foreground">
-                            Day {d.day.toString().padStart(2, "0")} {d.location ? `· ${d.location}` : ""}
-                          </div>
-                          <div className="mt-0.5 text-sm font-semibold">{d.title}</div>
-                        </div>
-                        {d.status === 'Completed' ? (
-                          <div className="flex items-center gap-1 rounded-full bg-green-50 px-2 py-0.5 text-[10px] font-medium text-green-700 border border-green-200 dark:bg-green-500/10 dark:text-green-400 dark:border-green-500/20">
-                            <CheckCircle2 className="h-3 w-3" /> Arrived
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-medium text-amber-600 border border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20">
-                            <Clock className="h-3 w-3" /> Pending
+          <TabsContent value="itinerary" className="mt-8">
+            <div className="space-y-8">
+              {t.itinerary.map((d, index) => (
+                <div key={d.day} className="relative flex gap-5 sm:gap-6">
+                  {/* Timeline track connecting days */}
+                  {index !== t.itinerary.length - 1 && (
+                    <div className="absolute left-[23px] top-12 bottom-[-32px] w-[2px] bg-gradient-to-b from-primary/30 via-primary/10 to-transparent" />
+                  )}
+                  
+                  {/* Day Badge */}
+                  <div className="relative z-10 flex shrink-0 flex-col items-center">
+                    <div className="flex h-12 w-12 flex-col items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-md ring-4 ring-background">
+                      <span className="text-[10px] font-bold uppercase tracking-wider opacity-80">Day</span>
+                      <span className="text-lg font-bold leading-none">{d.day.toString().padStart(2, "0")}</span>
+                    </div>
+                  </div>
+
+                  {/* Content Card */}
+                  <div className="flex-1 rounded-2xl border border-border/60 bg-card p-5 sm:p-7 shadow-sm ring-1 ring-black/[0.02] transition-all hover:shadow-md dark:ring-white/[0.02]">
+                    {/* Header */}
+                    <div className="flex flex-wrap items-start justify-between gap-4">
+                      <div>
+                        <h3 className="text-lg font-bold tracking-tight text-foreground">{d.title || d.location}</h3>
+                        {d.title && d.location && (
+                          <div className="mt-1 flex items-center gap-1.5 text-sm font-medium text-muted-foreground">
+                            <MapPin className="h-3.5 w-3.5 text-primary/70" />
+                            {d.location}
                           </div>
                         )}
                       </div>
+                      {d.status === 'Completed' ? (
+                        <div className="flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide text-emerald-700 ring-1 ring-inset ring-emerald-600/20 dark:bg-emerald-500/10 dark:text-emerald-400">
+                          <CheckCircle2 className="h-3.5 w-3.5" /> Arrived
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide text-amber-700 ring-1 ring-inset ring-amber-600/20 dark:bg-amber-500/10 dark:text-amber-400">
+                          <Clock className="h-3.5 w-3.5" /> Pending
+                        </div>
+                      )}
                     </div>
 
-                    {d.destinations && d.destinations.length > 0 ? (
-                      <div className="mt-4 space-y-4">
-                        {d.destinations.map((dest, i) => (
-                          <div key={i} className="space-y-1.5 relative pl-4 border-l-2 border-muted">
-                            <span className="absolute -left-1.5 top-1.5 h-2 w-2 rounded-full bg-primary/40 ring-4 ring-background" />
-                            <h4 className="text-sm font-medium">{dest.location}</h4>
-                            <p className="text-[13px] text-muted-foreground leading-relaxed whitespace-pre-wrap">{dest.activities}</p>
+                    {/* Destinations Timeline */}
+                    {(d.destinations && d.destinations.length > 0) || (d.activities && d.activities.length > 0) ? (
+                      <div className="mt-8 ml-2 space-y-0 relative">
+                        <div className="absolute left-[7px] top-2 bottom-2 w-px bg-border/80" />
+                        
+                        {d.destinations?.map((dest, i) => (
+                          <div key={i} className="relative pb-8 last:pb-0 pl-8 group">
+                            <div className="absolute left-[4px] top-1.5 h-2 w-2 rounded-full bg-background ring-[3px] ring-primary/40 transition-all group-hover:ring-primary" />
+                            <h4 className="text-sm font-bold text-foreground">{dest.location}</h4>
+                            <p className="mt-1.5 text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">{dest.activities}</p>
+                          </div>
+                        ))}
+                        
+                        {!d.destinations?.length && d.activities?.map((a, i) => (
+                          <div key={i} className="relative pb-6 last:pb-0 pl-8 group">
+                            <div className="absolute left-[5px] top-2 h-1.5 w-1.5 rounded-full bg-primary/40 ring-4 ring-background transition-all group-hover:bg-primary" />
+                            <p className="text-sm text-muted-foreground leading-relaxed">{a}</p>
                           </div>
                         ))}
                       </div>
-                    ) : (
-                      <ul className="mt-3 space-y-1 text-sm text-muted-foreground">
-                        {d.activities?.map((a, i) => (
-                          <li key={i} className="flex gap-2">
-                            <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-muted-foreground/60" />
-                            <span>{a}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
+                    ) : null}
 
-                    <div className="mt-4 grid gap-2 rounded-xl bg-accent/30 p-3 sm:grid-cols-[1fr_1fr_auto] items-center">
-                      <div className="flex items-center gap-2 text-xs">
-                        <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
-                        <span className="font-medium">{d.hotel}</span>
+                    {/* Hotel Footer */}
+                    <div className="mt-8 flex flex-wrap items-center justify-between gap-5 rounded-xl bg-slate-50 p-4 ring-1 ring-inset ring-slate-100 dark:bg-slate-900/40 dark:ring-slate-800">
+                      <div className="flex flex-wrap items-center gap-6">
+                        <div className="flex items-center gap-3">
+                          <div className="grid h-10 w-10 place-items-center rounded-lg bg-blue-100/50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400">
+                            <Building2 className="h-5 w-5" />
+                          </div>
+                          <div>
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Accommodation</p>
+                            <p className="text-sm font-bold text-slate-700 dark:text-slate-200">{d.hotel || "Not Specified"}</p>
+                          </div>
+                        </div>
+                        {d.hotelEmail && (
+                          <div className="flex items-center gap-3">
+                            <div className="grid h-10 w-10 place-items-center rounded-lg bg-slate-200/50 text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                              <Mail className="h-4 w-4" />
+                            </div>
+                            <div>
+                              <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Contact</p>
+                              <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">{d.hotelEmail}</p>
+                            </div>
+                          </div>
+                        )}
                       </div>
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <Mail className="h-3.5 w-3.5" />
-                        <span className="truncate">{d.hotelEmail}</span>
-                      </div>
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button variant="outline" size="sm" className="h-7 text-[10px] gap-1.5 w-full sm:w-auto bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100 rounded-lg dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/20 dark:hover:bg-blue-500/20">
-                            <Send className="h-3 w-3" />
-                            Review Auto-Generated Email
-                          </Button>
-                        </DialogTrigger>
+                      
+                      {d.hotelEmail && (
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button variant="outline" size="sm" className="h-9 gap-2 bg-white text-xs font-bold text-primary shadow-sm hover:bg-slate-50 hover:text-primary dark:bg-slate-950 dark:border-slate-800 dark:hover:bg-slate-900 w-full sm:w-auto">
+                              <Send className="h-3.5 w-3.5" />
+                              Auto-Email Hotel
+                            </Button>
+                          </DialogTrigger>
                         <DialogContent>
                           <DialogHeader>
                             <DialogTitle>Review Confirmation Email</DialogTitle>
@@ -2000,11 +2031,12 @@ function TouristDetail({
                           </DialogFooter>
                         </DialogContent>
                       </Dialog>
-                    </div>
+                    )}
                   </div>
-                </li>
-              ))}
-            </ol>
+                </div>
+              </div>
+            ))}
+          </div>
           </TabsContent>
         </Tabs>
 
