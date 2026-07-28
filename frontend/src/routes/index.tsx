@@ -2885,22 +2885,7 @@ function DashboardOverview({
   return (
     <ScrollArea className="flex-1">
       <div className="p-6">
-        <div className="mb-6 rounded-xl border border-border bg-card p-5 shadow-sm">
-          <h3 className="text-[13px] font-bold text-foreground">{labelMap[navLabel]}</h3>
-          <p className="mt-1.5 text-xs text-muted-foreground leading-relaxed">
-            Detailed {labelMap[navLabel].toLowerCase()} views are available here. Switch to{" "}
-            <span
-              onClick={() => onNavigate("tours")}
-              className="font-semibold text-primary hover:underline cursor-pointer"
-            >
-              Tour Category
-            </span>{" "}
-            from the left
-            navigation to manage tourist itineraries, agent performance logs, and real-time coordinator actions.
-          </p>
-        </div>
-
-        {navLabel !== "settings" && (
+        {navLabel === "dashboard" && (
           <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
             {tiles.map((t) => {
               const Icon = t.icon;
