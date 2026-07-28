@@ -2,6 +2,7 @@ import React, { useMemo } from "react";
 import { Plane, Clock, CheckCircle2, XCircle, Briefcase, Car, MapPin, Phone, Mail, TrendingUp } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
+import logoUrl from "@/assets/logo.png";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/lib/theme";
 
@@ -160,6 +161,13 @@ export default function ReportsView({ tourists, agents, drivers }: { tourists: a
                 const margin = 45;
                 const contentWidth = pageWidth - margin * 2;
 
+                const img = new Image();
+                img.src = logoUrl;
+                await new Promise((resolve) => {
+                  img.onload = resolve;
+                  img.onerror = resolve;
+                });
+
                 // Brand Colors
                 const primary = [15, 23, 42];      // Deep Slate
                 const primaryText = [30, 41, 59];  // Slate 800
@@ -179,16 +187,23 @@ export default function ReportsView({ tourists, agents, drivers }: { tourists: a
                   pdf.setFillColor(primary[0], primary[1], primary[2]);
                   pdf.rect(20, 20, pageWidth - 40, 65, "F");
 
+                  try {
+                    // Add logo
+                    pdf.addImage(img, "PNG", margin, 35, 25, 25);
+                  } catch (e) {
+                    console.error("Failed to add image", e);
+                  }
+
                   // Brand title
                   pdf.setTextColor(255, 255, 255);
                   pdf.setFont("helvetica", "bold");
                   pdf.setFontSize(14);
-                  pdf.text("HORIZON TRAVELS", margin, 50);
+                  pdf.text("NEX TOURA", margin + 35, 50);
                   
                   pdf.setFont("helvetica", "normal");
                   pdf.setFontSize(9);
                   pdf.setTextColor(148, 163, 184);
-                  pdf.text("OPERATIONS MANAGEMENT CONSOLE", margin, 65);
+                  pdf.text("OPERATIONS MANAGEMENT CONSOLE", margin + 35, 65);
 
                   // Section Title
                   pdf.setTextColor(accent[0], accent[1], accent[2]);
