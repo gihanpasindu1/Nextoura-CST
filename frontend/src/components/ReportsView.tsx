@@ -1,6 +1,7 @@
 import React, { useMemo } from "react";
-import { Plane, Clock, CheckCircle2, XCircle, Briefcase, Car, MapPin, Phone, Mail } from "lucide-react";
+import { Plane, Clock, CheckCircle2, XCircle, Briefcase, Car, MapPin, Phone, Mail, TrendingUp } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/lib/theme";
 
@@ -327,6 +328,324 @@ export default function ReportsView({ tourists, agents, drivers }: { tourists: a
             </div>
           )}
         </section>
+
+        {/* ── PDF Download Button ── */}
+        <div className="flex justify-center pt-4">
+          <Button
+            id="download-pdf-btn"
+            onClick={async () => {
+              const toast = (await import("sonner")).toast;
+              toast.loading("Generating professional PDF report...", { id: "pdf-gen" });
+              try {
+                const { jsPDF } = await import("jspdf");
+
+                const pdf = new jsPDF({
+                  orientation: "portrait",
+                  unit: "pt",
+                  format: "a4",
+                });
+
+                const pageWidth = pdf.internal.pageSize.getWidth();
+                const pageHeight = pdf.internal.pageSize.getHeight();
+                const margin = 45;
+                const contentWidth = pageWidth - margin * 2;
+
+                // Brand Colors
+                const primary = [15, 23, 42];      // Deep Slate
+                const primaryText = [30, 41, 59];  // Slate 800
+                const mutedText = [100, 116, 139]; // Slate 500
+                const accent = [13, 148, 136];     // Teal 600
+                const border = [226, 232, 240];     // Slate 200
+                const zebra = [248, 250, 252];      // Slate 50
+
+                // Helper: Draw decorative report page frame and header
+                const drawPageDecoration = (title: string, pageNum: number) => {
+                  // Page border frame
+                  pdf.setDrawColor(border[0], border[1], border[2]);
+                  pdf.setLineWidth(1);
+                  pdf.rect(20, 20, pageWidth - 40, pageHeight - 40, "S");
+
+                  // Top header block
+                  pdf.setFillColor(primary[0], primary[1], primary[2]);
+                  pdf.rect(20, 20, pageWidth - 40, 65, "F");
+
+                  // Brand title
+                  pdf.setTextColor(255, 255, 255);
+                  pdf.setFont("helvetica", "bold");
+                  pdf.setFontSize(14);
+                  pdf.text("HORIZON TRAVELS", margin, 50);
+                  
+                  pdf.setFont("helvetica", "normal");
+                  pdf.setFontSize(9);
+                  pdf.setTextColor(148, 163, 184);
+                  pdf.text("OPERATIONS MANAGEMENT CONSOLE", margin, 65);
+
+                  // Section Title
+                  pdf.setTextColor(accent[0], accent[1], accent[2]);
+                  pdf.setFont("helvetica", "bold");
+                  pdf.setFontSize(11);
+                  pdf.text(title, pageWidth - margin, 58, { align: "right" });
+
+                  // Footer
+                  pdf.setDrawColor(border[0], border[1], border[2]);
+                  pdf.setLineWidth(1);
+                  pdf.line(margin, pageHeight - 45, pageWidth - margin, pageHeight - 45);
+
+                  pdf.setTextColor(mutedText[0], mutedText[1], mutedText[2]);
+                  pdf.setFont("helvetica", "normal");
+                  pdf.setFontSize(8);
+                  pdf.text("CONFIDENTIAL REPORT - FOR INTERNAL USE ONLY", margin, pageHeight - 30);
+                  pdf.text(`Generated: ${new Date().toLocaleDateString()}`, pageWidth / 2, pageHeight - 30, { align: "center" });
+                  pdf.text(`Page ${pageNum} of 3`, pageWidth - margin, pageHeight - 30, { align: "right" });
+                };
+
+                // ── PAGE 1: EXECUTIVE SUMMARY & STATUS DISTRIBUTION ──
+                drawPageDecoration("TOUR STATUS OVERVIEW", 1);
+                let y = 120;
+
+                // Header
+                pdf.setTextColor(primary[0], primary[1], primary[2]);
+                pdf.setFont("helvetica", "bold");
+                pdf.setFontSize(15);
+                pdf.text("Executive Analytics Summary", margin, y);
+                y += 8;
+                
+                pdf.setDrawColor(accent[0], accent[1], accent[2]);
+                pdf.setLineWidth(2);
+                pdf.line(margin, y, margin + 60, y);
+                y += 20;
+
+                // Executive Summary text
+                pdf.setTextColor(primaryText[0], primaryText[1], primaryText[2]);
+                pdf.setFont("helvetica", "normal");
+                pdf.setFontSize(9.5);
+                pdf.text(
+                  "This report outlines the current operational workload and tour distribution for Nex Toura. It aggregates confirmed tour statuses, agent assignments, and driver capacities to deliver an overall health index of active operations.",
+                  margin,
+                  y,
+                  { maxWidth: contentWidth, lineHeightFactor: 1.4 }
+                );
+                y += 45;
+
+                // KPI Cards Grid (4 boxes)
+                const cardW = contentWidth / 4 - 8;
+                const statuses = [
+                  { label: "Active", count: confirmed.filter((t) => ["Active", "On Tour"].includes(t.status)).length, color: [20, 184, 166] },
+                  { label: "Upcoming", count: confirmed.filter((t) => t.status === "Upcoming").length, color: [99, 102, 241] },
+                  { label: "Completed", count: confirmed.filter((t) => t.status === "Completed").length, color: [100, 116, 139] },
+                  { label: "Cancelled", count: confirmed.filter((t) => t.status === "Cancelled").length, color: [249, 115, 22] },
+                ];
+
+                statuses.forEach((s, idx) => {
+                  const cardX = margin + idx * (cardW + 10);
+                  // Draw Card background
+                  pdf.setFillColor(zebra[0], zebra[1], zebra[2]);
+                  pdf.rect(cardX, y, cardW, 55, "F");
+                  
+                  // Card border
+                  pdf.setDrawColor(border[0], border[1], border[2]);
+                  pdf.setLineWidth(1);
+                  pdf.rect(cardX, y, cardW, 55, "S");
+
+                  // Status left highlight line
+                  pdf.setFillColor(s.color[0], s.color[1], s.color[2]);
+                  pdf.rect(cardX, y, 3, 55, "F");
+
+                  // Card contents
+                  pdf.setTextColor(mutedText[0], mutedText[1], mutedText[2]);
+                  pdf.setFont("helvetica", "bold");
+                  pdf.setFontSize(8);
+                  pdf.text(s.label.toUpperCase(), cardX + 12, y + 20);
+
+                  pdf.setTextColor(s.color[0], s.color[1], s.color[2]);
+                  pdf.setFont("helvetica", "bold");
+                  pdf.setFontSize(18);
+                  pdf.text(`${s.count}`, cardX + 12, y + 42);
+                });
+                y += 85;
+
+                // Table title
+                pdf.setTextColor(primary[0], primary[1], primary[2]);
+                pdf.setFont("helvetica", "bold");
+                pdf.setFontSize(12);
+                pdf.text("Tour Status Distribution Table", margin, y);
+                y += 18;
+
+                // Status Table Headers
+                pdf.setFillColor(primary[0], primary[1], primary[2]);
+                pdf.rect(margin, y, contentWidth, 24, "F");
+                
+                pdf.setTextColor(255, 255, 255);
+                pdf.setFont("helvetica", "bold");
+                pdf.setFontSize(9);
+                pdf.text("OPERATIONAL STATUS", margin + 15, y + 15);
+                pdf.text("TOTAL CONFIRMED", margin + 220, y + 15, { align: "center" });
+                pdf.text("PERCENTAGE SHARE", margin + 380, y + 15, { align: "center" });
+                y += 24;
+
+                // Status Table Rows
+                pdf.setFont("helvetica", "normal");
+                statusCounts.forEach((s, idx) => {
+                  // Row bg zebra
+                  if (idx % 2 === 1) {
+                    pdf.setFillColor(zebra[0], zebra[1], zebra[2]);
+                    pdf.rect(margin, y, contentWidth, 24, "F");
+                  }
+                  // Border line bottom
+                  pdf.setDrawColor(border[0], border[1], border[2]);
+                  pdf.setLineWidth(0.5);
+                  pdf.line(margin, y + 24, margin + contentWidth, y + 24);
+
+                  pdf.setTextColor(primaryText[0], primaryText[1], primaryText[2]);
+                  pdf.text(s.label, margin + 15, y + 15);
+                  
+                  pdf.setFont("helvetica", "bold");
+                  pdf.text(`${s.count}`, margin + 220, y + 15, { align: "center" });
+                  
+                  const pct = statusTotal > 0 ? Math.round((s.count / statusTotal) * 100) : 0;
+                  pdf.setFont("helvetica", "normal");
+                  pdf.text(`${pct}%`, margin + 380, y + 15, { align: "center" });
+                  y += 24;
+                });
+
+                // ── PAGE 2: AGENT ACTIVITY ──
+                pdf.addPage();
+                drawPageDecoration("AGENT PERFORMANCE REPORT", 2);
+                y = 120;
+
+                pdf.setTextColor(primary[0], primary[1], primary[2]);
+                pdf.setFont("helvetica", "bold");
+                pdf.setFontSize(14);
+                pdf.text("Agent Performance & Volume Breakdown", margin, y);
+                y += 8;
+                
+                pdf.setDrawColor(accent[0], accent[1], accent[2]);
+                pdf.setLineWidth(2);
+                pdf.line(margin, y, margin + 60, y);
+                y += 25;
+
+                if (agentStats.length === 0) {
+                  pdf.setFont("helvetica", "italic");
+                  pdf.setFontSize(10);
+                  pdf.setTextColor(mutedText[0], mutedText[1], mutedText[2]);
+                  pdf.text("No active agent distribution statistics found.", margin, y);
+                } else {
+                  // Table Header
+                  pdf.setFillColor(primary[0], primary[1], primary[2]);
+                  pdf.rect(margin, y, contentWidth, 24, "F");
+                  
+                  pdf.setTextColor(255, 255, 255);
+                  pdf.setFont("helvetica", "bold");
+                  pdf.setFontSize(9);
+                  pdf.text("AGENT REGISTERED NAME", margin + 15, y + 15);
+                  pdf.text("GEOGRAPHICAL REGION", margin + 220, y + 15);
+                  pdf.text("TOTAL ASSIGNED TOURS", margin + 380, y + 15, { align: "center" });
+                  y += 24;
+
+                  pdf.setFont("helvetica", "normal");
+                  agentStats.forEach((a, idx) => {
+                    if (idx % 2 === 1) {
+                      pdf.setFillColor(zebra[0], zebra[1], zebra[2]);
+                      pdf.rect(margin, y, contentWidth, 24, "F");
+                    }
+                    pdf.setDrawColor(border[0], border[1], border[2]);
+                    pdf.setLineWidth(0.5);
+                    pdf.line(margin, y + 24, margin + contentWidth, y + 24);
+
+                    pdf.setTextColor(primaryText[0], primaryText[1], primaryText[2]);
+                    pdf.text(a.name, margin + 15, y + 15);
+                    pdf.text(a.region, margin + 220, y + 15);
+                    
+                    pdf.setFont("helvetica", "bold");
+                    pdf.text(`${a.count}`, margin + 380, y + 15, { align: "center" });
+                    pdf.setFont("helvetica", "normal");
+                    y += 24;
+                  });
+                }
+
+                // ── PAGE 3: DRIVER & GUIDE WORKLOAD ──
+                pdf.addPage();
+                drawPageDecoration("DRIVER WORKLOAD REPORT", 3);
+                y = 120;
+
+                pdf.setTextColor(primary[0], primary[1], primary[2]);
+                pdf.setFont("helvetica", "bold");
+                pdf.setFontSize(14);
+                pdf.text("Driver Assignments & Active Workloads", margin, y);
+                y += 8;
+                
+                pdf.setDrawColor(accent[0], accent[1], accent[2]);
+                pdf.setLineWidth(2);
+                pdf.line(margin, y, margin + 60, y);
+                y += 25;
+
+                if (driverStats.length === 0) {
+                  pdf.setFont("helvetica", "italic");
+                  pdf.setFontSize(10);
+                  pdf.setTextColor(mutedText[0], mutedText[1], mutedText[2]);
+                  pdf.text("No registered driver workloads to evaluate.", margin, y);
+                } else {
+                  // Table Header
+                  pdf.setFillColor(primary[0], primary[1], primary[2]);
+                  pdf.rect(margin, y, contentWidth, 24, "F");
+                  
+                  pdf.setTextColor(255, 255, 255);
+                  pdf.setFont("helvetica", "bold");
+                  pdf.setFontSize(9);
+                  pdf.text("DRIVER / GUIDE NAME", margin + 15, y + 15);
+                  pdf.text("COMMUNICATION CHANNELS", margin + 180, y + 15);
+                  pdf.text("ACTIVE / TOTAL", margin + 360, y + 15, { align: "center" });
+                  pdf.text("WORKLOAD INDEX", margin + 440, y + 15, { align: "center" });
+                  y += 24;
+
+                  pdf.setFont("helvetica", "normal");
+                  driverStats.forEach((d, idx) => {
+                    if (idx % 2 === 1) {
+                      pdf.setFillColor(zebra[0], zebra[1], zebra[2]);
+                      pdf.rect(margin, y, contentWidth, 34, "F");
+                    }
+                    pdf.setDrawColor(border[0], border[1], border[2]);
+                    pdf.setLineWidth(0.5);
+                    pdf.line(margin, y + 34, margin + contentWidth, y + 34);
+
+                    // Name
+                    pdf.setTextColor(primaryText[0], primaryText[1], primaryText[2]);
+                    pdf.setFont("helvetica", "bold");
+                    pdf.text(d.name, margin + 15, y + 20);
+                    
+                    // Contacts (small font stacked)
+                    pdf.setFont("helvetica", "normal");
+                    pdf.setFontSize(7.5);
+                    pdf.setTextColor(mutedText[0], mutedText[1], mutedText[2]);
+                    pdf.text(`Phone: ${d.phone || "—"}`, margin + 180, y + 14);
+                    pdf.text(`Email: ${d.email || "—"}`, margin + 180, y + 24);
+                    
+                    // Counts & index
+                    pdf.setFontSize(9.5);
+                    pdf.setTextColor(primaryText[0], primaryText[1], primaryText[2]);
+                    pdf.text(`${d.active} / ${d.total}`, margin + 360, y + 20, { align: "center" });
+                    
+                    const workloadPct = d.total > 0 ? Math.round((d.active / d.total) * 100) : 0;
+                    pdf.setFont("helvetica", "bold");
+                    pdf.text(`${workloadPct}%`, margin + 440, y + 20, { align: "center" });
+                    
+                    y += 34;
+                  });
+                }
+
+                pdf.save("Horizon_Travel_Analytics_Report.pdf");
+                toast.success("PDF report downloaded successfully!", { id: "pdf-gen" });
+              } catch (error) {
+                console.error("PDF generation failed:", error);
+                toast.error("Failed to generate PDF. Please try again.", { id: "pdf-gen" });
+              }
+            }}
+            className="gap-1.5 px-5 h-10 rounded-lg shadow-sm text-xs font-bold bg-primary text-primary-foreground hover:bg-primary/95 transition-all duration-200"
+          >
+            <TrendingUp className="h-3.5 w-3.5" />
+            Download PDF Report
+          </Button>
+        </div>
       </div>
     </ScrollArea>
   );
