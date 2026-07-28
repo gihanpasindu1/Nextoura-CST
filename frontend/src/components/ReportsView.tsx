@@ -138,199 +138,9 @@ export default function ReportsView({ tourists, agents, drivers }: { tourists: a
   return (
     <ScrollArea className="flex-1">
       <div className="p-6 max-w-6xl mx-auto pb-16">
-        {/* ══ 1. Tour Status ══ */}
-        <section id="analytics-status">
-          <SectionHeader icon={<Plane className="h-4 w-4" />} title="Tour Status Distribution" />
-          <div className="grid gap-6 lg:grid-cols-[220px_1fr]">
-            {/* Donut */}
-            <div className="flex flex-col items-center justify-center rounded-xl border border-border/80 bg-card p-6 shadow-sm">
-              <DonutChart
-                segments={statusCounts.filter((s) => s.count > 0).map((s) => ({ label: s.label, value: s.count, color: s.color }))}
-                total={statusTotal} />
-              <div className="mt-4 w-full space-y-2">
-                {statusCounts.map((s) => (
-                  <div key={s.key} className="flex items-center justify-between text-[11px]">
-                    <div className="flex items-center gap-1.5">
-                      <div className="h-2 w-2 rounded-full shrink-0" style={{ background: s.color }} />
-                      <span className="text-muted-foreground">{s.label}</span>
-                    </div>
-                    <span className="font-semibold tabular-nums" style={{ color: s.color }}>{s.count}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Bars + KPI chips */}
-            <div className="rounded-xl border border-border/80 bg-card p-6 space-y-5 shadow-sm">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Count by Status</p>
-              <div className="space-y-4">
-                {statusCounts.map((s) => (
-                  <HBar key={s.key} value={s.count} max={maxStatus} color={s.color} label={s.label} count={s.count}
-                    sub={`${statusTotal > 0 ? Math.round((s.count / statusTotal) * 100) : 0}%`} />
-                ))}
-              </div>
-              <div className="grid grid-cols-2 gap-3 pt-4 border-t border-border/60 sm:grid-cols-3 xl:grid-cols-4">
-                {statusCounts.map((s) => {
-                  const Icon = s.icon;
-                  return (
-                    <div key={s.key} className="rounded-xl border p-3 text-center transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm"
-                      style={{ borderColor: `${s.color}25`, background: `${s.color}08` }}>
-                      <Icon className="mx-auto mb-1 h-4 w-4" style={{ color: s.color }} />
-                      <div className="text-xl font-bold tabular-nums" style={{ color: s.color }}>{s.count}</div>
-                      <div className="mt-0.5 text-[9px] font-bold uppercase tracking-wider text-muted-foreground">{s.label}</div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* ══ 2. Agent Activity ══ */}
-        <section id="analytics-agents">
-          <SectionHeader icon={<Briefcase className="h-4 w-4" />} title="Agent Activity" />
-          {agentStats.length === 0 ? <EmptyState message="No agents registered yet." /> : (
-            <div className="rounded-xl border border-border/80 bg-card p-6 shadow-sm">
-              <div className="grid gap-8 lg:grid-cols-[1fr_300px]">
-                <div className="space-y-4">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Tourist Count per Agent</p>
-                  <div className="space-y-4">
-                    {agentStats.map((a, i) => (
-                      <HBar key={a.id} value={a.count} max={maxAgent}
-                        color={AGENT_COLORS[i % AGENT_COLORS.length]}
-                        label={a.name} count={a.count} sub={a.region} />
-                    ))}
-                  </div>
-                </div>
-                <div className="space-y-2.5">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-3">Agent Profiles</p>
-                  {agentStats.map((a, i) => {
-                    const color = AGENT_COLORS[i % AGENT_COLORS.length];
-                    const initials = a.name.split(" ").map((p: string) => p[0]).slice(0, 2).join("");
-                    return (
-                      <div key={a.id} className="flex items-center gap-3 rounded-xl border p-3 transition-all duration-200 hover:shadow-sm"
-                        style={{ background: `${color}06`, borderColor: `${color}18` }}>
-                        <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-xs font-bold"
-                          style={{ background: `${color}15`, color, border: `1px solid ${color}25` }}>{initials}</div>
-                        <div className="min-w-0 flex-1">
-                          <div className="truncate text-[13px] font-bold text-foreground">{a.name}</div>
-                          <div className="flex items-center gap-1 text-[11px] text-muted-foreground mt-0.5">
-                            <MapPin className="h-3 w-3 shrink-0" />{a.region}
-                          </div>
-                        </div>
-                        <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-[11px] font-bold"
-                          style={{ background: `${color}15`, color }}>{a.count}</div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-          )}
-        </section>
-
-        {/* ══ 3. Driver Workload ══ */}
-        <section id="analytics-drivers">
-          <SectionHeader icon={<Car className="h-4 w-4" />} title="Driver & Guide Workload" />
-          {driverStats.length === 0 ? <EmptyState message="No drivers registered yet." /> : (
-            <div className="space-y-5">
-              {/* Column chart */}
-              <div className="rounded-xl border border-border/80 bg-card p-6 shadow-sm">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-5">
-                  Active / Upcoming Tours per Driver
-                </p>
-                <div className="flex items-end gap-4 overflow-x-auto pb-2">
-                  {driverStats.map((d) => {
-                    const tealColor = "#14b8a6";
-                    const greyColor = "#94a3b8";
-                    const col = d.active > 0 ? tealColor : greyColor;
-                    return (
-                      <div key={d.id} className="flex min-w-[60px] flex-col items-center gap-2">
-                        <span className="text-xs font-bold tabular-nums" style={{ color: d.active > 0 ? "#0d9488" : greyColor }}>{d.active}</span>
-                        <VBar value={d.active} max={maxDriver} color={col} />
-                        <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-[10px] font-bold"
-                          style={{
-                            background: d.active > 0 ? "rgba(20,184,166,0.12)" : "rgba(148,163,184,0.1)",
-                            color: d.active > 0 ? "#0d9488" : greyColor,
-                            border: `1px solid ${d.active > 0 ? "rgba(20,184,166,0.25)" : "rgba(148,163,184,0.18)"}`,
-                          }}>{d.initials}</div>
-                        <span className="max-w-[60px] truncate text-center text-[10px] text-muted-foreground leading-tight">
-                          {d.name.split(" ")[0]}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-                <div className="mt-5 flex items-center gap-5 border-t border-border pt-4 text-xs text-muted-foreground">
-                  <div className="flex items-center gap-1.5"><div className="h-2.5 w-2.5 rounded-sm bg-teal-500" />Active / Upcoming tours</div>
-                  <div className="flex items-center gap-1.5"><div className="h-2.5 w-2.5 rounded-sm bg-slate-300 dark:bg-slate-600" />No current assignment</div>
-                </div>
-              </div>
-
-              {/* Driver detail cards */}
-              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                {driverStats.map((d) => (
-                  <div key={d.id}
-                    className={cn("rounded-xl border p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md",
-                      d.active > 0 ? "border-teal-200/50 dark:border-teal-900/30" : "border-border/80")}
-                    style={{
-                      background: d.active > 0
-                        ? theme === "light" ? "linear-gradient(135deg,#f0fdfb,#ffffff)" : "linear-gradient(135deg,rgba(20,184,166,0.04),var(--card))"
-                        : "var(--card)",
-                    }}>
-                    <div className="flex items-center gap-3">
-                      <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl text-sm font-bold"
-                        style={{
-                          background: d.active > 0 ? "rgba(20,184,166,0.12)" : "rgba(148,163,184,0.08)",
-                          color: d.active > 0 ? "#0d9488" : "#94a3b8",
-                          border: `1px solid ${d.active > 0 ? "rgba(20,184,166,0.25)" : "rgba(148,163,184,0.18)"}`,
-                        }}>{d.initials}</div>
-                      <div className="min-w-0 flex-1">
-                        <div className="truncate text-[14px] font-bold text-foreground">{d.name}</div>
-                        <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-semibold mt-1"
-                          style={{
-                            background: d.active > 0 ? "rgba(20,184,166,0.1)" : "rgba(148,163,184,0.08)",
-                            color: d.active > 0 ? "#0d9488" : "#94a3b8",
-                          }}>
-                          <Car className="h-2.5 w-2.5" />{d.active} active · {d.total} total
-                        </span>
-                      </div>
-                    </div>
-                    <div className="mt-4 space-y-1.5 border-t border-border/40 pt-3">
-                      {d.phone && (
-                        <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-                          <Phone className="h-3.5 w-3.5 shrink-0 text-slate-400" /><span className="truncate">{d.phone}</span>
-                        </div>
-                      )}
-                      {d.email && (
-                        <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-                          <Mail className="h-3.5 w-3.5 shrink-0 text-slate-400" /><span className="truncate">{d.email}</span>
-                        </div>
-                      )}
-                    </div>
-                    <div className="mt-4 border-t border-border/40 pt-3">
-                      <div className="mb-1 flex justify-between text-[10px] text-muted-foreground font-medium">
-                        <span>Workload</span>
-                        <span className="font-semibold">{d.total > 0 ? Math.round((d.active / d.total) * 100) : 0}%</span>
-                      </div>
-                      <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted/70">
-                        <div className="h-full rounded-full transition-all duration-700"
-                          style={{
-                            width: `${d.total > 0 ? (d.active / d.total) * 100 : 0}%`,
-                            background: d.active > 0 ? "linear-gradient(90deg,#5eead4,#14b8a6)" : "#cbd5e1",
-                            minWidth: d.active > 0 ? 4 : 0,
-                          }} />
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </section>
-
+        
         {/* ── PDF Download Button ── */}
-        <div className="flex justify-center pt-4">
+        <div className="flex justify-end mb-6">
           <Button
             id="download-pdf-btn"
             onClick={async () => {
@@ -646,6 +456,197 @@ export default function ReportsView({ tourists, agents, drivers }: { tourists: a
             Download PDF Report
           </Button>
         </div>
+        {/* ══ 1. Tour Status ══ */}
+        <section id="analytics-status">
+          <SectionHeader icon={<Plane className="h-4 w-4" />} title="Tour Status Distribution" />
+          <div className="grid gap-6 lg:grid-cols-[220px_1fr]">
+            {/* Donut */}
+            <div className="flex flex-col items-center justify-center rounded-xl border border-border/80 bg-card p-6 shadow-sm">
+              <DonutChart
+                segments={statusCounts.filter((s) => s.count > 0).map((s) => ({ label: s.label, value: s.count, color: s.color }))}
+                total={statusTotal} />
+              <div className="mt-4 w-full space-y-2">
+                {statusCounts.map((s) => (
+                  <div key={s.key} className="flex items-center justify-between text-[11px]">
+                    <div className="flex items-center gap-1.5">
+                      <div className="h-2 w-2 rounded-full shrink-0" style={{ background: s.color }} />
+                      <span className="text-muted-foreground">{s.label}</span>
+                    </div>
+                    <span className="font-semibold tabular-nums" style={{ color: s.color }}>{s.count}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Bars + KPI chips */}
+            <div className="rounded-xl border border-border/80 bg-card p-6 space-y-5 shadow-sm">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Count by Status</p>
+              <div className="space-y-4">
+                {statusCounts.map((s) => (
+                  <HBar key={s.key} value={s.count} max={maxStatus} color={s.color} label={s.label} count={s.count}
+                    sub={`${statusTotal > 0 ? Math.round((s.count / statusTotal) * 100) : 0}%`} />
+                ))}
+              </div>
+              <div className="grid grid-cols-2 gap-3 pt-4 border-t border-border/60 sm:grid-cols-3 xl:grid-cols-4">
+                {statusCounts.map((s) => {
+                  const Icon = s.icon;
+                  return (
+                    <div key={s.key} className="rounded-xl border p-3 text-center transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm"
+                      style={{ borderColor: `${s.color}25`, background: `${s.color}08` }}>
+                      <Icon className="mx-auto mb-1 h-4 w-4" style={{ color: s.color }} />
+                      <div className="text-xl font-bold tabular-nums" style={{ color: s.color }}>{s.count}</div>
+                      <div className="mt-0.5 text-[9px] font-bold uppercase tracking-wider text-muted-foreground">{s.label}</div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ══ 2. Agent Activity ══ */}
+        <section id="analytics-agents">
+          <SectionHeader icon={<Briefcase className="h-4 w-4" />} title="Agent Activity" />
+          {agentStats.length === 0 ? <EmptyState message="No agents registered yet." /> : (
+            <div className="rounded-xl border border-border/80 bg-card p-6 shadow-sm">
+              <div className="grid gap-8 lg:grid-cols-[1fr_300px]">
+                <div className="space-y-4">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Tourist Count per Agent</p>
+                  <div className="space-y-4">
+                    {agentStats.map((a, i) => (
+                      <HBar key={a.id} value={a.count} max={maxAgent}
+                        color={AGENT_COLORS[i % AGENT_COLORS.length]}
+                        label={a.name} count={a.count} sub={a.region} />
+                    ))}
+                  </div>
+                </div>
+                <div className="space-y-2.5">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-3">Agent Profiles</p>
+                  {agentStats.map((a, i) => {
+                    const color = AGENT_COLORS[i % AGENT_COLORS.length];
+                    const initials = a.name.split(" ").map((p: string) => p[0]).slice(0, 2).join("");
+                    return (
+                      <div key={a.id} className="flex items-center gap-3 rounded-xl border p-3 transition-all duration-200 hover:shadow-sm"
+                        style={{ background: `${color}06`, borderColor: `${color}18` }}>
+                        <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-xs font-bold"
+                          style={{ background: `${color}15`, color, border: `1px solid ${color}25` }}>{initials}</div>
+                        <div className="min-w-0 flex-1">
+                          <div className="truncate text-[13px] font-bold text-foreground">{a.name}</div>
+                          <div className="flex items-center gap-1 text-[11px] text-muted-foreground mt-0.5">
+                            <MapPin className="h-3 w-3 shrink-0" />{a.region}
+                          </div>
+                        </div>
+                        <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-[11px] font-bold"
+                          style={{ background: `${color}15`, color }}>{a.count}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
+        </section>
+
+        {/* ══ 3. Driver Workload ══ */}
+        <section id="analytics-drivers">
+          <SectionHeader icon={<Car className="h-4 w-4" />} title="Driver & Guide Workload" />
+          {driverStats.length === 0 ? <EmptyState message="No drivers registered yet." /> : (
+            <div className="space-y-5">
+              {/* Column chart */}
+              <div className="rounded-xl border border-border/80 bg-card p-6 shadow-sm">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-5">
+                  Active / Upcoming Tours per Driver
+                </p>
+                <div className="flex items-end gap-4 overflow-x-auto pb-2">
+                  {driverStats.map((d) => {
+                    const tealColor = "#14b8a6";
+                    const greyColor = "#94a3b8";
+                    const col = d.active > 0 ? tealColor : greyColor;
+                    return (
+                      <div key={d.id} className="flex min-w-[60px] flex-col items-center gap-2">
+                        <span className="text-xs font-bold tabular-nums" style={{ color: d.active > 0 ? "#0d9488" : greyColor }}>{d.active}</span>
+                        <VBar value={d.active} max={maxDriver} color={col} />
+                        <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-[10px] font-bold"
+                          style={{
+                            background: d.active > 0 ? "rgba(20,184,166,0.12)" : "rgba(148,163,184,0.1)",
+                            color: d.active > 0 ? "#0d9488" : greyColor,
+                            border: `1px solid ${d.active > 0 ? "rgba(20,184,166,0.25)" : "rgba(148,163,184,0.18)"}`,
+                          }}>{d.initials}</div>
+                        <span className="max-w-[60px] truncate text-center text-[10px] text-muted-foreground leading-tight">
+                          {d.name.split(" ")[0]}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="mt-5 flex items-center gap-5 border-t border-border pt-4 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-1.5"><div className="h-2.5 w-2.5 rounded-sm bg-teal-500" />Active / Upcoming tours</div>
+                  <div className="flex items-center gap-1.5"><div className="h-2.5 w-2.5 rounded-sm bg-slate-300 dark:bg-slate-600" />No current assignment</div>
+                </div>
+              </div>
+
+              {/* Driver detail cards */}
+              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                {driverStats.map((d) => (
+                  <div key={d.id}
+                    className={cn("rounded-xl border p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md",
+                      d.active > 0 ? "border-teal-200/50 dark:border-teal-900/30" : "border-border/80")}
+                    style={{
+                      background: d.active > 0
+                        ? theme === "light" ? "linear-gradient(135deg,#f0fdfb,#ffffff)" : "linear-gradient(135deg,rgba(20,184,166,0.04),var(--card))"
+                        : "var(--card)",
+                    }}>
+                    <div className="flex items-center gap-3">
+                      <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl text-sm font-bold"
+                        style={{
+                          background: d.active > 0 ? "rgba(20,184,166,0.12)" : "rgba(148,163,184,0.08)",
+                          color: d.active > 0 ? "#0d9488" : "#94a3b8",
+                          border: `1px solid ${d.active > 0 ? "rgba(20,184,166,0.25)" : "rgba(148,163,184,0.18)"}`,
+                        }}>{d.initials}</div>
+                      <div className="min-w-0 flex-1">
+                        <div className="truncate text-[14px] font-bold text-foreground">{d.name}</div>
+                        <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-semibold mt-1"
+                          style={{
+                            background: d.active > 0 ? "rgba(20,184,166,0.1)" : "rgba(148,163,184,0.08)",
+                            color: d.active > 0 ? "#0d9488" : "#94a3b8",
+                          }}>
+                          <Car className="h-2.5 w-2.5" />{d.active} active · {d.total} total
+                        </span>
+                      </div>
+                    </div>
+                    <div className="mt-4 space-y-1.5 border-t border-border/40 pt-3">
+                      {d.phone && (
+                        <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                          <Phone className="h-3.5 w-3.5 shrink-0 text-slate-400" /><span className="truncate">{d.phone}</span>
+                        </div>
+                      )}
+                      {d.email && (
+                        <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                          <Mail className="h-3.5 w-3.5 shrink-0 text-slate-400" /><span className="truncate">{d.email}</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="mt-4 border-t border-border/40 pt-3">
+                      <div className="mb-1 flex justify-between text-[10px] text-muted-foreground font-medium">
+                        <span>Workload</span>
+                        <span className="font-semibold">{d.total > 0 ? Math.round((d.active / d.total) * 100) : 0}%</span>
+                      </div>
+                      <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted/70">
+                        <div className="h-full rounded-full transition-all duration-700"
+                          style={{
+                            width: `${d.total > 0 ? (d.active / d.total) * 100 : 0}%`,
+                            background: d.active > 0 ? "linear-gradient(90deg,#5eead4,#14b8a6)" : "#cbd5e1",
+                            minWidth: d.active > 0 ? 4 : 0,
+                          }} />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </section>
+
       </div>
     </ScrollArea>
   );
