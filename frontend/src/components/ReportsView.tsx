@@ -168,6 +168,18 @@ export default function ReportsView({ tourists, agents, drivers }: { tourists: a
                   img.onerror = resolve;
                 });
 
+                // Create faint watermark version of the logo using Canvas
+                const canvas = document.createElement("canvas");
+                canvas.width = img.width || 500;
+                canvas.height = img.height || 500;
+                const ctx = canvas.getContext("2d");
+                let watermarkData = img.src; // fallback
+                if (ctx && img.width > 0) {
+                  ctx.globalAlpha = 0.04; // Very faint opacity for watermark
+                  ctx.drawImage(img, 0, 0);
+                  watermarkData = canvas.toDataURL("image/png");
+                }
+
                 // Brand Colors
                 const primary = [15, 23, 42];      // Deep Slate
                 const primaryText = [30, 41, 59];  // Slate 800
@@ -182,6 +194,16 @@ export default function ReportsView({ tourists, agents, drivers }: { tourists: a
                   pdf.setDrawColor(border[0], border[1], border[2]);
                   pdf.setLineWidth(1);
                   pdf.rect(20, 20, pageWidth - 40, pageHeight - 40, "S");
+
+                  // Watermark
+                  try {
+                    const wmSize = 350;
+                    const x = (pageWidth - wmSize) / 2;
+                    const y = (pageHeight - wmSize) / 2 + 20;
+                    pdf.addImage(watermarkData, "PNG", x, y, wmSize, wmSize);
+                  } catch (e) {
+                    console.error("Failed to add watermark", e);
+                  }
 
                   // Top header block
                   pdf.setFillColor(primary[0], primary[1], primary[2]);
