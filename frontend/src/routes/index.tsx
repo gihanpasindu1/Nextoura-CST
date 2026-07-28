@@ -2490,7 +2490,7 @@ function DriverManagement({
     }
 
     // Email validation
-    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
     if (!emailRegex.test(form.email.trim())) {
       toast.error("Please enter a valid email address");
       return;
@@ -2530,7 +2530,7 @@ function DriverManagement({
     }
 
     // Email validation
-    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
     if (!emailRegex.test(form.email.trim())) {
       toast.error("Please enter a valid email address");
       return;
