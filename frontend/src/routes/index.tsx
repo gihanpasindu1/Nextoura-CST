@@ -1,6 +1,7 @@
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { supabase } from "@/lib/supabase";
 import logoUrl from "@/assets/logo.png";
+import ReportsView from "@/components/ReportsView";
 import { useMemo, useState, useEffect } from "react";
 import {
   LayoutDashboard,
@@ -843,16 +844,18 @@ function Console() {
               </div>
             </div>
             <div className="flex items-center gap-1.5">
-              <Button
-                id="view-graphs-btn"
-                variant="outline"
-                size="sm"
-                onClick={() => router.navigate({ to: "/analytics" })}
-                className="flex items-center gap-1.5 h-8 rounded-lg border border-border px-3 text-[11px] font-semibold text-muted-foreground bg-card/50 transition-all hover:bg-accent hover:text-primary hover:border-primary/30 shadow-sm"
-              >
-                <BarChart3 className="h-3.5 w-3.5 text-primary" />
-                <span className="hidden sm:inline">View Graphs</span>
-              </Button>
+              {nav !== "reports" && (
+                <Button
+                  id="view-graphs-btn"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => router.navigate({ to: "/analytics" })}
+                  className="flex items-center gap-1.5 h-8 rounded-lg border border-border px-3 text-[11px] font-semibold text-muted-foreground bg-card/50 transition-all hover:bg-accent hover:text-primary hover:border-primary/30 shadow-sm"
+                >
+                  <BarChart3 className="h-3.5 w-3.5 text-primary" />
+                  <span className="hidden sm:inline">View Graphs</span>
+                </Button>
+              )}
               <div className="h-4 w-px bg-border mx-0.5" />
               <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground transition-all duration-200 relative">
                 <Bell className="h-4 w-4" />
@@ -948,8 +951,10 @@ function Console() {
                 }
               }}
             />
-          ) : nav === "dashboard" || nav === "reports" ? (
+          ) : nav === "dashboard" ? (
             <DashboardOverview stats={stats} navLabel={nav} onNavigate={setNav} />
+          ) : nav === "reports" ? (
+            <ReportsView tourists={touristsList} agents={agents} drivers={drivers} />
           ) : nav === "settings" ? (
             <SettingsView companyProfile={companyProfile} setCompanyProfile={setCompanyProfile} />
           ) : (
