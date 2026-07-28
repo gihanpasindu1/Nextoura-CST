@@ -2893,7 +2893,7 @@ function DashboardOverview({
               onClick={() => onNavigate("tours")}
               className="font-semibold text-primary hover:underline cursor-pointer"
             >
-              Active Tours
+              Tour Category
             </span>{" "}
             from the left
             navigation to manage tourist itineraries, agent performance logs, and real-time coordinator actions.
