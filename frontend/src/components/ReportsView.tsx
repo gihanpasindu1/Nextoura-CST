@@ -364,7 +364,7 @@ export default function ReportsView({ tourists, agents, drivers }: { tourists: a
                   pdf.setFontSize(9);
                   pdf.text("AGENT REGISTERED NAME", margin + 15, y + 15);
                   pdf.text("GEOGRAPHICAL REGION", margin + 220, y + 15);
-                  pdf.text("TOTAL ASSIGNED TOURS", margin + 380, y + 15, { align: "center" });
+                  pdf.text("TOTAL ASSIGNED TOURS", margin + 420, y + 15, { align: "center" });
                   y += 24;
 
                   pdf.setFont("helvetica", "normal");
@@ -382,7 +382,7 @@ export default function ReportsView({ tourists, agents, drivers }: { tourists: a
                     pdf.text(a.region, margin + 220, y + 15);
                     
                     pdf.setFont("helvetica", "bold");
-                    pdf.text(`${a.count}`, margin + 380, y + 15, { align: "center" });
+                    pdf.text(`${a.count}`, margin + 420, y + 15, { align: "center" });
                     pdf.setFont("helvetica", "normal");
                     y += 24;
                   });
