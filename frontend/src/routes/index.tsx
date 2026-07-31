@@ -1047,6 +1047,13 @@ function Console() {
                   }
                 } catch (e) {
                   toast.error("Error updating status");
+                  console.error(e);
+                }
+              }}
+              onRefresh={async () => {
+                if (companyId) {
+                  await loadData(companyId);
+                  toast.success("Data refreshed successfully");
                 }
               }}
               onResolveAlert={async (id) => {
@@ -1343,6 +1350,7 @@ function ToursWorkspace({
   nav,
   departingTouristsCount,
   onStatusChange,
+  onRefresh,
 }: {
   drivers: any[];
   query: string;
@@ -1366,10 +1374,12 @@ function ToursWorkspace({
   nav: string;
   departingTouristsCount: number;
   onStatusChange?: (id: string, status: TourStatus) => void;
+  onRefresh?: () => Promise<void> | void;
 }) {
   const wsRouter = useRouter();
   const [driverPopoverOpen, setDriverPopoverOpen] = useState(false);
   const [driverSearchQuery, setDriverSearchQuery] = useState("");
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
     if (!driverPopoverOpen) {
@@ -1468,6 +1478,22 @@ function ToursWorkspace({
                 </div>
               </PopoverContent>
             </Popover>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8.5 w-8.5 rounded-lg border-border/80 bg-background hover:bg-accent/40 text-muted-foreground hover:text-foreground transition-all duration-200 shadow-none"
+              onClick={() => {
+                setDriverFilter("All Drivers");
+                setQuery("");
+                setStatusFilter("all");
+                if (onRefresh) {
+                  onRefresh();
+                }
+              }}
+              title="Refresh Data & Reset Filters"
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
+            </Button>
           </div>
 
           {/* Status bar */}
