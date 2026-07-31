@@ -438,7 +438,17 @@ function Console() {
                 dep.setHours(0,0,0,0);
                 today.setHours(0,0,0,0);
                 const diffDays = Math.ceil((dep.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-                isDepartingSoon = (diffDays <= 2 && diffDays >= 0) || (diffDays < 0 && t.status !== "Completed" && t.status !== "Cancelled");
+                
+                let isInvalid = false;
+                if (t.arrival) {
+                  const arrDate = new Date(t.arrival);
+                  arrDate.setHours(0,0,0,0);
+                  if (!isNaN(arrDate.getTime()) && dep < arrDate) {
+                    isInvalid = true;
+                  }
+                }
+                
+                isDepartingSoon = (diffDays <= 2 || isInvalid) && t.status !== "Completed" && t.status !== "Cancelled";
              }
           }
           if (!isDepartingSoon) return false;
@@ -489,7 +499,17 @@ function Console() {
         if (!isNaN(departureDate.getTime())) {
           departureDate.setHours(0, 0, 0, 0);
           const diffDays = Math.ceil((departureDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-          if ((diffDays <= 2 && diffDays >= 0) || (diffDays < 0 && t.status !== "Completed" && t.status !== "Cancelled")) {
+          
+          let isInvalid = false;
+          if (t.arrival) {
+            const arrDate = new Date(t.arrival);
+            arrDate.setHours(0,0,0,0);
+            if (!isNaN(arrDate.getTime()) && departureDate < arrDate) {
+              isInvalid = true;
+            }
+          }
+
+          if ((diffDays <= 2 || isInvalid) && t.status !== "Completed" && t.status !== "Cancelled") {
             count++;
           }
         }
@@ -1578,10 +1598,24 @@ function ToursWorkspace({
                         today.setHours(0, 0, 0, 0);
                         const diffTime = departureDate.getTime() - today.getTime();
                         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                        if (diffDays <= 2 && diffDays >= 0) {
-                          departureInfo = diffDays === 0 ? "Departing today" : diffDays === 1 ? "Departing tomorrow" : `Departing in ${diffDays} days`;
-                        } else if (diffDays < 0 && t.status !== "Completed" && t.status !== "Cancelled") {
-                          departureInfo = `Departure overdue by ${Math.abs(diffDays)} ${Math.abs(diffDays) === 1 ? "day" : "days"}`;
+                        
+                        let isInvalid = false;
+                        if (t.arrival) {
+                          const arrDate = new Date(t.arrival);
+                          arrDate.setHours(0,0,0,0);
+                          if (!isNaN(arrDate.getTime()) && departureDate < arrDate) {
+                            isInvalid = true;
+                          }
+                        }
+
+                        if (t.status !== "Completed" && t.status !== "Cancelled") {
+                          if (isInvalid) {
+                            departureInfo = "Invalid Dates";
+                          } else if (diffDays <= 2 && diffDays >= 0) {
+                            departureInfo = diffDays === 0 ? "Departing today" : diffDays === 1 ? "Departing tomorrow" : `Departing in ${diffDays} days`;
+                          } else if (diffDays < 0) {
+                            departureInfo = `Departure overdue by ${Math.abs(diffDays)} ${Math.abs(diffDays) === 1 ? "day" : "days"}`;
+                          }
                         }
                       }
                     }
@@ -1779,12 +1813,25 @@ function TouristDetail({
     const diffTime = departureDate.getTime() - today.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     
-    if (diffDays <= 2 && diffDays >= 0) {
-      if (diffDays === 0) return "Departing today";
-      if (diffDays === 1) return "Departing tomorrow";
-      return `Departing in ${diffDays} days`;
-    } else if (diffDays < 0 && t.status !== "Completed" && t.status !== "Cancelled") {
-      return `Departure overdue by ${Math.abs(diffDays)} ${Math.abs(diffDays) === 1 ? "day" : "days"}`;
+    let isInvalid = false;
+    if (t.arrival) {
+      const arrDate = new Date(t.arrival);
+      arrDate.setHours(0,0,0,0);
+      if (!isNaN(arrDate.getTime()) && departureDate < arrDate) {
+        isInvalid = true;
+      }
+    }
+    
+    if (t.status !== "Completed" && t.status !== "Cancelled") {
+      if (isInvalid) {
+        return "Invalid Dates";
+      } else if (diffDays <= 2 && diffDays >= 0) {
+        if (diffDays === 0) return "Departing today";
+        if (diffDays === 1) return "Departing tomorrow";
+        return `Departing in ${diffDays} days`;
+      } else if (diffDays < 0) {
+        return `Departure overdue by ${Math.abs(diffDays)} ${Math.abs(diffDays) === 1 ? "day" : "days"}`;
+      }
     }
     return null;
   }, [t.departure]);
@@ -1806,7 +1853,9 @@ function TouristDetail({
                 <div className="text-[11px] font-medium text-amber-700/80 dark:text-amber-400/80 mt-0.5">
                   {departureInfo.includes("overdue") 
                     ? "Action Required: The departure date has passed. Please mark the tour as completed or cancelled."
-                    : "Reminder: Double-check that all final transfers and checkout arrangements are set."}
+                    : departureInfo.includes("Invalid")
+                      ? "Action Required: The departure date is before the arrival date. Please correct the dates."
+                      : "Reminder: Double-check that all final transfers and checkout arrangements are set."}
                 </div>
               </div>
             </div>
