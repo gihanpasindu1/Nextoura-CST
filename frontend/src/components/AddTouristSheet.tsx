@@ -975,7 +975,7 @@ export function AddTouristSheet({
                     value={formData.pax}
                     onChange={e => {
                       const val = e.target.value;
-                      setFormData({ ...formData, pax: val === "" ? "" as any : parseInt(val, 100) });
+                      setFormData({ ...formData, pax: val === "" ? "" as any : parseInt(val, 10) });
                     }}
                   />
                 </div>
