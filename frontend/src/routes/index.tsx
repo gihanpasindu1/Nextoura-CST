@@ -484,10 +484,10 @@ function Console() {
   const selected = filtered.find((t) => t.id === selectedId) ?? filtered[0] ?? touristsList[0];
 
   const stats = useMemo(() => {
-    const active = touristsList.filter((t) => t.status === "Active").length;
+    const active = touristsList.filter((t) => t.status === "Active" || t.status === "On Tour").length;
     const upcoming = touristsList.filter((t) => t.status === "Upcoming").length;
-    const pax = touristsList.filter((t) => t.status !== "Completed").reduce((s, t) => s + t.pax, 0);
-    return { active, upcoming, pax, countries: new Set(touristsList.map((t) => t.country)).size };
+    const pax = touristsList.filter((t) => t.status === "Active" || t.status === "On Tour").reduce((s, t) => s + t.pax, 0);
+    return { active, upcoming, pax, countries: new Set(touristsList.filter(t => t.status !== "Cancelled" && t.status !== "Completed").map((t) => t.country)).size };
   }, [touristsList]);
 
   const departingTouristsCount = useMemo(() => {
