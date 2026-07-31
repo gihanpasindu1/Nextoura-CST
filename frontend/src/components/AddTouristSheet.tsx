@@ -1009,12 +1009,12 @@ export function AddTouristSheet({
                 </div>
                 <div className="space-y-2">
                   <Label className={cn(errors.arrival && "text-destructive")}>Arrival Date {mode === "confirmed" && "*"}</Label>
-                  <Input type="date" className={cn(errors.arrival && "border-destructive focus-visible:ring-destructive")} value={formData.arrival} onChange={e => { setFormData({ ...formData, arrival: e.target.value }); if (errors.arrival) setErrors({ ...errors, arrival: "" }); }} />
+                  <Input type="date" className={cn("dark:[color-scheme:dark]", errors.arrival && "border-destructive focus-visible:ring-destructive")} value={formData.arrival} onChange={e => { setFormData({ ...formData, arrival: e.target.value }); if (errors.arrival) setErrors({ ...errors, arrival: "" }); }} />
                   {errors.arrival && <div className="text-[10px] text-destructive flex items-center gap-1"><AlertCircle className="h-3 w-3" /> {errors.arrival}</div>}
                 </div>
                 <div className="space-y-2">
                   <Label className={cn(errors.departure && "text-destructive")}>Departure Date {mode === "confirmed" && "*"}</Label>
-                  <Input type="date" className={cn(errors.departure && "border-destructive focus-visible:ring-destructive")} value={formData.departure} onChange={e => { setFormData({ ...formData, departure: e.target.value }); if (errors.departure) setErrors({ ...errors, departure: "" }); }} />
+                  <Input type="date" className={cn("dark:[color-scheme:dark]", errors.departure && "border-destructive focus-visible:ring-destructive")} value={formData.departure} onChange={e => { setFormData({ ...formData, departure: e.target.value }); if (errors.departure) setErrors({ ...errors, departure: "" }); }} />
                   {errors.departure && <div className="text-[10px] text-destructive flex items-center gap-1"><AlertCircle className="h-3 w-3" /> {errors.departure}</div>}
                 </div>
                 <div className="space-y-2">
