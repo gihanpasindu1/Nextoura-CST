@@ -161,7 +161,7 @@ const NAV = NAV_SECTIONS.flatMap((s) => s.items);
 function Console() {
   const [nav, setNav] = useState<NavKey>("tours");
   const [agentFilter, setAgentFilter] = useState("all");
-  const [statusFilter, setStatusFilter] = useState<"all" | TourStatus>("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | TourStatus | "DepartingSoon">("all");
   const [driverFilter, setDriverFilter] = useState("All Drivers");
   const [query, setQuery] = useState("");
   const [selectedId, setSelectedId] = useState<string>("t1");
@@ -429,7 +429,20 @@ function Console() {
         if (agent && t.agent !== (agent.agent_name || agent.name)) return false;
       }
       if (statusFilter !== "all") {
-        if (statusFilter === "Active") {
+        if (statusFilter === "DepartingSoon") {
+          let isDepartingSoon = false;
+          if (t.departure) {
+             const dep = new Date(t.departure);
+             if (!isNaN(dep.getTime())) {
+                const today = new Date();
+                dep.setHours(0,0,0,0);
+                today.setHours(0,0,0,0);
+                const diffDays = Math.ceil((dep.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+                isDepartingSoon = diffDays <= 2 && diffDays >= 0;
+             }
+          }
+          if (!isDepartingSoon) return false;
+        } else if (statusFilter === "Active") {
           if (t.status !== "Active" && t.status !== "On Tour") return false;
         } else {
           if (t.status !== statusFilter) return false;
@@ -464,6 +477,25 @@ function Console() {
     const upcoming = touristsList.filter((t) => t.status === "Upcoming").length;
     const pax = touristsList.filter((t) => t.status !== "Completed").reduce((s, t) => s + t.pax, 0);
     return { active, upcoming, pax, countries: new Set(touristsList.map((t) => t.country)).size };
+  }, [touristsList]);
+
+  const departingTouristsCount = useMemo(() => {
+    let count = 0;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    for (const t of touristsList) {
+      if (t.departure) {
+        const departureDate = new Date(t.departure);
+        if (!isNaN(departureDate.getTime())) {
+          departureDate.setHours(0, 0, 0, 0);
+          const diffDays = Math.ceil((departureDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+          if (diffDays <= 2 && diffDays >= 0) {
+            count++;
+          }
+        }
+      }
+    }
+    return count;
   }, [touristsList]);
 
   const filteredDriversForFilter = drivers.filter((d: any) =>
@@ -963,6 +995,7 @@ function Console() {
               statusAlertCounts={statusAlertCounts}
               notifications={notifications}
               nav={nav}
+              departingTouristsCount={departingTouristsCount}
               onStatusChange={async (id, status) => {
                 try {
                   const res = await fetch(`http://localhost:8000/api/tourists/${id}/status`, {
@@ -1273,13 +1306,14 @@ function ToursWorkspace({
   onConfirmTour,
   onDeleteClient,
   nav,
+  departingTouristsCount,
   onStatusChange,
 }: {
   drivers: any[];
   query: string;
   setQuery: (v: string) => void;
-  statusFilter: "all" | TourStatus;
-  setStatusFilter: (v: "all" | TourStatus) => void;
+  statusFilter: "all" | TourStatus | "DepartingSoon";
+  setStatusFilter: (v: "all" | TourStatus | "DepartingSoon") => void;
   driverFilter: string;
   setDriverFilter: (v: string) => void;
   tourists: Tourist[];
@@ -1295,6 +1329,7 @@ function ToursWorkspace({
   onConfirmTour: (t: Tourist) => void;
   onDeleteClient: (id: string) => void;
   nav: string;
+  departingTouristsCount: number;
   onStatusChange?: (id: string, status: TourStatus) => void;
 }) {
   const wsRouter = useRouter();
@@ -1444,6 +1479,14 @@ function ToursWorkspace({
                   activeText: "text-orange-600 dark:text-orange-400 bg-background",
                   iconClass: "text-orange-600 dark:text-orange-400"
                 },
+                ...(departingTouristsCount > 0 ? [{
+                  key: "DepartingSoon",
+                  label: `Departing Soon (${departingTouristsCount})`,
+                  icon: Bell,
+                  activeBorder: "border-amber-200/60 dark:border-amber-900/40",
+                  activeText: "text-amber-600 dark:text-amber-400 bg-background",
+                  iconClass: "text-amber-600 dark:text-amber-400"
+                }] : [])
               ].map((tab) => {
                 const Icon = tab.icon;
                 const active = statusFilter === tab.key;
