@@ -1699,9 +1699,47 @@ function TouristDetail({
   const activeGuideNotices = activeAlerts.filter((n) => n.type !== "alert");
   const resolvedAlerts = personAlerts.filter((n) => n.resolved);
 
+  const departureInfo = useMemo(() => {
+    if (!t.departure) return null;
+    const departureDate = new Date(t.departure);
+    if (isNaN(departureDate.getTime())) return null;
+    const today = new Date();
+    departureDate.setHours(0, 0, 0, 0);
+    today.setHours(0, 0, 0, 0);
+    const diffTime = departureDate.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays <= 2 && diffDays >= 0) {
+      if (diffDays === 0) return "Departing today";
+      if (diffDays === 1) return "Departing tomorrow";
+      return `Departing in ${diffDays} days`;
+    }
+    return null;
+  }, [t.departure]);
+
   return (
     <ScrollArea className="h-full">
       <div key={t.id} className="animate-in fade-in slide-in-from-right-2 duration-200">
+        {departureInfo && (
+          <div className="relative overflow-hidden bg-gradient-to-r from-amber-50/90 to-orange-50/90 dark:from-amber-950/40 dark:to-orange-950/40 border-b border-amber-200/60 dark:border-amber-900/50 px-7 py-3.5 backdrop-blur-md">
+            <div className="flex items-center gap-3.5 relative z-10">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/60 text-amber-600 dark:text-amber-400 ring-1 ring-amber-200/80 dark:ring-amber-800/80 shadow-sm relative">
+                <div className="absolute inset-0 rounded-full animate-ping bg-amber-400/20" />
+                <Plane className="h-4 w-4 relative z-10" />
+              </div>
+              <div>
+                <div className="text-[13px] font-bold text-amber-900 dark:text-amber-100 tracking-tight">
+                  {departureInfo}
+                </div>
+                <div className="text-[11px] font-medium text-amber-700/80 dark:text-amber-400/80 mt-0.5">
+                  Reminder: Double-check that all final transfers and checkout arrangements are set.
+                </div>
+              </div>
+            </div>
+            {/* Decorative background accent */}
+            <div className="absolute right-0 top-0 bottom-0 w-1/3 bg-gradient-to-l from-amber-500/10 to-transparent pointer-events-none" />
+          </div>
+        )}
         {/* Header */}
         <div className="border-b border-border bg-card/90 backdrop-blur-sm px-7 py-5">
           {onBack && (
@@ -1747,7 +1785,7 @@ function TouristDetail({
                     onChange={onStatusChange ? (newStatus) => onStatusChange(t.id, newStatus) : undefined}
                   />
                 </div>
-                <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
+                <div className="mt-1 flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
                   <div className="flex items-center gap-1.5">
                     <MapPin className="h-3.5 w-3.5" />
                     {t.currentLocation}
@@ -1756,6 +1794,18 @@ function TouristDetail({
                     <Calendar className="h-3.5 w-3.5" />
                     {t.duration}
                   </div>
+                  {t.arrival && (
+                    <div className="flex items-center gap-1.5">
+                      <Plane className="h-3.5 w-3.5 rotate-90" />
+                      Arr: {t.arrival}
+                    </div>
+                  )}
+                  {t.departure && (
+                    <div className="flex items-center gap-1.5">
+                      <Plane className="h-3.5 w-3.5" />
+                      Dep: {t.departure}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
