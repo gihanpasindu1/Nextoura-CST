@@ -438,7 +438,7 @@ function Console() {
                 dep.setHours(0,0,0,0);
                 today.setHours(0,0,0,0);
                 const diffDays = Math.ceil((dep.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-                isDepartingSoon = diffDays <= 2 && diffDays >= 0;
+                isDepartingSoon = (diffDays <= 2 && diffDays >= 0) || (diffDays < 0 && t.status !== "Completed" && t.status !== "Cancelled");
              }
           }
           if (!isDepartingSoon) return false;
@@ -489,7 +489,7 @@ function Console() {
         if (!isNaN(departureDate.getTime())) {
           departureDate.setHours(0, 0, 0, 0);
           const diffDays = Math.ceil((departureDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-          if (diffDays <= 2 && diffDays >= 0) {
+          if ((diffDays <= 2 && diffDays >= 0) || (diffDays < 0 && t.status !== "Completed" && t.status !== "Cancelled")) {
             count++;
           }
         }
@@ -1580,6 +1580,8 @@ function ToursWorkspace({
                         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
                         if (diffDays <= 2 && diffDays >= 0) {
                           departureInfo = diffDays === 0 ? "Departing today" : diffDays === 1 ? "Departing tomorrow" : `Departing in ${diffDays} days`;
+                        } else if (diffDays < 0 && t.status !== "Completed" && t.status !== "Cancelled") {
+                          departureInfo = `Departure overdue by ${Math.abs(diffDays)} ${Math.abs(diffDays) === 1 ? "day" : "days"}`;
                         }
                       }
                     }
@@ -1781,6 +1783,8 @@ function TouristDetail({
       if (diffDays === 0) return "Departing today";
       if (diffDays === 1) return "Departing tomorrow";
       return `Departing in ${diffDays} days`;
+    } else if (diffDays < 0 && t.status !== "Completed" && t.status !== "Cancelled") {
+      return `Departure overdue by ${Math.abs(diffDays)} ${Math.abs(diffDays) === 1 ? "day" : "days"}`;
     }
     return null;
   }, [t.departure]);
