@@ -1804,7 +1804,9 @@ function TouristDetail({
                   {departureInfo}
                 </div>
                 <div className="text-[11px] font-medium text-amber-700/80 dark:text-amber-400/80 mt-0.5">
-                  Reminder: Double-check that all final transfers and checkout arrangements are set.
+                  {departureInfo.includes("overdue") 
+                    ? "Action Required: The departure date has passed. Please mark the tour as completed or cancelled."
+                    : "Reminder: Double-check that all final transfers and checkout arrangements are set."}
                 </div>
               </div>
             </div>
