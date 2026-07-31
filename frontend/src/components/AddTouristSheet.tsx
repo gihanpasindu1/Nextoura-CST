@@ -969,7 +969,15 @@ export function AddTouristSheet({
                 </div>
                 <div className="space-y-2">
                   <Label>Pax (Group Size)</Label>
-                  <Input type="number" min="1" value={formData.pax} onChange={e => setFormData({...formData, pax: parseInt(e.target.value) || 1})} />
+                  <Input 
+                    type="number" 
+                    min="1" 
+                    value={formData.pax} 
+                    onChange={e => {
+                      const val = e.target.value;
+                      setFormData({...formData, pax: val === "" ? "" as any : parseInt(val, 10)});
+                    }} 
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label className={cn(errors.agent && "text-destructive")}>Agent {mode === "confirmed" && "*"}</Label>
