@@ -716,7 +716,7 @@ export function AddTouristSheet({
       name: formData.name,
       country: formData.country || "TBD",
       countryCode: formData.countryCode || "UN",
-      pax: formData.pax,
+      pax: Number(formData.pax) || 1,
       arrival: formData.arrival || "TBD",
       departure: formData.departure || "",
       duration: formData.duration || "TBD",
@@ -972,10 +972,12 @@ export function AddTouristSheet({
                   <Input
                     type="number"
                     min="1"
+                    max="100"
                     value={formData.pax}
                     onChange={e => {
-                      const val = e.target.value;
-                      setFormData({ ...formData, pax: val === "" ? "" as any : parseInt(val, 10) });
+                      let val = e.target.value;
+                      if (val !== "" && Number(val) > 100) val = "100";
+                      setFormData({ ...formData, pax: val as any });
                     }}
                   />
                 </div>
