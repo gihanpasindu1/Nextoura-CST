@@ -39,6 +39,7 @@ export interface Tourist {
   agent: string;
   arrival: string;
   departure?: string;
+  flightDetails?: string;
   group: GroupMember[];
   itinerary: ItineraryDay[];
   isLead?: boolean;

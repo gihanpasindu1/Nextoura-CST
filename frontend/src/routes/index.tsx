@@ -23,6 +23,7 @@ import {
   Mail,
   CreditCard,
   AlertTriangle,
+  AlertCircle,
   Info,
   CheckCircle2,
   Building2,
@@ -992,7 +993,21 @@ function Console() {
               }}
             />
           ) : nav === "dashboard" ? (
-            <DashboardOverview stats={stats} navLabel={nav} onNavigate={setNav} />
+            <DashboardOverview 
+              stats={stats} 
+              navLabel={nav} 
+              onNavigate={setNav}
+              tourists={touristsList}
+              notifications={notifications}
+              onResolveAlert={async (id) => {
+                try {
+                  await fetch(`http://localhost:8000/api/notifications/${id}/resolve`, { method: "PATCH" });
+                  if (companyId) loadData(companyId);
+                } catch (e) {
+                  console.error(e);
+                }
+              }}
+            />
           ) : nav === "reports" ? (
             <ReportsView tourists={touristsList} agents={agents} drivers={drivers} />
           ) : nav === "settings" ? (
@@ -3020,10 +3035,16 @@ function DashboardOverview({
   stats,
   navLabel,
   onNavigate,
+  tourists,
+  notifications,
+  onResolveAlert,
 }: {
   stats: { active: number; upcoming: number; pax: number; countries: number };
   navLabel: NavKey;
   onNavigate: (key: NavKey) => void;
+  tourists: Tourist[];
+  notifications: any[];
+  onResolveAlert: (id: string) => void;
 }) {
   const tiles = [
     {
@@ -3072,55 +3093,259 @@ function DashboardOverview({
     },
   ];
 
-  const labelMap: Record<NavKey, string> = {
-    dashboard: "Dashboard",
-    tours: "Active Tours",
-    leads: "Inquiries & Leads",
-    agents: "Agent Management",
-    drivers: "Drivers & Guides",
-    reports: "Reports",
-    settings: "Settings",
-  };
+  const unresolvedAlerts = useMemo(() => {
+    return notifications.filter(n => !n.resolved).slice(0, 5);
+  }, [notifications]);
+
+  const upcomingArrivals = useMemo(() => {
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    return tourists.filter(t => {
+      if (t.status === "Cancelled" || t.status === "Completed" || t.isLead) return false;
+      if (!t.arrival) return false;
+      const arr = new Date(t.arrival);
+      if (isNaN(arr.getTime())) return false;
+      arr.setHours(0,0,0,0);
+      const diffDays = Math.ceil((arr.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+      return diffDays >= 0 && diffDays <= 7;
+    }).sort((a, b) => new Date(a.arrival!).getTime() - new Date(b.arrival!).getTime()).slice(0, 4);
+  }, [tourists]);
+
+  const departingSoonTourists = useMemo(() => {
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    return tourists.filter(t => {
+      if (t.status === "Cancelled" || t.status === "Completed" || t.isLead) return false;
+      if (!t.departure) return false;
+      const dep = new Date(t.departure);
+      if (isNaN(dep.getTime())) return false;
+      dep.setHours(0,0,0,0);
+      const diffDays = Math.ceil((dep.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+      return diffDays <= 2;
+    }).sort((a, b) => new Date(a.departure!).getTime() - new Date(b.departure!).getTime()).slice(0, 4);
+  }, [tourists]);
+
+  const activeTourists = useMemo(() => {
+    return tourists.filter(t => (t.status === "Active" || t.status === "On Tour") && !t.isLead)
+      .slice(0, 4);
+  }, [tourists]);
 
   return (
     <ScrollArea className="flex-1">
       <div className="p-6">
         {navLabel === "dashboard" && (
-          <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
-            {tiles.map((t) => {
-              const Icon = t.icon;
-              return (
-                <div
-                  key={t.label}
-                  className={cn(
-                    "relative overflow-hidden rounded-xl border bg-card p-4 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md",
-                    t.borderClass
-                  )}
-                >
-                  {/* Visual accent indicator line */}
-                  <div className={cn("absolute left-0 top-0 bottom-0 w-1", t.accentLine)} />
-
-                  <div className="flex items-center justify-between">
-                    <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                      {t.label}
+          <div className="space-y-6 max-w-7xl mx-auto">
+            {/* Metric Cards */}
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {tiles.map((t) => {
+                const Icon = t.icon;
+                return (
+                  <div
+                    key={t.label}
+                    className={cn(
+                      "relative overflow-hidden rounded-xl border bg-card p-4 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md",
+                      t.borderClass
+                    )}
+                  >
+                    <div className={cn("absolute left-0 top-0 bottom-0 w-1", t.accentLine)} />
+                    <div className="flex items-center justify-between">
+                      <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                        {t.label}
+                      </div>
+                      <div className={cn("flex h-8 w-8 items-center justify-center rounded-lg bg-opacity-10", t.bgClass)}>
+                        <Icon className={cn("h-4 w-4", t.textClass)} />
+                      </div>
                     </div>
-                    <div className={cn("flex h-8 w-8 items-center justify-center rounded-lg bg-opacity-10", t.bgClass)}>
-                      <Icon className={cn("h-4 w-4", t.textClass)} />
+                    <div className="mt-2.5 flex items-baseline gap-1.5">
+                      <div className="text-2xl font-extrabold tracking-tight text-foreground">
+                        {t.value}
+                      </div>
+                    </div>
+                    <div className="mt-1.5 flex items-center gap-1 text-[11px] font-medium text-muted-foreground">
+                      <span>{t.hint}</span>
                     </div>
                   </div>
+                );
+              })}
+            </div>
 
-                  <div className="mt-2.5 flex items-baseline gap-1.5">
-                    <div className="text-2xl font-extrabold tracking-tight text-foreground">
-                      {t.value}
+            {/* Dashboard Content Grid */}
+            <div className="grid gap-6 lg:grid-cols-3">
+              {/* Left Column: Active Tours & Arrivals/Departures */}
+              <div className="lg:col-span-2 space-y-6">
+                
+                {/* Active Tours Panel */}
+                <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden flex flex-col">
+                  <div className="border-b border-border bg-muted/30 px-5 py-3.5 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Plane className="h-4 w-4 text-teal-500" />
+                      <h3 className="text-sm font-semibold text-foreground">Active Tours Overview</h3>
                     </div>
+                    <Button variant="ghost" size="sm" className="h-7 text-xs px-2" onClick={() => onNavigate("tours")}>
+                      View All
+                    </Button>
                   </div>
-
-                  <div className="mt-1.5 flex items-center gap-1 text-[11px] font-medium text-muted-foreground">
-                    <span>{t.hint}</span>
+                  <div className="p-0">
+                    {activeTourists.length === 0 ? (
+                      <div className="p-8 text-center text-sm text-muted-foreground">No active tours at the moment.</div>
+                    ) : (
+                      <div className="divide-y divide-border">
+                        {activeTourists.map(t => (
+                          <div key={t.id} className="flex items-center justify-between p-4 hover:bg-muted/20 transition-colors">
+                            <div className="flex items-center gap-3">
+                              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-teal-50 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400 border border-teal-100 dark:border-teal-800">
+                                <span className="text-xs font-bold">{t.name.charAt(0)}</span>
+                              </div>
+                              <div>
+                                <div className="text-sm font-semibold">{t.name}</div>
+                                <div className="text-[11px] text-muted-foreground flex items-center gap-1.5 mt-0.5">
+                                  <MapPin className="h-3 w-3" />
+                                  {t.currentLocation || "Location unknown"}
+                                  <span className="opacity-50">•</span>
+                                  <Users2 className="h-3 w-3" />
+                                  {t.pax} Pax
+                                </div>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-[11px] font-medium text-foreground">{t.driver || "No driver assigned"}</div>
+                              <div className="text-[10px] text-muted-foreground">{t.duration}</div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
-              );
-            })}
+
+                {/* Arrivals & Departures Grid */}
+                <div className="grid gap-6 sm:grid-cols-2">
+                  
+                  {/* Arrivals Panel */}
+                  <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden flex flex-col">
+                    <div className="border-b border-border bg-indigo-50/50 dark:bg-indigo-950/20 px-4 py-3 flex items-center gap-2">
+                      <CalendarRange className="h-4 w-4 text-indigo-500" />
+                      <h3 className="text-sm font-semibold text-foreground">Upcoming Arrivals</h3>
+                    </div>
+                    <div className="p-0 flex-1">
+                      {upcomingArrivals.length === 0 ? (
+                        <div className="p-6 text-center text-xs text-muted-foreground">No arrivals in the next 7 days.</div>
+                      ) : (
+                        <div className="divide-y divide-border">
+                          {upcomingArrivals.map(t => (
+                            <div key={t.id} className="p-3 hover:bg-muted/20 transition-colors">
+                              <div className="flex justify-between items-start mb-1">
+                                <span className="text-sm font-medium">{t.name}</span>
+                                <span className="text-[10px] font-semibold bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 px-2 py-0.5 rounded-full">
+                                  {t.arrival}
+                                </span>
+                              </div>
+                              <div className="text-[11px] text-muted-foreground line-clamp-1">
+                                {t.flightDetails ? `Flight: ${t.flightDetails}` : "No flight details"}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Departures Panel */}
+                  <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden flex flex-col">
+                    <div className="border-b border-border bg-amber-50/50 dark:bg-amber-950/20 px-4 py-3 flex items-center gap-2">
+                      <Plane className="h-4 w-4 text-amber-500" />
+                      <h3 className="text-sm font-semibold text-foreground">Departing Soon</h3>
+                    </div>
+                    <div className="p-0 flex-1">
+                      {departingSoonTourists.length === 0 ? (
+                        <div className="p-6 text-center text-xs text-muted-foreground">No departures in the next 2 days.</div>
+                      ) : (
+                        <div className="divide-y divide-border">
+                          {departingSoonTourists.map(t => {
+                            const isOverdue = new Date(t.departure!) < new Date(new Date().setHours(0,0,0,0));
+                            return (
+                              <div key={t.id} className="p-3 hover:bg-muted/20 transition-colors">
+                                <div className="flex justify-between items-start mb-1">
+                                  <span className="text-sm font-medium">{t.name}</span>
+                                  <span className={cn(
+                                    "text-[10px] font-semibold px-2 py-0.5 rounded-full",
+                                    isOverdue 
+                                      ? "bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300"
+                                      : "bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300"
+                                  )}>
+                                    {isOverdue ? "Overdue" : t.departure}
+                                  </span>
+                                </div>
+                                <div className="text-[11px] text-muted-foreground">
+                                  Status: <span className="font-medium text-foreground">{t.status}</span>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+              {/* Right Column: Actionable Alerts */}
+              <div className="space-y-6">
+                <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden flex flex-col h-full max-h-[600px]">
+                  <div className="border-b border-border bg-rose-50/50 dark:bg-rose-950/20 px-5 py-4 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <AlertCircle className="h-4 w-4 text-rose-500" />
+                      <h3 className="text-sm font-semibold text-foreground">Actionable Alerts</h3>
+                    </div>
+                    {unresolvedAlerts.length > 0 && (
+                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-rose-500 text-[10px] font-bold text-white">
+                        {unresolvedAlerts.length}
+                      </span>
+                    )}
+                  </div>
+                  <ScrollArea className="flex-1">
+                    <div className="p-4 space-y-3">
+                      {unresolvedAlerts.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center py-8 text-center text-muted-foreground">
+                          <CheckCircle2 className="h-8 w-8 text-emerald-500 mb-2 opacity-50" />
+                          <p className="text-sm font-medium">All caught up!</p>
+                          <p className="text-xs">No pending alerts to review.</p>
+                        </div>
+                      ) : (
+                        unresolvedAlerts.map(alert => (
+                          <div key={alert.id} className="rounded-lg border border-border/60 bg-muted/30 p-3 flex flex-col gap-2">
+                            <div className="flex justify-between items-start gap-2">
+                              <span className="text-xs font-semibold text-foreground line-clamp-2">{alert.message}</span>
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="h-6 w-6 p-0 text-muted-foreground hover:text-emerald-500 shrink-0" 
+                                onClick={() => onResolveAlert(alert.id)}
+                                title="Mark as resolved"
+                              >
+                                <CheckCircle2 className="h-3.5 w-3.5" />
+                              </Button>
+                            </div>
+                            <div className="text-[10px] text-muted-foreground">
+                              {new Date(alert.created_at).toLocaleDateString()} at {new Date(alert.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </ScrollArea>
+                  {unresolvedAlerts.length > 0 && (
+                    <div className="border-t border-border bg-muted/10 p-3 text-center">
+                      <Button variant="link" className="h-auto p-0 text-xs text-muted-foreground" onClick={() => onNavigate("tours")}>
+                        Go to Tours to see all alerts
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
           </div>
         )}
       </div>
