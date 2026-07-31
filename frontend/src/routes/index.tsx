@@ -1525,6 +1525,22 @@ function ToursWorkspace({
                           : t.status === "Cancelled"
                             ? "border-l-orange-400"
                             : "border-l-slate-300 dark:border-l-slate-600";
+                    
+                    let departureInfo = null;
+                    if (t.departure) {
+                      const departureDate = new Date(t.departure);
+                      if (!isNaN(departureDate.getTime())) {
+                        const today = new Date();
+                        departureDate.setHours(0, 0, 0, 0);
+                        today.setHours(0, 0, 0, 0);
+                        const diffTime = departureDate.getTime() - today.getTime();
+                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                        if (diffDays <= 2 && diffDays >= 0) {
+                          departureInfo = diffDays === 0 ? "Departing today" : diffDays === 1 ? "Departing tomorrow" : `Departing in ${diffDays} days`;
+                        }
+                      }
+                    }
+
                     return (
                       <div
                         key={t.id}
@@ -1586,6 +1602,15 @@ function ToursWorkspace({
                             <div className="mt-1 text-[11px] text-muted-foreground">Driver: {t.driver.split(" ")[0]}</div>
                           </div>
                         </div>
+                        {departureInfo && (
+                          <div className="mt-3.5 flex items-center gap-2 rounded-md bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-500/10 dark:to-orange-500/10 px-3 py-1.5 text-[11px] font-semibold text-amber-700 dark:text-amber-400 border border-amber-200/50 dark:border-amber-500/20">
+                            <div className="relative flex h-1.5 w-1.5 shrink-0">
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-amber-500"></span>
+                            </div>
+                            {departureInfo}
+                          </div>
+                        )}
                       </div>
                     );
                   })}
