@@ -433,24 +433,24 @@ function Console() {
         if (statusFilter === "DepartingSoon") {
           let isDepartingSoon = false;
           if (t.departure) {
-             const dep = new Date(t.departure);
-             if (!isNaN(dep.getTime())) {
-                const today = new Date();
-                dep.setHours(0,0,0,0);
-                today.setHours(0,0,0,0);
-                const diffDays = Math.ceil((dep.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-                
-                let isInvalid = false;
-                if (t.arrival) {
-                  const arrDate = new Date(t.arrival);
-                  arrDate.setHours(0,0,0,0);
-                  if (!isNaN(arrDate.getTime()) && dep < arrDate) {
-                    isInvalid = true;
-                  }
+            const dep = new Date(t.departure);
+            if (!isNaN(dep.getTime())) {
+              const today = new Date();
+              dep.setHours(0, 0, 0, 0);
+              today.setHours(0, 0, 0, 0);
+              const diffDays = Math.ceil((dep.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+
+              let isInvalid = false;
+              if (t.arrival) {
+                const arrDate = new Date(t.arrival);
+                arrDate.setHours(0, 0, 0, 0);
+                if (!isNaN(arrDate.getTime()) && dep < arrDate) {
+                  isInvalid = true;
                 }
-                
-                isDepartingSoon = (diffDays <= 2 || isInvalid) && t.status !== "Completed" && t.status !== "Cancelled";
-             }
+              }
+
+              isDepartingSoon = (diffDays <= 2 || isInvalid) && t.status !== "Completed" && t.status !== "Cancelled";
+            }
           }
           if (!isDepartingSoon) return false;
         } else if (statusFilter === "Active") {
@@ -500,11 +500,11 @@ function Console() {
         if (!isNaN(departureDate.getTime())) {
           departureDate.setHours(0, 0, 0, 0);
           const diffDays = Math.ceil((departureDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-          
+
           let isInvalid = false;
           if (t.arrival) {
             const arrDate = new Date(t.arrival);
-            arrDate.setHours(0,0,0,0);
+            arrDate.setHours(0, 0, 0, 0);
             if (!isNaN(arrDate.getTime()) && departureDate < arrDate) {
               isInvalid = true;
             }
@@ -573,55 +573,55 @@ function Console() {
         {/* ── Agent filter ── */}
         {(nav === "tours" || nav === "leads") && (
           <div className="px-5 pb-4">
-          <Label className={cn(
-            "mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.18em] transition-colors",
-            theme === "light" ? "text-slate-500/80" : "text-slate-500"
-          )}>
-            Agent View
-          </Label>
-          <div className="flex gap-2">
-            <Select value={agentFilter} onValueChange={(val) => {
-              setAgentFilter(val);
-              setIsDetailOpen(false);
-              setSelectedId("");
-            }}>
-              <SelectTrigger className={cn(
-                "h-9 flex-1 rounded-lg transition-all duration-200 focus:ring-blue-500/40",
-                theme === "light"
-                  ? "border-slate-300 bg-white text-slate-800 hover:bg-slate-50"
-                  : "border-slate-700/60 bg-slate-800/60 text-slate-200 hover:bg-slate-800"
-              )}>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Agents</SelectItem>
-                {agents.map((a) => (
-                  <SelectItem key={a.id} value={a.id}>
-                    {a.agent_name || a.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {agentFilter !== "all" && (
-              <button
-                onClick={() => {
-                  setAgentFilter("all");
-                  setIsDetailOpen(false);
-                  setSelectedId("");
-                }}
-                title="Reset to all agents"
-                className={cn(
-                  "h-9 w-9 shrink-0 flex items-center justify-center rounded-lg border transition-all duration-200",
+            <Label className={cn(
+              "mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.18em] transition-colors",
+              theme === "light" ? "text-slate-500/80" : "text-slate-500"
+            )}>
+              Agent View
+            </Label>
+            <div className="flex gap-2">
+              <Select value={agentFilter} onValueChange={(val) => {
+                setAgentFilter(val);
+                setIsDetailOpen(false);
+                setSelectedId("");
+              }}>
+                <SelectTrigger className={cn(
+                  "h-9 flex-1 rounded-lg transition-all duration-200 focus:ring-blue-500/40",
                   theme === "light"
-                    ? "border-slate-300 bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-800"
-                    : "border-slate-700/60 bg-slate-800/60 text-slate-400 hover:bg-slate-700 hover:text-white"
-                )}
-              >
-                <RotateCcw className="h-3.5 w-3.5" />
-              </button>
-            )}
+                    ? "border-slate-300 bg-white text-slate-800 hover:bg-slate-50"
+                    : "border-slate-700/60 bg-slate-800/60 text-slate-200 hover:bg-slate-800"
+                )}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Agents</SelectItem>
+                  {agents.map((a) => (
+                    <SelectItem key={a.id} value={a.id}>
+                      {a.agent_name || a.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {agentFilter !== "all" && (
+                <button
+                  onClick={() => {
+                    setAgentFilter("all");
+                    setIsDetailOpen(false);
+                    setSelectedId("");
+                  }}
+                  title="Reset to all agents"
+                  className={cn(
+                    "h-9 w-9 shrink-0 flex items-center justify-center rounded-lg border transition-all duration-200",
+                    theme === "light"
+                      ? "border-slate-300 bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-800"
+                      : "border-slate-700/60 bg-slate-800/60 text-slate-400 hover:bg-slate-700 hover:text-white"
+                  )}
+                >
+                  <RotateCcw className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
           </div>
-        </div>
         )}
 
         {/* ── Divider ── */}
@@ -993,9 +993,9 @@ function Console() {
               }}
             />
           ) : nav === "dashboard" ? (
-            <DashboardOverview 
-              stats={stats} 
-              navLabel={nav} 
+            <DashboardOverview
+              stats={stats}
+              navLabel={nav}
               onNavigate={setNav}
               tourists={touristsList}
               notifications={notifications}
@@ -1629,7 +1629,7 @@ function ToursWorkspace({
                           : t.status === "Cancelled"
                             ? "border-l-orange-400"
                             : "border-l-slate-300 dark:border-l-slate-600";
-                    
+
                     let departureInfo = null;
                     if (t.departure) {
                       const departureDate = new Date(t.departure);
@@ -1639,11 +1639,11 @@ function ToursWorkspace({
                         today.setHours(0, 0, 0, 0);
                         const diffTime = departureDate.getTime() - today.getTime();
                         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                        
+
                         let isInvalid = false;
                         if (t.arrival) {
                           const arrDate = new Date(t.arrival);
-                          arrDate.setHours(0,0,0,0);
+                          arrDate.setHours(0, 0, 0, 0);
                           if (!isNaN(arrDate.getTime()) && departureDate < arrDate) {
                             isInvalid = true;
                           }
@@ -1853,16 +1853,16 @@ function TouristDetail({
     today.setHours(0, 0, 0, 0);
     const diffTime = departureDate.getTime() - today.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
+
     let isInvalid = false;
     if (t.arrival) {
       const arrDate = new Date(t.arrival);
-      arrDate.setHours(0,0,0,0);
+      arrDate.setHours(0, 0, 0, 0);
       if (!isNaN(arrDate.getTime()) && departureDate < arrDate) {
         isInvalid = true;
       }
     }
-    
+
     if (t.status !== "Completed" && t.status !== "Cancelled") {
       if (isInvalid) {
         return "Invalid Dates";
@@ -1892,7 +1892,7 @@ function TouristDetail({
                   {departureInfo}
                 </div>
                 <div className="text-[11px] font-medium text-amber-700/80 dark:text-amber-400/80 mt-0.5">
-                  {departureInfo.includes("overdue") 
+                  {departureInfo.includes("overdue")
                     ? "Action Required: The departure date has passed. Please mark the tour as completed or cancelled."
                     : departureInfo.includes("Invalid")
                       ? "Action Required: The departure date is before the arrival date. Please correct the dates."
@@ -2129,7 +2129,7 @@ function TouristDetail({
                   {index !== t.itinerary.length - 1 && (
                     <div className="absolute left-[23px] top-12 bottom-[-32px] w-[2px] bg-gradient-to-b from-primary/30 via-primary/10 to-transparent" />
                   )}
-                  
+
                   {/* Day Badge */}
                   <div className="relative z-10 flex shrink-0 flex-col items-center">
                     <div className="flex h-12 w-12 flex-col items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-md ring-4 ring-background">
@@ -2166,7 +2166,7 @@ function TouristDetail({
                     {(d.destinations && d.destinations.length > 0) || (d.activities && d.activities.length > 0) ? (
                       <div className="mt-8 ml-2 space-y-0 relative">
                         <div className="absolute left-[7px] top-2 bottom-2 w-px bg-border/80" />
-                        
+
                         {d.destinations?.map((dest, i) => (
                           <div key={i} className="relative pb-8 last:pb-0 pl-8 group">
                             <div className="absolute left-[4px] top-1.5 h-2 w-2 rounded-full bg-background ring-[3px] ring-primary/40 transition-all group-hover:ring-primary" />
@@ -2174,7 +2174,7 @@ function TouristDetail({
                             <p className="mt-1.5 text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">{dest.activities}</p>
                           </div>
                         ))}
-                        
+
                         {!d.destinations?.length && d.activities?.map((a, i) => (
                           <div key={i} className="relative pb-6 last:pb-0 pl-8 group">
                             <div className="absolute left-[5px] top-2 h-1.5 w-1.5 rounded-full bg-primary/40 ring-4 ring-background transition-all group-hover:bg-primary" />
@@ -2208,7 +2208,7 @@ function TouristDetail({
                           </div>
                         )}
                       </div>
-                      
+
                       {d.hotelEmail && (
                         <Dialog>
                           <DialogTrigger asChild>
@@ -2217,40 +2217,40 @@ function TouristDetail({
                               Auto-Email Hotel
                             </Button>
                           </DialogTrigger>
-                        <DialogContent>
-                          <DialogHeader>
-                            <DialogTitle>Review Confirmation Email</DialogTitle>
-                            <DialogDescription>Automated email to {d.hotelEmail}</DialogDescription>
-                          </DialogHeader>
-                          <div className="space-y-4 py-2">
-                            <div className="grid gap-2">
-                              <Label>From</Label>
-                              <Input disabled defaultValue="info@ceylonsignaturetravels.com" />
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>Review Confirmation Email</DialogTitle>
+                              <DialogDescription>Automated email to {d.hotelEmail}</DialogDescription>
+                            </DialogHeader>
+                            <div className="space-y-4 py-2">
+                              <div className="grid gap-2">
+                                <Label>From</Label>
+                                <Input disabled defaultValue="info@ceylonsignaturetravels.com" />
+                              </div>
+                              <div className="grid gap-2">
+                                <Label htmlFor="subject">Subject</Label>
+                                <Input id="subject" defaultValue={`Booking Confirmation for ${t.name} (Ref: ${t.id})`} />
+                              </div>
+                              <div className="grid gap-2">
+                                <Label htmlFor="message">Message</Label>
+                                <textarea
+                                  id="message"
+                                  className="flex min-h-[160px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                                  defaultValue={`Dear Reservation Team at ${d.hotel},\n\nWe would like to confirm the booking for our client, ${t.name} (Group Size: ${t.pax}), arriving for Day ${d.day} of their tour.\n\nPlease let us know if everything is confirmed on your end and provide any relevant reservation numbers.\n\nBest regards,\nCeylon Signature Travels`}
+                                />
+                              </div>
                             </div>
-                            <div className="grid gap-2">
-                              <Label htmlFor="subject">Subject</Label>
-                              <Input id="subject" defaultValue={`Booking Confirmation for ${t.name} (Ref: ${t.id})`} />
-                            </div>
-                            <div className="grid gap-2">
-                              <Label htmlFor="message">Message</Label>
-                              <textarea
-                                id="message"
-                                className="flex min-h-[160px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                                defaultValue={`Dear Reservation Team at ${d.hotel},\n\nWe would like to confirm the booking for our client, ${t.name} (Group Size: ${t.pax}), arriving for Day ${d.day} of their tour.\n\nPlease let us know if everything is confirmed on your end and provide any relevant reservation numbers.\n\nBest regards,\nCeylon Signature Travels`}
-                              />
-                            </div>
-                          </div>
-                          <DialogFooter>
-                            <Button type="submit">Send Confirmation</Button>
-                          </DialogFooter>
-                        </DialogContent>
-                      </Dialog>
-                    )}
+                            <DialogFooter>
+                              <Button type="submit">Send Confirmation</Button>
+                            </DialogFooter>
+                          </DialogContent>
+                        </Dialog>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
           </TabsContent>
         </Tabs>
 
@@ -2418,84 +2418,84 @@ function AgentManagement({ agents, onAddAgent, onEditAgent, onDeleteAgent }: {
           </div>
           <Dialog open={addOpen} onOpenChange={setAddOpen}>
             <DialogTrigger asChild>
-            <Button size="sm" className="gap-1.5 rounded-lg shadow-sm text-xs h-8">
-              <UserPlus className="h-3.5 w-3.5" />
-              Add Agent
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Add new agent</DialogTitle>
-              <DialogDescription>Create a profile for a new agent.</DialogDescription>
-            </DialogHeader>
-            <div className="space-y-3">
-              <div>
-                <Label htmlFor="ag-name">Full name</Label>
-                <Input id="ag-name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="e.g. Amara Jayawardena" />
+              <Button size="sm" className="gap-1.5 rounded-lg shadow-sm text-xs h-8">
+                <UserPlus className="h-3.5 w-3.5" />
+                Add Agent
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Add new agent</DialogTitle>
+                <DialogDescription>Create a profile for a new agent.</DialogDescription>
+              </DialogHeader>
+              <div className="space-y-3">
+                <div>
+                  <Label htmlFor="ag-name">Full name</Label>
+                  <Input id="ag-name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="e.g. Amara Jayawardena" />
+                </div>
+                <div>
+                  <Label htmlFor="ag-email">Email</Label>
+                  <Input id="ag-email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="amara@horizon.travel" />
+                </div>
+                <div>
+                  <Label htmlFor="ag-region">Assigned region</Label>
+                  <Popover open={addRegionOpen} onOpenChange={setAddRegionOpen}>
+                    <PopoverTrigger asChild>
+                      <button
+                        id="ag-region"
+                        type="button"
+                        className="w-full flex items-center justify-between h-9 px-3 py-2 text-sm rounded-md border border-input bg-background hover:bg-muted text-left cursor-pointer"
+                      >
+                        <span className={form.region ? "text-foreground" : "text-muted-foreground"}>
+                          {form.region || "Choose a region"}
+                        </span>
+                        <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="p-0 w-[240px] flex flex-col z-[100] bg-card border border-border rounded-md shadow-md" align="start">
+                      <div className="p-2 border-b border-border">
+                        <Input
+                          placeholder="Search region..."
+                          value={addSearch}
+                          onChange={(e) => setAddSearch(e.target.value)}
+                          className="h-8 text-xs focus-visible:ring-0"
+                          autoFocus
+                        />
+                      </div>
+                      <div className="overflow-y-auto flex-1 max-h-[200px] py-1" style={{ scrollbarWidth: 'thin' }} onWheel={(e) => e.stopPropagation()} onTouchMove={(e) => e.stopPropagation()}>
+                        {regions
+                          .filter((r) => r.toLowerCase().includes(addSearch.toLowerCase()))
+                          .map((r) => (
+                            <button
+                              key={r}
+                              type="button"
+                              onClick={() => {
+                                setForm({ ...form, region: r });
+                                setAddRegionOpen(false);
+                                setAddSearch("");
+                              }}
+                              className="w-full text-left px-3 py-1.5 text-xs hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-between rounded-sm cursor-pointer"
+                            >
+                              <span className="text-slate-700 dark:text-slate-300">{r}</span>
+                              {form.region === r && (
+                                <span className="h-2 w-2 rounded-full bg-blue-500" />
+                              )}
+                            </button>
+                          ))}
+                        {regions.filter((r) => r.toLowerCase().includes(addSearch.toLowerCase())).length === 0 && (
+                          <div className="text-[10px] text-muted-foreground text-center py-2">No regions found</div>
+                        )}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                </div>
               </div>
-              <div>
-                <Label htmlFor="ag-email">Email</Label>
-                <Input id="ag-email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="amara@horizon.travel" />
-              </div>
-              <div>
-                <Label htmlFor="ag-region">Assigned region</Label>
-                <Popover open={addRegionOpen} onOpenChange={setAddRegionOpen}>
-                  <PopoverTrigger asChild>
-                    <button
-                      id="ag-region"
-                      type="button"
-                      className="w-full flex items-center justify-between h-9 px-3 py-2 text-sm rounded-md border border-input bg-background hover:bg-muted text-left cursor-pointer"
-                    >
-                      <span className={form.region ? "text-foreground" : "text-muted-foreground"}>
-                        {form.region || "Choose a region"}
-                      </span>
-                      <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
-                    </button>
-                  </PopoverTrigger>
-                  <PopoverContent className="p-0 w-[240px] flex flex-col z-[100] bg-card border border-border rounded-md shadow-md" align="start">
-                    <div className="p-2 border-b border-border">
-                      <Input
-                        placeholder="Search region..."
-                        value={addSearch}
-                        onChange={(e) => setAddSearch(e.target.value)}
-                        className="h-8 text-xs focus-visible:ring-0"
-                        autoFocus
-                      />
-                    </div>
-                    <div className="overflow-y-auto flex-1 max-h-[200px] py-1" style={{ scrollbarWidth: 'thin' }} onWheel={(e) => e.stopPropagation()} onTouchMove={(e) => e.stopPropagation()}>
-                      {regions
-                        .filter((r) => r.toLowerCase().includes(addSearch.toLowerCase()))
-                        .map((r) => (
-                          <button
-                            key={r}
-                            type="button"
-                            onClick={() => {
-                              setForm({ ...form, region: r });
-                              setAddRegionOpen(false);
-                              setAddSearch("");
-                            }}
-                            className="w-full text-left px-3 py-1.5 text-xs hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-between rounded-sm cursor-pointer"
-                          >
-                            <span className="text-slate-700 dark:text-slate-300">{r}</span>
-                            {form.region === r && (
-                              <span className="h-2 w-2 rounded-full bg-blue-500" />
-                            )}
-                          </button>
-                        ))}
-                      {regions.filter((r) => r.toLowerCase().includes(addSearch.toLowerCase())).length === 0 && (
-                        <div className="text-[10px] text-muted-foreground text-center py-2">No regions found</div>
-                      )}
-                    </div>
-                  </PopoverContent>
-                </Popover>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="ghost" onClick={() => setAddOpen(false)}>Cancel</Button>
-              <Button onClick={submitAdd}>Create agent</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+              <DialogFooter>
+                <Button variant="ghost" onClick={() => setAddOpen(false)}>Cancel</Button>
+                <Button onClick={submitAdd}>Create agent</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
 
@@ -2833,78 +2833,78 @@ function DriverManagement({
           </div>
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-            <Button size="sm" className="gap-1.5 rounded-lg shadow-sm text-xs h-8">
-              <UserPlus className="h-3.5 w-3.5" />
-              Add Driver / Guide
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Add new driver / guide</DialogTitle>
-              <DialogDescription>Create a profile for a driver or guide.</DialogDescription>
-            </DialogHeader>
-            <div className="space-y-3">
-              <div>
-                <Label htmlFor="drv-name">Full name</Label>
-                <Input
-                  id="drv-name"
-                  value={form.name}
-                  onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  placeholder="e.g. Kamal Perera"
-                />
-              </div>
-              <div>
-                <Label htmlFor="drv-phone">Phone Number</Label>
-                <div className="flex rounded-md shadow-sm">
-                  <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-input bg-muted text-muted-foreground text-sm font-semibold select-none">
-                    🇱🇰 +94
-                  </span>
+              <Button size="sm" className="gap-1.5 rounded-lg shadow-sm text-xs h-8">
+                <UserPlus className="h-3.5 w-3.5" />
+                Add Driver / Guide
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Add new driver / guide</DialogTitle>
+                <DialogDescription>Create a profile for a driver or guide.</DialogDescription>
+              </DialogHeader>
+              <div className="space-y-3">
+                <div>
+                  <Label htmlFor="drv-name">Full name</Label>
                   <Input
-                    id="drv-phone"
-                    value={form.phone}
-                    onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                    placeholder="77 123 4567"
-                    className="rounded-l-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                    id="drv-name"
+                    value={form.name}
+                    onChange={(e) => setForm({ ...form, name: e.target.value })}
+                    placeholder="e.g. Kamal Perera"
                   />
                 </div>
-              </div>
-
-              <div>
-                <Label htmlFor="drv-email">Email</Label>
-                <Input
-                  id="drv-email"
-                  type="email"
-                  value={form.email}
-                  onChange={(e) => setForm({ ...form, email: e.target.value })}
-                  placeholder="driver@example.com"
-                />
-              </div>
-              <div>
-                <div className="flex justify-between items-center mb-1">
-                  <Label htmlFor="drv-pw">Password</Label>
-                  <Button type="button" variant="link" className="h-auto p-0 text-xs" onClick={() => {
-                    const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
-                    let newPw = "";
-                    for (let i = 0; i < 10; i++) newPw += chars.charAt(Math.floor(Math.random() * chars.length));
-                    setForm({ ...form, password: newPw });
-                  }}>Generate Random</Button>
+                <div>
+                  <Label htmlFor="drv-phone">Phone Number</Label>
+                  <div className="flex rounded-md shadow-sm">
+                    <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-input bg-muted text-muted-foreground text-sm font-semibold select-none">
+                      🇱🇰 +94
+                    </span>
+                    <Input
+                      id="drv-phone"
+                      value={form.phone}
+                      onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                      placeholder="77 123 4567"
+                      className="rounded-l-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                    />
+                  </div>
                 </div>
-                <Input
-                  id="drv-pw"
-                  type="text"
-                  value={form.password}
-                  onChange={(e) => setForm({ ...form, password: e.target.value })}
-                  placeholder="Optional: Auto-assigns if empty"
-                />
-              </div>
 
-            </div>
-            <DialogFooter>
-              <Button variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
-              <Button onClick={submit}>Create profile</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+                <div>
+                  <Label htmlFor="drv-email">Email</Label>
+                  <Input
+                    id="drv-email"
+                    type="email"
+                    value={form.email}
+                    onChange={(e) => setForm({ ...form, email: e.target.value })}
+                    placeholder="driver@example.com"
+                  />
+                </div>
+                <div>
+                  <div className="flex justify-between items-center mb-1">
+                    <Label htmlFor="drv-pw">Password</Label>
+                    <Button type="button" variant="link" className="h-auto p-0 text-xs" onClick={() => {
+                      const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
+                      let newPw = "";
+                      for (let i = 0; i < 10; i++) newPw += chars.charAt(Math.floor(Math.random() * chars.length));
+                      setForm({ ...form, password: newPw });
+                    }}>Generate Random</Button>
+                  </div>
+                  <Input
+                    id="drv-pw"
+                    type="text"
+                    value={form.password}
+                    onChange={(e) => setForm({ ...form, password: e.target.value })}
+                    placeholder="Optional: Auto-assigns if empty"
+                  />
+                </div>
+
+              </div>
+              <DialogFooter>
+                <Button variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
+                <Button onClick={submit}>Create profile</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
 
@@ -3125,13 +3125,13 @@ function DashboardOverview({
 
   const upcomingArrivals = useMemo(() => {
     const today = new Date();
-    today.setHours(0,0,0,0);
+    today.setHours(0, 0, 0, 0);
     return tourists.filter(t => {
       if (t.status === "Cancelled" || t.status === "Completed" || t.isLead) return false;
       if (!t.arrival) return false;
       const arr = new Date(t.arrival);
       if (isNaN(arr.getTime())) return false;
-      arr.setHours(0,0,0,0);
+      arr.setHours(0, 0, 0, 0);
       const diffDays = Math.ceil((arr.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
       return diffDays >= 0 && diffDays <= 7;
     }).sort((a, b) => new Date(a.arrival!).getTime() - new Date(b.arrival!).getTime()).slice(0, 4);
@@ -3139,13 +3139,13 @@ function DashboardOverview({
 
   const departingSoonTourists = useMemo(() => {
     const today = new Date();
-    today.setHours(0,0,0,0);
+    today.setHours(0, 0, 0, 0);
     return tourists.filter(t => {
       if (t.status === "Cancelled" || t.status === "Completed" || t.isLead) return false;
       if (!t.departure) return false;
       const dep = new Date(t.departure);
       if (isNaN(dep.getTime())) return false;
-      dep.setHours(0,0,0,0);
+      dep.setHours(0, 0, 0, 0);
       const diffDays = Math.ceil((dep.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
       return diffDays <= 2;
     }).sort((a, b) => new Date(a.departure!).getTime() - new Date(b.departure!).getTime()).slice(0, 4);
@@ -3199,13 +3199,13 @@ function DashboardOverview({
             <div className="grid gap-6 lg:grid-cols-3">
               {/* Left Column: Active Tours & Arrivals/Departures */}
               <div className="lg:col-span-2 space-y-6">
-                
+
                 {/* Active Tours Panel */}
                 <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden flex flex-col">
                   <div className="border-b border-border bg-muted/30 px-5 py-3.5 flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Plane className="h-4 w-4 text-teal-500" />
-                      <h3 className="text-sm font-semibold text-foreground">Active Tours Overview</h3>
+                      <h3 className="text-sm font-semibold text-foreground">Tour Category Overview</h3>
                     </div>
                     <Button variant="ghost" size="sm" className="h-7 text-xs px-2" onClick={() => onNavigate("tours")}>
                       View All
@@ -3246,7 +3246,7 @@ function DashboardOverview({
 
                 {/* Arrivals & Departures Grid */}
                 <div className="grid gap-6 sm:grid-cols-2">
-                  
+
                   {/* Arrivals Panel */}
                   <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden flex flex-col">
                     <div className="border-b border-border bg-indigo-50/50 dark:bg-indigo-950/20 px-4 py-3 flex items-center gap-2">
@@ -3288,14 +3288,14 @@ function DashboardOverview({
                       ) : (
                         <div className="divide-y divide-border">
                           {departingSoonTourists.map(t => {
-                            const isOverdue = new Date(t.departure!) < new Date(new Date().setHours(0,0,0,0));
+                            const isOverdue = new Date(t.departure!) < new Date(new Date().setHours(0, 0, 0, 0));
                             return (
                               <div key={t.id} className="p-3 hover:bg-muted/20 transition-colors">
                                 <div className="flex justify-between items-start mb-1">
                                   <span className="text-sm font-medium">{t.name}</span>
                                   <span className={cn(
                                     "text-[10px] font-semibold px-2 py-0.5 rounded-full",
-                                    isOverdue 
+                                    isOverdue
                                       ? "bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300"
                                       : "bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300"
                                   )}>
@@ -3343,10 +3343,10 @@ function DashboardOverview({
                           <div key={alert.id} className="rounded-lg border border-border/60 bg-muted/30 p-3 flex flex-col gap-2">
                             <div className="flex justify-between items-start gap-2">
                               <span className="text-xs font-semibold text-foreground line-clamp-2">{alert.message}</span>
-                              <Button 
-                                variant="ghost" 
-                                size="sm" 
-                                className="h-6 w-6 p-0 text-muted-foreground hover:text-emerald-500 shrink-0" 
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 w-6 p-0 text-muted-foreground hover:text-emerald-500 shrink-0"
                                 onClick={() => onResolveAlert(alert.id)}
                                 title="Mark as resolved"
                               >
