@@ -2991,8 +2991,8 @@ function DriverManagement({
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Edit Driver</DialogTitle>
-            <DialogDescription>Update driver details.</DialogDescription>
+            <DialogTitle>Edit Driver/Guide</DialogTitle>
+            <DialogDescription>Update driver/guide details.</DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
             <div>
