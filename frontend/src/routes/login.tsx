@@ -1,6 +1,7 @@
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { supabase } from "../lib/supabase";
+import logoUrl from "@/assets/logo.png";
 import { toast } from "sonner";
 import { Plane, MapPinned, Mail, Lock, Eye, EyeOff, Loader2, Shield } from "lucide-react";
 
@@ -59,18 +60,15 @@ function LoginPage() {
       <div className="relative z-10 w-full max-w-[420px] rounded-2xl border border-slate-800/80 bg-slate-900/40 p-8 sm:p-10 backdrop-blur-xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] transition-all duration-300 hover:border-slate-800">
         <div className="flex flex-col items-center text-center">
           {/* Logo container with gradient border and subtle pulse */}
-          <div className="relative flex h-14 w-14 items-center justify-center rounded-[20px] shadow-lg shadow-indigo-500/25 transition-all duration-300" style={{
-            background: 'linear-gradient(135deg, #2dd4bf 0%, #6366f1 45%, #ec4899 75%, #f97316 100%)',
-            boxShadow: '0 8px 24px rgba(99,102,241,0.35), inset 0 2px 4px rgba(255,255,255,0.2)'
-          }}>
-            <Plane className="h-7 w-7 text-white" strokeWidth={2.5} />
+          <div className="relative flex h-16 w-16 items-center justify-center transition-all duration-300 rounded-full overflow-hidden bg-white shadow-lg shadow-indigo-500/10 ring-1 ring-slate-800">
+            <img src={logoUrl} alt="Nex Toura Logo" className="h-full w-full object-cover scale-[1.05]" />
           </div>
 
           <h2 className="mt-5 text-2xl font-extrabold tracking-tight text-white transition-all duration-300">
             NEX TOURA
           </h2>
-          <p className="mt-2 text-xs font-semibold uppercase tracking-[0.3em] text-indigo-400/80">
-            Since 2026
+          <p className="mt-2 text-[10px] font-bold uppercase tracking-[0.25em] text-indigo-400/80">
+            Operations Console
           </p>
         </div>
 

@@ -1,5 +1,7 @@
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { supabase } from "@/lib/supabase";
+import logoUrl from "@/assets/logo.png";
+import ReportsView from "@/components/ReportsView";
 import { useMemo, useState, useEffect } from "react";
 import {
   LayoutDashboard,
@@ -21,6 +23,7 @@ import {
   Mail,
   CreditCard,
   AlertTriangle,
+  AlertCircle,
   Info,
   CheckCircle2,
   Building2,
@@ -159,7 +162,7 @@ const NAV = NAV_SECTIONS.flatMap((s) => s.items);
 function Console() {
   const [nav, setNav] = useState<NavKey>("tours");
   const [agentFilter, setAgentFilter] = useState("all");
-  const [statusFilter, setStatusFilter] = useState<"all" | TourStatus>("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | TourStatus | "DepartingSoon">("all");
   const [driverFilter, setDriverFilter] = useState("All Drivers");
   const [query, setQuery] = useState("");
   const [selectedId, setSelectedId] = useState<string>("t1");
@@ -427,7 +430,30 @@ function Console() {
         if (agent && t.agent !== (agent.agent_name || agent.name)) return false;
       }
       if (statusFilter !== "all") {
-        if (statusFilter === "Active") {
+        if (statusFilter === "DepartingSoon") {
+          let isDepartingSoon = false;
+          if (t.departure) {
+            const dep = new Date(t.departure);
+            if (!isNaN(dep.getTime())) {
+              const today = new Date();
+              dep.setHours(0, 0, 0, 0);
+              today.setHours(0, 0, 0, 0);
+              const diffDays = Math.ceil((dep.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+
+              let isInvalid = false;
+              if (t.arrival) {
+                const arrDate = new Date(t.arrival);
+                arrDate.setHours(0, 0, 0, 0);
+                if (!isNaN(arrDate.getTime()) && dep < arrDate) {
+                  isInvalid = true;
+                }
+              }
+
+              isDepartingSoon = (diffDays <= 2 || isInvalid) && t.status !== "Completed" && t.status !== "Cancelled";
+            }
+          }
+          if (!isDepartingSoon) return false;
+        } else if (statusFilter === "Active") {
           if (t.status !== "Active" && t.status !== "On Tour") return false;
         } else {
           if (t.status !== statusFilter) return false;
@@ -458,10 +484,39 @@ function Console() {
   const selected = filtered.find((t) => t.id === selectedId) ?? filtered[0] ?? touristsList[0];
 
   const stats = useMemo(() => {
-    const active = touristsList.filter((t) => t.status === "Active").length;
+    const active = touristsList.filter((t) => t.status === "Active" || t.status === "On Tour").length;
     const upcoming = touristsList.filter((t) => t.status === "Upcoming").length;
-    const pax = touristsList.filter((t) => t.status !== "Completed").reduce((s, t) => s + t.pax, 0);
-    return { active, upcoming, pax, countries: new Set(touristsList.map((t) => t.country)).size };
+    const pax = touristsList.filter((t) => t.status === "Active" || t.status === "On Tour").reduce((s, t) => s + t.pax, 0);
+    return { active, upcoming, pax, countries: new Set(touristsList.filter(t => t.status !== "Cancelled" && t.status !== "Completed").map((t) => t.country)).size };
+  }, [touristsList]);
+
+  const departingTouristsCount = useMemo(() => {
+    let count = 0;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    for (const t of touristsList) {
+      if (t.departure) {
+        const departureDate = new Date(t.departure);
+        if (!isNaN(departureDate.getTime())) {
+          departureDate.setHours(0, 0, 0, 0);
+          const diffDays = Math.ceil((departureDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+
+          let isInvalid = false;
+          if (t.arrival) {
+            const arrDate = new Date(t.arrival);
+            arrDate.setHours(0, 0, 0, 0);
+            if (!isNaN(arrDate.getTime()) && departureDate < arrDate) {
+              isInvalid = true;
+            }
+          }
+
+          if ((diffDays <= 2 || isInvalid) && t.status !== "Completed" && t.status !== "Cancelled") {
+            count++;
+          }
+        }
+      }
+    }
+    return count;
   }, [touristsList]);
 
   const filteredDriversForFilter = drivers.filter((d: any) =>
@@ -496,13 +551,8 @@ function Console() {
               : 'radial-gradient(circle, rgba(59,130,246,0.12) 0%, transparent 70%)'
           }} />
           <div className="flex items-center gap-3.5 mb-1 px-1">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[18px] relative overflow-hidden transition-all duration-300 hover:scale-105" style={{
-              background: 'linear-gradient(135deg, #2dd4bf 0%, #6366f1 45%, #ec4899 75%, #f97316 100%)',
-              boxShadow: theme === "light"
-                ? '0 6px 20px rgba(99,102,241,0.25), inset 0 2px 4px rgba(255,255,255,0.3)'
-                : '0 8px 24px rgba(99,102,241,0.35), inset 0 2px 4px rgba(255,255,255,0.2)',
-            }}>
-              <Plane className="h-5 w-5 text-white" strokeWidth={2.5} />
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center relative transition-all duration-300 hover:scale-105 rounded-full overflow-hidden bg-white shadow-sm ring-1 ring-border/50">
+              <img src={logoUrl} alt="Nex Toura Logo" className="h-full w-full object-cover scale-[1.05]" />
             </div>
             <div className="min-w-0">
               <div className={cn(
@@ -512,65 +562,67 @@ function Console() {
                 NEX <span className={cn("font-medium transition-colors", theme === "light" ? "text-indigo-600" : "text-indigo-400")}>TOURA</span>
               </div>
               <div className={cn(
-                "mt-1.5 text-[9px] font-semibold uppercase tracking-[0.25em] transition-colors",
+                "mt-1 text-[9.5px] font-bold uppercase tracking-[0.2em] transition-colors",
                 theme === "light" ? "text-slate-500" : "text-slate-400"
               )}>
-                Since 2026
+                Operations Console
               </div>
             </div>      </div>
         </div>
 
         {/* ── Agent filter ── */}
-        <div className="px-5 pb-4">
-          <Label className={cn(
-            "mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.18em] transition-colors",
-            theme === "light" ? "text-slate-500/80" : "text-slate-500"
-          )}>
-            Agent View
-          </Label>
-          <div className="flex gap-2">
-            <Select value={agentFilter} onValueChange={(val) => {
-              setAgentFilter(val);
-              setIsDetailOpen(false);
-              setSelectedId("");
-            }}>
-              <SelectTrigger className={cn(
-                "h-9 flex-1 rounded-lg transition-all duration-200 focus:ring-blue-500/40",
-                theme === "light"
-                  ? "border-slate-300 bg-white text-slate-800 hover:bg-slate-50"
-                  : "border-slate-700/60 bg-slate-800/60 text-slate-200 hover:bg-slate-800"
-              )}>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Agents</SelectItem>
-                {agents.map((a) => (
-                  <SelectItem key={a.id} value={a.id}>
-                    {a.agent_name || a.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {agentFilter !== "all" && (
-              <button
-                onClick={() => {
-                  setAgentFilter("all");
-                  setIsDetailOpen(false);
-                  setSelectedId("");
-                }}
-                title="Reset to all agents"
-                className={cn(
-                  "h-9 w-9 shrink-0 flex items-center justify-center rounded-lg border transition-all duration-200",
+        {(nav === "tours" || nav === "leads") && (
+          <div className="px-5 pb-4">
+            <Label className={cn(
+              "mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.18em] transition-colors",
+              theme === "light" ? "text-slate-500/80" : "text-slate-500"
+            )}>
+              Agent View
+            </Label>
+            <div className="flex gap-2">
+              <Select value={agentFilter} onValueChange={(val) => {
+                setAgentFilter(val);
+                setIsDetailOpen(false);
+                setSelectedId("");
+              }}>
+                <SelectTrigger className={cn(
+                  "h-9 flex-1 rounded-lg transition-all duration-200 focus:ring-blue-500/40",
                   theme === "light"
-                    ? "border-slate-300 bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-800"
-                    : "border-slate-700/60 bg-slate-800/60 text-slate-400 hover:bg-slate-700 hover:text-white"
-                )}
-              >
-                <RotateCcw className="h-3.5 w-3.5" />
-              </button>
-            )}
+                    ? "border-slate-300 bg-white text-slate-800 hover:bg-slate-50"
+                    : "border-slate-700/60 bg-slate-800/60 text-slate-200 hover:bg-slate-800"
+                )}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Agents</SelectItem>
+                  {agents.map((a) => (
+                    <SelectItem key={a.id} value={a.id}>
+                      {a.agent_name || a.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {agentFilter !== "all" && (
+                <button
+                  onClick={() => {
+                    setAgentFilter("all");
+                    setIsDetailOpen(false);
+                    setSelectedId("");
+                  }}
+                  title="Reset to all agents"
+                  className={cn(
+                    "h-9 w-9 shrink-0 flex items-center justify-center rounded-lg border transition-all duration-200",
+                    theme === "light"
+                      ? "border-slate-300 bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-800"
+                      : "border-slate-700/60 bg-slate-800/60 text-slate-400 hover:bg-slate-700 hover:text-white"
+                  )}
+                >
+                  <RotateCcw className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* ── Divider ── */}
         <div className={cn(
@@ -721,7 +773,7 @@ function Console() {
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="space-y-4 text-[14px]">
                   <div className="flex items-center gap-3.5 text-muted-foreground">
                     <div className="grid h-8 w-8 place-items-center rounded-full bg-accent text-foreground/70">
@@ -741,18 +793,18 @@ function Console() {
                         <Phone className="h-4 w-4" />
                       </div>
                       <span className="truncate">
-                        {typeof companyProfile.phone_numbers === 'string' 
+                        {typeof companyProfile.phone_numbers === 'string'
                           ? (() => {
-                              try {
-                                const parsed = JSON.parse(companyProfile.phone_numbers);
-                                if (Array.isArray(parsed) && parsed.length > 0) {
-                                  return `+${parsed[0].code} ${parsed[0].number}`;
-                                }
-                                return companyProfile.phone_numbers;
-                              } catch {
-                                return companyProfile.phone_numbers;
+                            try {
+                              const parsed = JSON.parse(companyProfile.phone_numbers);
+                              if (Array.isArray(parsed) && parsed.length > 0) {
+                                return `+${parsed[0].code} ${parsed[0].number}`;
                               }
-                            })()
+                              return companyProfile.phone_numbers;
+                            } catch {
+                              return companyProfile.phone_numbers;
+                            }
+                          })()
                           : "No phone provided"}
                       </span>
                     </div>
@@ -845,16 +897,6 @@ function Console() {
               </div>
             </div>
             <div className="flex items-center gap-1.5">
-              <Button
-                id="view-graphs-btn"
-                variant="outline"
-                size="sm"
-                onClick={() => router.navigate({ to: "/analytics" })}
-                className="flex items-center gap-1.5 h-8 rounded-lg border border-border px-3 text-[11px] font-semibold text-muted-foreground bg-card/50 transition-all hover:bg-accent hover:text-primary hover:border-primary/30 shadow-sm"
-              >
-                <BarChart3 className="h-3.5 w-3.5 text-primary" />
-                <span className="hidden sm:inline">View Graphs</span>
-              </Button>
               <div className="h-4 w-px bg-border mx-0.5" />
               <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground transition-all duration-200 relative">
                 <Bell className="h-4 w-4" />
@@ -950,8 +992,24 @@ function Console() {
                 }
               }}
             />
-          ) : nav === "dashboard" || nav === "reports" ? (
-            <DashboardOverview stats={stats} navLabel={nav} onNavigate={setNav} />
+          ) : nav === "dashboard" ? (
+            <DashboardOverview
+              stats={stats}
+              navLabel={nav}
+              onNavigate={setNav}
+              tourists={touristsList}
+              notifications={notifications}
+              onResolveAlert={async (id) => {
+                try {
+                  await fetch(`http://localhost:8000/api/notifications/${id}/resolve`, { method: "PATCH" });
+                  if (companyId) loadData(companyId);
+                } catch (e) {
+                  console.error(e);
+                }
+              }}
+            />
+          ) : nav === "reports" ? (
+            <ReportsView tourists={touristsList} agents={agents} drivers={drivers} />
           ) : nav === "settings" ? (
             <SettingsView companyProfile={companyProfile} setCompanyProfile={setCompanyProfile} />
           ) : (
@@ -972,6 +1030,7 @@ function Console() {
               statusAlertCounts={statusAlertCounts}
               notifications={notifications}
               nav={nav}
+              departingTouristsCount={departingTouristsCount}
               onStatusChange={async (id, status) => {
                 try {
                   const res = await fetch(`https://cst-tour-management-system.onrender.com/api/tourists/${id}/status`, {
@@ -988,6 +1047,13 @@ function Console() {
                   }
                 } catch (e) {
                   toast.error("Error updating status");
+                  console.error(e);
+                }
+              }}
+              onRefresh={async () => {
+                if (companyId) {
+                  await loadData(companyId);
+                  toast.success("Data refreshed successfully");
                 }
               }}
               onResolveAlert={async (id) => {
@@ -1149,11 +1215,8 @@ function Console() {
 
             {/* Center: Brand logo */}
             <div className="flex flex-1 flex-col items-center justify-center px-4">
-              <div className="grid h-11 w-11 place-items-center rounded-xl" style={{
-                background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
-                boxShadow: '0 4px 16px rgba(59,130,246,0.15)',
-              }}>
-                <MapPinned className="h-5.5 w-5.5 text-white" strokeWidth={2} />
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center relative transition-all duration-300 hover:scale-105 rounded-full overflow-hidden bg-white shadow-sm ring-1 ring-border/50">
+                <img src={logoUrl} alt="Nex Toura Logo" className="h-full w-full object-cover scale-[1.05]" />
               </div>
             </div>
 
@@ -1285,13 +1348,15 @@ function ToursWorkspace({
   onConfirmTour,
   onDeleteClient,
   nav,
+  departingTouristsCount,
   onStatusChange,
+  onRefresh,
 }: {
   drivers: any[];
   query: string;
   setQuery: (v: string) => void;
-  statusFilter: "all" | TourStatus;
-  setStatusFilter: (v: "all" | TourStatus) => void;
+  statusFilter: "all" | TourStatus | "DepartingSoon";
+  setStatusFilter: (v: "all" | TourStatus | "DepartingSoon") => void;
   driverFilter: string;
   setDriverFilter: (v: string) => void;
   tourists: Tourist[];
@@ -1307,11 +1372,14 @@ function ToursWorkspace({
   onConfirmTour: (t: Tourist) => void;
   onDeleteClient: (id: string) => void;
   nav: string;
+  departingTouristsCount: number;
   onStatusChange?: (id: string, status: TourStatus) => void;
+  onRefresh?: () => Promise<void> | void;
 }) {
   const wsRouter = useRouter();
   const [driverPopoverOpen, setDriverPopoverOpen] = useState(false);
   const [driverSearchQuery, setDriverSearchQuery] = useState("");
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
     if (!driverPopoverOpen) {
@@ -1375,7 +1443,7 @@ function ToursWorkspace({
                     autoFocus
                   />
                 </div>
-                <div className="overflow-y-auto flex-1 max-h-[200px] py-1">
+                <div className="overflow-y-auto flex-1 max-h-[200px] py-1" style={{ scrollbarWidth: 'thin' }} onWheel={(e) => e.stopPropagation()} onTouchMove={(e) => e.stopPropagation()}>
                   <button
                     type="button"
                     onClick={() => {
@@ -1410,6 +1478,22 @@ function ToursWorkspace({
                 </div>
               </PopoverContent>
             </Popover>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8.5 w-8.5 rounded-lg border-border/80 bg-background hover:bg-accent/40 text-muted-foreground hover:text-foreground transition-all duration-200 shadow-none"
+              onClick={() => {
+                setDriverFilter("All Drivers");
+                setQuery("");
+                setStatusFilter("all");
+                if (onRefresh) {
+                  onRefresh();
+                }
+              }}
+              title="Refresh Data & Reset Filters"
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
+            </Button>
           </div>
 
           {/* Status bar */}
@@ -1456,6 +1540,14 @@ function ToursWorkspace({
                   activeText: "text-orange-600 dark:text-orange-400 bg-background",
                   iconClass: "text-orange-600 dark:text-orange-400"
                 },
+                ...(departingTouristsCount > 0 ? [{
+                  key: "DepartingSoon",
+                  label: `Departing Soon (${departingTouristsCount})`,
+                  icon: Bell,
+                  activeBorder: "border-amber-200/60 dark:border-amber-900/40",
+                  activeText: "text-amber-600 dark:text-amber-400 bg-background",
+                  iconClass: "text-amber-600 dark:text-amber-400"
+                }] : [])
               ].map((tab) => {
                 const Icon = tab.icon;
                 const active = statusFilter === tab.key;
@@ -1537,6 +1629,38 @@ function ToursWorkspace({
                           : t.status === "Cancelled"
                             ? "border-l-orange-400"
                             : "border-l-slate-300 dark:border-l-slate-600";
+
+                    let departureInfo = null;
+                    if (t.departure) {
+                      const departureDate = new Date(t.departure);
+                      if (!isNaN(departureDate.getTime())) {
+                        const today = new Date();
+                        departureDate.setHours(0, 0, 0, 0);
+                        today.setHours(0, 0, 0, 0);
+                        const diffTime = departureDate.getTime() - today.getTime();
+                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                        let isInvalid = false;
+                        if (t.arrival) {
+                          const arrDate = new Date(t.arrival);
+                          arrDate.setHours(0, 0, 0, 0);
+                          if (!isNaN(arrDate.getTime()) && departureDate < arrDate) {
+                            isInvalid = true;
+                          }
+                        }
+
+                        if (t.status !== "Completed" && t.status !== "Cancelled") {
+                          if (isInvalid) {
+                            departureInfo = "Invalid Dates";
+                          } else if (diffDays <= 2 && diffDays >= 0) {
+                            departureInfo = diffDays === 0 ? "Departing today" : diffDays === 1 ? "Departing tomorrow" : `Departing in ${diffDays} days`;
+                          } else if (diffDays < 0) {
+                            departureInfo = `Departure overdue by ${Math.abs(diffDays)} ${Math.abs(diffDays) === 1 ? "day" : "days"}`;
+                          }
+                        }
+                      }
+                    }
+
                     return (
                       <div
                         key={t.id}
@@ -1598,6 +1722,15 @@ function ToursWorkspace({
                             <div className="mt-1 text-[11px] text-muted-foreground">Driver: {t.driver.split(" ")[0]}</div>
                           </div>
                         </div>
+                        {departureInfo && (
+                          <div className="mt-3.5 flex items-center gap-2 rounded-md bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-500/10 dark:to-orange-500/10 px-3 py-1.5 text-[11px] font-semibold text-amber-700 dark:text-amber-400 border border-amber-200/50 dark:border-amber-500/20">
+                            <div className="relative flex h-1.5 w-1.5 shrink-0">
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-amber-500"></span>
+                            </div>
+                            {departureInfo}
+                          </div>
+                        )}
                       </div>
                     );
                   })}
@@ -1667,8 +1800,8 @@ function StatusPill({ status, onChange }: { status: TourStatus, onChange?: (stat
         {(["Upcoming", "Active", "Completed", "Cancelled"] as TourStatus[]).map((s) => {
           const { icon: MenuIcon } = config[s];
           return (
-            <DropdownMenuItem 
-              key={s} 
+            <DropdownMenuItem
+              key={s}
               onClick={(e) => {
                 e.stopPropagation();
                 onChange(s);
@@ -1711,9 +1844,66 @@ function TouristDetail({
   const activeGuideNotices = activeAlerts.filter((n) => n.type !== "alert");
   const resolvedAlerts = personAlerts.filter((n) => n.resolved);
 
+  const departureInfo = useMemo(() => {
+    if (!t.departure) return null;
+    const departureDate = new Date(t.departure);
+    if (isNaN(departureDate.getTime())) return null;
+    const today = new Date();
+    departureDate.setHours(0, 0, 0, 0);
+    today.setHours(0, 0, 0, 0);
+    const diffTime = departureDate.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    let isInvalid = false;
+    if (t.arrival) {
+      const arrDate = new Date(t.arrival);
+      arrDate.setHours(0, 0, 0, 0);
+      if (!isNaN(arrDate.getTime()) && departureDate < arrDate) {
+        isInvalid = true;
+      }
+    }
+
+    if (t.status !== "Completed" && t.status !== "Cancelled") {
+      if (isInvalid) {
+        return "Invalid Dates";
+      } else if (diffDays <= 2 && diffDays >= 0) {
+        if (diffDays === 0) return "Departing today";
+        if (diffDays === 1) return "Departing tomorrow";
+        return `Departing in ${diffDays} days`;
+      } else if (diffDays < 0) {
+        return `Departure overdue by ${Math.abs(diffDays)} ${Math.abs(diffDays) === 1 ? "day" : "days"}`;
+      }
+    }
+    return null;
+  }, [t.departure]);
+
   return (
     <ScrollArea className="h-full">
       <div key={t.id} className="animate-in fade-in slide-in-from-right-2 duration-200">
+        {departureInfo && (
+          <div className="relative overflow-hidden bg-gradient-to-r from-amber-50/90 to-orange-50/90 dark:from-amber-950/40 dark:to-orange-950/40 border-b border-amber-200/60 dark:border-amber-900/50 px-7 py-3.5 backdrop-blur-md">
+            <div className="flex items-center gap-3.5 relative z-10">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/60 text-amber-600 dark:text-amber-400 ring-1 ring-amber-200/80 dark:ring-amber-800/80 shadow-sm relative">
+                <div className="absolute inset-0 rounded-full animate-ping bg-amber-400/20" />
+                <Plane className="h-4 w-4 relative z-10" />
+              </div>
+              <div>
+                <div className="text-[13px] font-bold text-amber-900 dark:text-amber-100 tracking-tight">
+                  {departureInfo}
+                </div>
+                <div className="text-[11px] font-medium text-amber-700/80 dark:text-amber-400/80 mt-0.5">
+                  {departureInfo.includes("overdue")
+                    ? "Action Required: The departure date has passed. Please mark the tour as completed or cancelled."
+                    : departureInfo.includes("Invalid")
+                      ? "Action Required: The departure date is before the arrival date. Please correct the dates."
+                      : "Reminder: Double-check that all final transfers and checkout arrangements are set."}
+                </div>
+              </div>
+            </div>
+            {/* Decorative background accent */}
+            <div className="absolute right-0 top-0 bottom-0 w-1/3 bg-gradient-to-l from-amber-500/10 to-transparent pointer-events-none" />
+          </div>
+        )}
         {/* Header */}
         <div className="border-b border-border bg-card/90 backdrop-blur-sm px-7 py-5">
           {onBack && (
@@ -1754,12 +1944,12 @@ function TouristDetail({
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
                   <h2 className="truncate text-[16px] font-bold tracking-tight text-foreground">{t.name}</h2>
-                  <StatusPill 
-                    status={t.status} 
-                    onChange={onStatusChange ? (newStatus) => onStatusChange(t.id, newStatus) : undefined} 
+                  <StatusPill
+                    status={t.status}
+                    onChange={onStatusChange ? (newStatus) => onStatusChange(t.id, newStatus) : undefined}
                   />
                 </div>
-                <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
+                <div className="mt-1 flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
                   <div className="flex items-center gap-1.5">
                     <MapPin className="h-3.5 w-3.5" />
                     {t.currentLocation}
@@ -1768,6 +1958,18 @@ function TouristDetail({
                     <Calendar className="h-3.5 w-3.5" />
                     {t.duration}
                   </div>
+                  {t.arrival && (
+                    <div className="flex items-center gap-1.5">
+                      <Plane className="h-3.5 w-3.5 rotate-90" />
+                      Arr: {t.arrival}
+                    </div>
+                  )}
+                  {t.departure && (
+                    <div className="flex items-center gap-1.5">
+                      <Plane className="h-3.5 w-3.5" />
+                      Dep: {t.departure}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -1919,104 +2121,136 @@ function TouristDetail({
             </div>
           </TabsContent>
 
-          <TabsContent value="itinerary" className="mt-5">
-            <ol className="relative ml-3 space-y-5 border-l border-border pl-6">
-              {t.itinerary.map((d) => (
-                <li key={d.day} className="relative">
-                  <span className="absolute -left-[31px] top-0.5 grid h-6 w-6 place-items-center rounded-full border-2 border-background bg-primary text-[10px] font-semibold text-primary-foreground">
-                    {d.day.toString().padStart(2, "0")}
-                  </span>
-                  <div className="rounded-xl border border-border bg-card p-4 transition-all hover:shadow-sm">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <div className="flex flex-wrap items-center gap-3">
-                        <div>
-                          <div className="text-xs uppercase tracking-wider text-muted-foreground">
-                            Day {d.day.toString().padStart(2, "0")} {d.location ? `· ${d.location}` : ""}
-                          </div>
-                          <div className="mt-0.5 text-sm font-semibold">{d.title}</div>
-                        </div>
-                        {d.status === 'Completed' ? (
-                          <div className="flex items-center gap-1 rounded-full bg-green-50 px-2 py-0.5 text-[10px] font-medium text-green-700 border border-green-200 dark:bg-green-500/10 dark:text-green-400 dark:border-green-500/20">
-                            <CheckCircle2 className="h-3 w-3" /> Arrived
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-medium text-amber-600 border border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20">
-                            <Clock className="h-3 w-3" /> Pending
+          <TabsContent value="itinerary" className="mt-8">
+            <div className="space-y-8">
+              {t.itinerary.map((d, index) => (
+                <div key={d.day} className="relative flex gap-5 sm:gap-6">
+                  {/* Timeline track connecting days */}
+                  {index !== t.itinerary.length - 1 && (
+                    <div className="absolute left-[23px] top-12 bottom-[-32px] w-[2px] bg-gradient-to-b from-primary/30 via-primary/10 to-transparent" />
+                  )}
+
+                  {/* Day Badge */}
+                  <div className="relative z-10 flex shrink-0 flex-col items-center">
+                    <div className="flex h-12 w-12 flex-col items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-md ring-4 ring-background">
+                      <span className="text-[10px] font-bold uppercase tracking-wider opacity-80">Day</span>
+                      <span className="text-lg font-bold leading-none">{d.day.toString().padStart(2, "0")}</span>
+                    </div>
+                  </div>
+
+                  {/* Content Card */}
+                  <div className="flex-1 rounded-2xl border border-border/60 bg-card p-5 sm:p-7 shadow-sm ring-1 ring-black/[0.02] transition-all hover:shadow-md dark:ring-white/[0.02]">
+                    {/* Header */}
+                    <div className="flex flex-wrap items-start justify-between gap-4">
+                      <div>
+                        <h3 className="text-lg font-bold tracking-tight text-foreground">{d.title || d.location}</h3>
+                        {d.title && d.location && (
+                          <div className="mt-1 flex items-center gap-1.5 text-sm font-medium text-muted-foreground">
+                            <MapPin className="h-3.5 w-3.5 text-primary/70" />
+                            {d.location}
                           </div>
                         )}
                       </div>
+                      {d.status === 'Completed' ? (
+                        <div className="flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide text-emerald-700 ring-1 ring-inset ring-emerald-600/20 dark:bg-emerald-500/10 dark:text-emerald-400">
+                          <CheckCircle2 className="h-3.5 w-3.5" /> Arrived
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide text-amber-700 ring-1 ring-inset ring-amber-600/20 dark:bg-amber-500/10 dark:text-amber-400">
+                          <Clock className="h-3.5 w-3.5" /> Pending
+                        </div>
+                      )}
                     </div>
 
-                    {d.destinations && d.destinations.length > 0 ? (
-                      <div className="mt-4 space-y-4">
-                        {d.destinations.map((dest, i) => (
-                          <div key={i} className="space-y-1.5 relative pl-4 border-l-2 border-muted">
-                            <span className="absolute -left-1.5 top-1.5 h-2 w-2 rounded-full bg-primary/40 ring-4 ring-background" />
-                            <h4 className="text-sm font-medium">{dest.location}</h4>
-                            <p className="text-[13px] text-muted-foreground leading-relaxed whitespace-pre-wrap">{dest.activities}</p>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <ul className="mt-3 space-y-1 text-sm text-muted-foreground">
-                        {d.activities?.map((a, i) => (
-                          <li key={i} className="flex gap-2">
-                            <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-muted-foreground/60" />
-                            <span>{a}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
+                    {/* Destinations Timeline */}
+                    {(d.destinations && d.destinations.length > 0) || (d.activities && d.activities.length > 0) ? (
+                      <div className="mt-8 ml-2 space-y-0 relative">
+                        <div className="absolute left-[7px] top-2 bottom-2 w-px bg-border/80" />
 
-                    <div className="mt-4 grid gap-2 rounded-xl bg-accent/30 p-3 sm:grid-cols-[1fr_1fr_auto] items-center">
-                      <div className="flex items-center gap-2 text-xs">
-                        <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
-                        <span className="font-medium">{d.hotel}</span>
+                        {d.destinations?.map((dest, i) => (
+                          <div key={i} className="relative pb-8 last:pb-0 pl-8 group">
+                            <div className="absolute left-[4px] top-1.5 h-2 w-2 rounded-full bg-background ring-[3px] ring-primary/40 transition-all group-hover:ring-primary" />
+                            <h4 className="text-sm font-bold text-foreground">{dest.location}</h4>
+                            <p className="mt-1.5 text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">{dest.activities}</p>
+                          </div>
+                        ))}
+
+                        {!d.destinations?.length && d.activities?.map((a, i) => (
+                          <div key={i} className="relative pb-6 last:pb-0 pl-8 group">
+                            <div className="absolute left-[5px] top-2 h-1.5 w-1.5 rounded-full bg-primary/40 ring-4 ring-background transition-all group-hover:bg-primary" />
+                            <p className="text-sm text-muted-foreground leading-relaxed">{a}</p>
+                          </div>
+                        ))}
                       </div>
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <Mail className="h-3.5 w-3.5" />
-                        <span className="truncate">{d.hotelEmail}</span>
-                      </div>
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button variant="outline" size="sm" className="h-7 text-[10px] gap-1.5 w-full sm:w-auto bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100 rounded-lg dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/20 dark:hover:bg-blue-500/20">
-                            <Send className="h-3 w-3" />
-                            Review Auto-Generated Email
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                          <DialogHeader>
-                            <DialogTitle>Review Confirmation Email</DialogTitle>
-                            <DialogDescription>Automated email to {d.hotelEmail}</DialogDescription>
-                          </DialogHeader>
-                          <div className="space-y-4 py-2">
-                            <div className="grid gap-2">
-                              <Label>From</Label>
-                              <Input disabled defaultValue="info@ceylonsignaturetravels.com" />
+                    ) : null}
+
+                    {/* Hotel Footer */}
+                    <div className="mt-8 flex flex-wrap items-center justify-between gap-5 rounded-xl bg-slate-50 p-4 ring-1 ring-inset ring-slate-100 dark:bg-slate-900/40 dark:ring-slate-800">
+                      <div className="flex flex-wrap items-center gap-6">
+                        <div className="flex items-center gap-3">
+                          <div className="grid h-10 w-10 place-items-center rounded-lg bg-blue-100/50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400">
+                            <Building2 className="h-5 w-5" />
+                          </div>
+                          <div>
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Accommodation</p>
+                            <p className="text-sm font-bold text-slate-700 dark:text-slate-200">{d.hotel || "Not Specified"}</p>
+                          </div>
+                        </div>
+                        {d.hotelEmail && (
+                          <div className="flex items-center gap-3">
+                            <div className="grid h-10 w-10 place-items-center rounded-lg bg-slate-200/50 text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                              <Mail className="h-4 w-4" />
                             </div>
-                            <div className="grid gap-2">
-                              <Label htmlFor="subject">Subject</Label>
-                              <Input id="subject" defaultValue={`Booking Confirmation for ${t.name} (Ref: ${t.id})`} />
-                            </div>
-                            <div className="grid gap-2">
-                              <Label htmlFor="message">Message</Label>
-                              <textarea
-                                id="message"
-                                className="flex min-h-[160px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                                defaultValue={`Dear Reservation Team at ${d.hotel},\n\nWe would like to confirm the booking for our client, ${t.name} (Group Size: ${t.pax}), arriving for Day ${d.day} of their tour.\n\nPlease let us know if everything is confirmed on your end and provide any relevant reservation numbers.\n\nBest regards,\nCeylon Signature Travels`}
-                              />
+                            <div>
+                              <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Contact</p>
+                              <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">{d.hotelEmail}</p>
                             </div>
                           </div>
-                          <DialogFooter>
-                            <Button type="submit">Send Confirmation</Button>
-                          </DialogFooter>
-                        </DialogContent>
-                      </Dialog>
+                        )}
+                      </div>
+
+                      {d.hotelEmail && (
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button variant="outline" size="sm" className="h-9 gap-2 bg-white text-xs font-bold text-primary shadow-sm hover:bg-slate-50 hover:text-primary dark:bg-slate-950 dark:border-slate-800 dark:hover:bg-slate-900 w-full sm:w-auto">
+                              <Send className="h-3.5 w-3.5" />
+                              Auto-Email Hotel
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>Review Confirmation Email</DialogTitle>
+                              <DialogDescription>Automated email to {d.hotelEmail}</DialogDescription>
+                            </DialogHeader>
+                            <div className="space-y-4 py-2">
+                              <div className="grid gap-2">
+                                <Label>From</Label>
+                                <Input disabled defaultValue="info@ceylonsignaturetravels.com" />
+                              </div>
+                              <div className="grid gap-2">
+                                <Label htmlFor="subject">Subject</Label>
+                                <Input id="subject" defaultValue={`Booking Confirmation for ${t.name} (Ref: ${t.id})`} />
+                              </div>
+                              <div className="grid gap-2">
+                                <Label htmlFor="message">Message</Label>
+                                <textarea
+                                  id="message"
+                                  className="flex min-h-[160px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                                  defaultValue={`Dear Reservation Team at ${d.hotel},\n\nWe would like to confirm the booking for our client, ${t.name} (Group Size: ${t.pax}), arriving for Day ${d.day} of their tour.\n\nPlease let us know if everything is confirmed on your end and provide any relevant reservation numbers.\n\nBest regards,\nCeylon Signature Travels`}
+                                />
+                              </div>
+                            </div>
+                            <DialogFooter>
+                              <Button type="submit">Send Confirmation</Button>
+                            </DialogFooter>
+                          </DialogContent>
+                        </Dialog>
+                      )}
                     </div>
                   </div>
-                </li>
+                </div>
               ))}
-            </ol>
+            </div>
           </TabsContent>
         </Tabs>
 
@@ -2088,6 +2322,7 @@ function AgentManagement({ agents, onAddAgent, onEditAgent, onDeleteAgent }: {
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [editingAgent, setEditingAgent] = useState<any>(null);
+  const [searchQuery, setSearchQuery] = useState("");
   const [form, setForm] = useState({ name: "", email: "", region: "" });
   const [editForm, setEditForm] = useState({ name: "", email: "", region: "" });
 
@@ -2171,86 +2406,97 @@ function AgentManagement({ agents, onAddAgent, onEditAgent, onDeleteAgent }: {
             {agents.length} Agents · {agents.reduce((s, a) => s + (a.clients || 0), 0)} Clients Under Management
           </span>
         </div>
-        <Dialog open={addOpen} onOpenChange={setAddOpen}>
-          <DialogTrigger asChild>
-            <Button size="sm" className="gap-1.5 rounded-lg shadow-sm text-xs h-8">
-              <UserPlus className="h-3.5 w-3.5" />
-              Add Agent
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Add new agent</DialogTitle>
-              <DialogDescription>Create a profile for a new agent.</DialogDescription>
-            </DialogHeader>
-            <div className="space-y-3">
-              <div>
-                <Label htmlFor="ag-name">Full name</Label>
-                <Input id="ag-name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="e.g. Amara Jayawardena" />
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+            <Input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search agents..."
+              className="h-8 w-[200px] md:w-[250px] pl-8 text-xs bg-background"
+            />
+          </div>
+          <Dialog open={addOpen} onOpenChange={setAddOpen}>
+            <DialogTrigger asChild>
+              <Button size="sm" className="gap-1.5 rounded-lg shadow-sm text-xs h-8">
+                <UserPlus className="h-3.5 w-3.5" />
+                Add Agent
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Add new agent</DialogTitle>
+                <DialogDescription>Create a profile for a new agent.</DialogDescription>
+              </DialogHeader>
+              <div className="space-y-3">
+                <div>
+                  <Label htmlFor="ag-name">Full name</Label>
+                  <Input id="ag-name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="e.g. Amara Jayawardena" />
+                </div>
+                <div>
+                  <Label htmlFor="ag-email">Email</Label>
+                  <Input id="ag-email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="amara@horizon.travel" />
+                </div>
+                <div>
+                  <Label htmlFor="ag-region">Assigned region</Label>
+                  <Popover open={addRegionOpen} onOpenChange={setAddRegionOpen}>
+                    <PopoverTrigger asChild>
+                      <button
+                        id="ag-region"
+                        type="button"
+                        className="w-full flex items-center justify-between h-9 px-3 py-2 text-sm rounded-md border border-input bg-background hover:bg-muted text-left cursor-pointer"
+                      >
+                        <span className={form.region ? "text-foreground" : "text-muted-foreground"}>
+                          {form.region || "Choose a region"}
+                        </span>
+                        <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="p-0 w-[240px] flex flex-col z-[100] bg-card border border-border rounded-md shadow-md" align="start">
+                      <div className="p-2 border-b border-border">
+                        <Input
+                          placeholder="Search region..."
+                          value={addSearch}
+                          onChange={(e) => setAddSearch(e.target.value)}
+                          className="h-8 text-xs focus-visible:ring-0"
+                          autoFocus
+                        />
+                      </div>
+                      <div className="overflow-y-auto flex-1 max-h-[200px] py-1" style={{ scrollbarWidth: 'thin' }} onWheel={(e) => e.stopPropagation()} onTouchMove={(e) => e.stopPropagation()}>
+                        {regions
+                          .filter((r) => r.toLowerCase().includes(addSearch.toLowerCase()))
+                          .map((r) => (
+                            <button
+                              key={r}
+                              type="button"
+                              onClick={() => {
+                                setForm({ ...form, region: r });
+                                setAddRegionOpen(false);
+                                setAddSearch("");
+                              }}
+                              className="w-full text-left px-3 py-1.5 text-xs hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-between rounded-sm cursor-pointer"
+                            >
+                              <span className="text-slate-700 dark:text-slate-300">{r}</span>
+                              {form.region === r && (
+                                <span className="h-2 w-2 rounded-full bg-blue-500" />
+                              )}
+                            </button>
+                          ))}
+                        {regions.filter((r) => r.toLowerCase().includes(addSearch.toLowerCase())).length === 0 && (
+                          <div className="text-[10px] text-muted-foreground text-center py-2">No regions found</div>
+                        )}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                </div>
               </div>
-              <div>
-                <Label htmlFor="ag-email">Email</Label>
-                <Input id="ag-email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="amara@horizon.travel" />
-              </div>
-              <div>
-                <Label htmlFor="ag-region">Assigned region</Label>
-                <Popover open={addRegionOpen} onOpenChange={setAddRegionOpen}>
-                  <PopoverTrigger asChild>
-                    <button
-                      id="ag-region"
-                      type="button"
-                      className="w-full flex items-center justify-between h-9 px-3 py-2 text-sm rounded-md border border-input bg-background hover:bg-muted text-left cursor-pointer"
-                    >
-                      <span className={form.region ? "text-foreground" : "text-muted-foreground"}>
-                        {form.region || "Choose a region"}
-                      </span>
-                      <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
-                    </button>
-                  </PopoverTrigger>
-                  <PopoverContent className="p-0 w-[240px] flex flex-col z-[100] bg-card border border-border rounded-md shadow-md" align="start">
-                    <div className="p-2 border-b border-border">
-                      <Input
-                        placeholder="Search region..."
-                        value={addSearch}
-                        onChange={(e) => setAddSearch(e.target.value)}
-                        className="h-8 text-xs focus-visible:ring-0"
-                        autoFocus
-                      />
-                    </div>
-                    <div className="overflow-y-auto flex-1 max-h-[200px] py-1">
-                      {regions
-                        .filter((r) => r.toLowerCase().includes(addSearch.toLowerCase()))
-                        .map((r) => (
-                          <button
-                            key={r}
-                            type="button"
-                            onClick={() => {
-                              setForm({ ...form, region: r });
-                              setAddRegionOpen(false);
-                              setAddSearch("");
-                            }}
-                            className="w-full text-left px-3 py-1.5 text-xs hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-between rounded-sm cursor-pointer"
-                          >
-                            <span className="text-slate-700 dark:text-slate-300">{r}</span>
-                            {form.region === r && (
-                              <span className="h-2 w-2 rounded-full bg-blue-500" />
-                            )}
-                          </button>
-                        ))}
-                      {regions.filter((r) => r.toLowerCase().includes(addSearch.toLowerCase())).length === 0 && (
-                        <div className="text-[10px] text-muted-foreground text-center py-2">No regions found</div>
-                      )}
-                    </div>
-                  </PopoverContent>
-                </Popover>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="ghost" onClick={() => setAddOpen(false)}>Cancel</Button>
-              <Button onClick={submitAdd}>Create agent</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+              <DialogFooter>
+                <Button variant="ghost" onClick={() => setAddOpen(false)}>Cancel</Button>
+                <Button onClick={submitAdd}>Create agent</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       {/* Edit Dialog */}
@@ -2293,7 +2539,7 @@ function AgentManagement({ agents, onAddAgent, onEditAgent, onDeleteAgent }: {
                       autoFocus
                     />
                   </div>
-                  <div className="overflow-y-auto flex-1 max-h-[200px] py-1">
+                  <div className="overflow-y-auto flex-1 max-h-[200px] py-1" style={{ scrollbarWidth: 'thin' }} onWheel={(e) => e.stopPropagation()} onTouchMove={(e) => e.stopPropagation()}>
                     {regions
                       .filter((r) => r.toLowerCase().includes(editSearch.toLowerCase()))
                       .map((r) => (
@@ -2351,7 +2597,7 @@ function AgentManagement({ agents, onAddAgent, onEditAgent, onDeleteAgent }: {
 
       <ScrollArea className="flex-1">
         <div className="grid gap-4 p-6 sm:grid-cols-2 xl:grid-cols-3">
-          {agents.map((a: any) => {
+          {agents.filter(a => (a.agent_name || a.name || "").toLowerCase().includes(searchQuery.toLowerCase()) || (a.email || "").toLowerCase().includes(searchQuery.toLowerCase())).map((a: any) => {
             const initials = (a.agent_name || a.name || "?")
               .split(" ")
               .map((p: any) => p[0])
@@ -2447,6 +2693,7 @@ function DriverManagement({
   const [open, setOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const [form, setForm] = useState({ name: "", phone: "", email: "", password: "" });
   const [selectedDriver, setSelectedDriver] = useState<any>(null);
 
@@ -2457,7 +2704,8 @@ function DriverManagement({
     }
 
     // Email validation
-    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    // Restricting top-level domain strictly to 2-4 characters to block '.comsss'
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
     if (!emailRegex.test(form.email.trim())) {
       toast.error("Please enter a valid email address");
       return;
@@ -2497,7 +2745,8 @@ function DriverManagement({
     }
 
     // Email validation
-    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    // Restricting top-level domain strictly to 2-4 characters to block '.comsss'
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
     if (!emailRegex.test(form.email.trim())) {
       toast.error("Please enter a valid email address");
       return;
@@ -2572,86 +2821,97 @@ function DriverManagement({
             {drivers.length} Drivers & Guides
           </span>
         </div>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button size="sm" className="gap-1.5 rounded-lg shadow-sm text-xs h-8">
-              <UserPlus className="h-3.5 w-3.5" />
-              Add Driver / Guide
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Add new driver / guide</DialogTitle>
-              <DialogDescription>Create a profile for a driver or guide.</DialogDescription>
-            </DialogHeader>
-            <div className="space-y-3">
-              <div>
-                <Label htmlFor="drv-name">Full name</Label>
-                <Input
-                  id="drv-name"
-                  value={form.name}
-                  onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  placeholder="e.g. Kamal Perera"
-                />
-              </div>
-              <div>
-                <Label htmlFor="drv-phone">Phone Number</Label>
-                <div className="flex rounded-md shadow-sm">
-                  <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-input bg-muted text-muted-foreground text-sm font-semibold select-none">
-                    🇱🇰 +94
-                  </span>
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+            <Input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search drivers..."
+              className="h-8 w-[200px] md:w-[250px] pl-8 text-xs bg-background"
+            />
+          </div>
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <Button size="sm" className="gap-1.5 rounded-lg shadow-sm text-xs h-8">
+                <UserPlus className="h-3.5 w-3.5" />
+                Add Driver / Guide
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Add new driver / guide</DialogTitle>
+                <DialogDescription>Create a profile for a driver or guide.</DialogDescription>
+              </DialogHeader>
+              <div className="space-y-3">
+                <div>
+                  <Label htmlFor="drv-name">Full name</Label>
                   <Input
-                    id="drv-phone"
-                    value={form.phone}
-                    onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                    placeholder="77 123 4567"
-                    className="rounded-l-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                    id="drv-name"
+                    value={form.name}
+                    onChange={(e) => setForm({ ...form, name: e.target.value })}
+                    placeholder="e.g. Kamal Perera"
                   />
                 </div>
-              </div>
-
-              <div>
-                <Label htmlFor="drv-email">Email</Label>
-                <Input
-                  id="drv-email"
-                  type="email"
-                  value={form.email}
-                  onChange={(e) => setForm({ ...form, email: e.target.value })}
-                  placeholder="driver@example.com"
-                />
-              </div>
-              <div>
-                <div className="flex justify-between items-center mb-1">
-                  <Label htmlFor="drv-pw">Password</Label>
-                  <Button type="button" variant="link" className="h-auto p-0 text-xs" onClick={() => {
-                    const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
-                    let newPw = "";
-                    for (let i = 0; i < 10; i++) newPw += chars.charAt(Math.floor(Math.random() * chars.length));
-                    setForm({ ...form, password: newPw });
-                  }}>Generate Random</Button>
+                <div>
+                  <Label htmlFor="drv-phone">Phone Number</Label>
+                  <div className="flex rounded-md shadow-sm">
+                    <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-input bg-muted text-muted-foreground text-sm font-semibold select-none">
+                      🇱🇰 +94
+                    </span>
+                    <Input
+                      id="drv-phone"
+                      value={form.phone}
+                      onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                      placeholder="77 123 4567"
+                      className="rounded-l-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                    />
+                  </div>
                 </div>
-                <Input
-                  id="drv-pw"
-                  type="text"
-                  value={form.password}
-                  onChange={(e) => setForm({ ...form, password: e.target.value })}
-                  placeholder="Optional: Auto-assigns if empty"
-                />
-              </div>
 
-            </div>
-            <DialogFooter>
-              <Button variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
-              <Button onClick={submit}>Create profile</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+                <div>
+                  <Label htmlFor="drv-email">Email</Label>
+                  <Input
+                    id="drv-email"
+                    type="email"
+                    value={form.email}
+                    onChange={(e) => setForm({ ...form, email: e.target.value })}
+                    placeholder="driver@example.com"
+                  />
+                </div>
+                <div>
+                  <div className="flex justify-between items-center mb-1">
+                    <Label htmlFor="drv-pw">Password</Label>
+                    <Button type="button" variant="link" className="h-auto p-0 text-xs" onClick={() => {
+                      const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
+                      let newPw = "";
+                      for (let i = 0; i < 10; i++) newPw += chars.charAt(Math.floor(Math.random() * chars.length));
+                      setForm({ ...form, password: newPw });
+                    }}>Generate Random</Button>
+                  </div>
+                  <Input
+                    id="drv-pw"
+                    type="text"
+                    value={form.password}
+                    onChange={(e) => setForm({ ...form, password: e.target.value })}
+                    placeholder="Optional: Auto-assigns if empty"
+                  />
+                </div>
+
+              </div>
+              <DialogFooter>
+                <Button variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
+                <Button onClick={submit}>Create profile</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
 
       <ScrollArea className="flex-1">
         <div className="grid gap-4 p-6 sm:grid-cols-2 xl:grid-cols-3">
-          {drivers.map((d: any) => {
+          {drivers.filter(d => (d.name || "").toLowerCase().includes(searchQuery.toLowerCase()) || (d.email || "").toLowerCase().includes(searchQuery.toLowerCase()) || (d.phone || "").toLowerCase().includes(searchQuery.toLowerCase())).map((d: any) => {
             const initials = (d.name || "?")
               .split(" ")
               .map((p: any) => p[0])
@@ -2731,8 +2991,8 @@ function DriverManagement({
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Edit Driver</DialogTitle>
-            <DialogDescription>Update driver details.</DialogDescription>
+            <DialogTitle>Edit Driver/Guide</DialogTitle>
+            <DialogDescription>Update driver/guide details.</DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
             <div>
@@ -2801,10 +3061,16 @@ function DashboardOverview({
   stats,
   navLabel,
   onNavigate,
+  tourists,
+  notifications,
+  onResolveAlert,
 }: {
   stats: { active: number; upcoming: number; pax: number; countries: number };
   navLabel: NavKey;
   onNavigate: (key: NavKey) => void;
+  tourists: Tourist[];
+  notifications: any[];
+  onResolveAlert: (id: string) => void;
 }) {
   const tiles = [
     {
@@ -2853,72 +3119,261 @@ function DashboardOverview({
     },
   ];
 
-  const labelMap: Record<NavKey, string> = {
-    dashboard: "Dashboard",
-    tours: "Active Tours",
-    leads: "Inquiries & Leads",
-    agents: "Agent Management",
-    drivers: "Drivers & Guides",
-    reports: "Reports",
-    settings: "Settings",
-  };
+  const unresolvedAlerts = useMemo(() => {
+    return notifications.filter(n => !n.resolved).slice(0, 5);
+  }, [notifications]);
+
+  const upcomingArrivals = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return tourists.filter(t => {
+      if (t.status === "Cancelled" || t.status === "Completed" || t.isLead) return false;
+      if (!t.arrival) return false;
+      const arr = new Date(t.arrival);
+      if (isNaN(arr.getTime())) return false;
+      arr.setHours(0, 0, 0, 0);
+      const diffDays = Math.ceil((arr.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+      return diffDays >= 0 && diffDays <= 7;
+    }).sort((a, b) => new Date(a.arrival!).getTime() - new Date(b.arrival!).getTime()).slice(0, 4);
+  }, [tourists]);
+
+  const departingSoonTourists = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return tourists.filter(t => {
+      if (t.status === "Cancelled" || t.status === "Completed" || t.isLead) return false;
+      if (!t.departure) return false;
+      const dep = new Date(t.departure);
+      if (isNaN(dep.getTime())) return false;
+      dep.setHours(0, 0, 0, 0);
+      const diffDays = Math.ceil((dep.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+      return diffDays <= 2;
+    }).sort((a, b) => new Date(a.departure!).getTime() - new Date(b.departure!).getTime()).slice(0, 4);
+  }, [tourists]);
+
+  const activeTourists = useMemo(() => {
+    return tourists.filter(t => (t.status === "Active" || t.status === "On Tour") && !t.isLead)
+      .slice(0, 4);
+  }, [tourists]);
 
   return (
     <ScrollArea className="flex-1">
       <div className="p-6">
-        {navLabel !== "settings" && (
-          <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
-            {tiles.map((t) => {
-              const Icon = t.icon;
-              return (
-                <div
-                  key={t.label}
-                  className={cn(
-                    "relative overflow-hidden rounded-xl border bg-card p-4 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md",
-                    t.borderClass
-                  )}
-                >
-                  {/* Visual accent indicator line */}
-                  <div className={cn("absolute left-0 top-0 bottom-0 w-1", t.accentLine)} />
-
-                  <div className="flex items-center justify-between">
-                    <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                      {t.label}
+        {navLabel === "dashboard" && (
+          <div className="space-y-6 max-w-7xl mx-auto">
+            {/* Metric Cards */}
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {tiles.map((t) => {
+                const Icon = t.icon;
+                return (
+                  <div
+                    key={t.label}
+                    className={cn(
+                      "relative overflow-hidden rounded-xl border bg-card p-4 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md",
+                      t.borderClass
+                    )}
+                  >
+                    <div className={cn("absolute left-0 top-0 bottom-0 w-1", t.accentLine)} />
+                    <div className="flex items-center justify-between">
+                      <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                        {t.label}
+                      </div>
+                      <div className={cn("flex h-8 w-8 items-center justify-center rounded-lg bg-opacity-10", t.bgClass)}>
+                        <Icon className={cn("h-4 w-4", t.textClass)} />
+                      </div>
                     </div>
-                    <div className={cn("flex h-8 w-8 items-center justify-center rounded-lg bg-opacity-10", t.bgClass)}>
-                      <Icon className={cn("h-4 w-4", t.textClass)} />
+                    <div className="mt-2.5 flex items-baseline gap-1.5">
+                      <div className="text-2xl font-extrabold tracking-tight text-foreground">
+                        {t.value}
+                      </div>
+                    </div>
+                    <div className="mt-1.5 flex items-center gap-1 text-[11px] font-medium text-muted-foreground">
+                      <span>{t.hint}</span>
                     </div>
                   </div>
+                );
+              })}
+            </div>
 
-                  <div className="mt-2.5 flex items-baseline gap-1.5">
-                    <div className="text-2xl font-extrabold tracking-tight text-foreground">
-                      {t.value}
+            {/* Dashboard Content Grid */}
+            <div className="grid gap-6 lg:grid-cols-3">
+              {/* Left Column: Active Tours & Arrivals/Departures */}
+              <div className="lg:col-span-2 space-y-6">
+
+                {/* Active Tours Panel */}
+                <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden flex flex-col">
+                  <div className="border-b border-border bg-muted/30 px-5 py-3.5 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Plane className="h-4 w-4 text-teal-500" />
+                      <h3 className="text-sm font-semibold text-foreground">Tour Category Overview</h3>
                     </div>
+                    <Button variant="ghost" size="sm" className="h-7 text-xs px-2" onClick={() => onNavigate("tours")}>
+                      View All
+                    </Button>
                   </div>
-
-                  <div className="mt-1.5 flex items-center gap-1 text-[11px] font-medium text-muted-foreground">
-                    <span>{t.hint}</span>
+                  <div className="p-0">
+                    {activeTourists.length === 0 ? (
+                      <div className="p-8 text-center text-sm text-muted-foreground">No active tours at the moment.</div>
+                    ) : (
+                      <div className="divide-y divide-border">
+                        {activeTourists.map(t => (
+                          <div key={t.id} className="flex items-center justify-between p-4 hover:bg-muted/20 transition-colors">
+                            <div className="flex items-center gap-3">
+                              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-teal-50 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400 border border-teal-100 dark:border-teal-800">
+                                <span className="text-xs font-bold">{t.name.charAt(0)}</span>
+                              </div>
+                              <div>
+                                <div className="text-sm font-semibold">{t.name}</div>
+                                <div className="text-[11px] text-muted-foreground flex items-center gap-1.5 mt-0.5">
+                                  <MapPin className="h-3 w-3" />
+                                  {t.currentLocation || "Location unknown"}
+                                  <span className="opacity-50">•</span>
+                                  <Users2 className="h-3 w-3" />
+                                  {t.pax} Pax
+                                </div>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-[11px] font-medium text-foreground">{t.driver || "No driver assigned"}</div>
+                              <div className="text-[10px] text-muted-foreground">{t.duration}</div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
-              );
-            })}
+
+                {/* Arrivals & Departures Grid */}
+                <div className="grid gap-6 sm:grid-cols-2">
+
+                  {/* Arrivals Panel */}
+                  <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden flex flex-col">
+                    <div className="border-b border-border bg-indigo-50/50 dark:bg-indigo-950/20 px-4 py-3 flex items-center gap-2">
+                      <CalendarRange className="h-4 w-4 text-indigo-500" />
+                      <h3 className="text-sm font-semibold text-foreground">Upcoming Arrivals</h3>
+                    </div>
+                    <div className="p-0 flex-1">
+                      {upcomingArrivals.length === 0 ? (
+                        <div className="p-6 text-center text-xs text-muted-foreground">No arrivals in the next 7 days.</div>
+                      ) : (
+                        <div className="divide-y divide-border">
+                          {upcomingArrivals.map(t => (
+                            <div key={t.id} className="p-3 hover:bg-muted/20 transition-colors">
+                              <div className="flex justify-between items-start mb-1">
+                                <span className="text-sm font-medium">{t.name}</span>
+                                <span className="text-[10px] font-semibold bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 px-2 py-0.5 rounded-full">
+                                  {t.arrival}
+                                </span>
+                              </div>
+                              <div className="text-[11px] text-muted-foreground line-clamp-1">
+                                {t.flightDetails ? `Flight: ${t.flightDetails}` : "No flight details"}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Departures Panel */}
+                  <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden flex flex-col">
+                    <div className="border-b border-border bg-amber-50/50 dark:bg-amber-950/20 px-4 py-3 flex items-center gap-2">
+                      <Plane className="h-4 w-4 text-amber-500" />
+                      <h3 className="text-sm font-semibold text-foreground">Departing Soon</h3>
+                    </div>
+                    <div className="p-0 flex-1">
+                      {departingSoonTourists.length === 0 ? (
+                        <div className="p-6 text-center text-xs text-muted-foreground">No departures in the next 2 days.</div>
+                      ) : (
+                        <div className="divide-y divide-border">
+                          {departingSoonTourists.map(t => {
+                            const isOverdue = new Date(t.departure!) < new Date(new Date().setHours(0, 0, 0, 0));
+                            return (
+                              <div key={t.id} className="p-3 hover:bg-muted/20 transition-colors">
+                                <div className="flex justify-between items-start mb-1">
+                                  <span className="text-sm font-medium">{t.name}</span>
+                                  <span className={cn(
+                                    "text-[10px] font-semibold px-2 py-0.5 rounded-full",
+                                    isOverdue
+                                      ? "bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300"
+                                      : "bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300"
+                                  )}>
+                                    {isOverdue ? "Overdue" : t.departure}
+                                  </span>
+                                </div>
+                                <div className="text-[11px] text-muted-foreground">
+                                  Status: <span className="font-medium text-foreground">{t.status}</span>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+              {/* Right Column: Actionable Alerts */}
+              <div className="space-y-6">
+                <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden flex flex-col h-full max-h-[600px]">
+                  <div className="border-b border-border bg-rose-50/50 dark:bg-rose-950/20 px-5 py-4 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <AlertCircle className="h-4 w-4 text-rose-500" />
+                      <h3 className="text-sm font-semibold text-foreground">Actionable Alerts</h3>
+                    </div>
+                    {unresolvedAlerts.length > 0 && (
+                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-rose-500 text-[10px] font-bold text-white">
+                        {unresolvedAlerts.length}
+                      </span>
+                    )}
+                  </div>
+                  <ScrollArea className="flex-1">
+                    <div className="p-4 space-y-3">
+                      {unresolvedAlerts.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center py-8 text-center text-muted-foreground">
+                          <CheckCircle2 className="h-8 w-8 text-emerald-500 mb-2 opacity-50" />
+                          <p className="text-sm font-medium">All caught up!</p>
+                          <p className="text-xs">No pending alerts to review.</p>
+                        </div>
+                      ) : (
+                        unresolvedAlerts.map(alert => (
+                          <div key={alert.id} className="rounded-lg border border-border/60 bg-muted/30 p-3 flex flex-col gap-2">
+                            <div className="flex justify-between items-start gap-2">
+                              <span className="text-xs font-semibold text-foreground line-clamp-2">{alert.message}</span>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 w-6 p-0 text-muted-foreground hover:text-emerald-500 shrink-0"
+                                onClick={() => onResolveAlert(alert.id)}
+                                title="Mark as resolved"
+                              >
+                                <CheckCircle2 className="h-3.5 w-3.5" />
+                              </Button>
+                            </div>
+                            <div className="text-[10px] text-muted-foreground">
+                              {new Date(alert.created_at).toLocaleDateString()} at {new Date(alert.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </ScrollArea>
+                  {unresolvedAlerts.length > 0 && (
+                    <div className="border-t border-border bg-muted/10 p-3 text-center">
+                      <Button variant="link" className="h-auto p-0 text-xs text-muted-foreground" onClick={() => onNavigate("tours")}>
+                        Go to Tours to see all alerts
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
           </div>
         )}
-
-        <div className="mt-6 rounded-xl border border-border bg-card p-5 shadow-sm">
-          <h3 className="text-[13px] font-bold text-foreground">{labelMap[navLabel]}</h3>
-          <p className="mt-1.5 text-xs text-muted-foreground leading-relaxed">
-            Detailed {labelMap[navLabel].toLowerCase()} views are available here. Switch to{" "}
-            <span
-              onClick={() => onNavigate("tours")}
-              className="font-semibold text-primary hover:underline cursor-pointer"
-            >
-              Active Tours
-            </span>{" "}
-            from the left
-            navigation to manage tourist itineraries, agent performance logs, and real-time coordinator actions.
-          </p>
-        </div>
       </div>
     </ScrollArea>
   );

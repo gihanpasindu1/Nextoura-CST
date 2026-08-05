@@ -217,18 +217,18 @@ const COUNTRIES = [
   { name: "Zimbabwe", code: "ZW", flag: "\ud83c\uddff\ud83c\uddfc", dialCode: "+263", pattern: /^[0-9]{9}$/, placeholder: "71 234 5678" },
 ];
 
-export function AddTouristSheet({ 
-  open, 
-  onOpenChange, 
-  onAdd, 
+export function AddTouristSheet({
+  open,
+  onOpenChange,
+  onAdd,
   mode = "confirmed",
   initialData,
   agents = [],
   drivers = [],
   hotels = [],
-}: { 
-  open: boolean; 
-  onOpenChange: (open: boolean) => void; 
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   onAdd: (tourist: Tourist) => void;
   mode?: "lead" | "confirmed";
   initialData?: Tourist;
@@ -277,7 +277,7 @@ export function AddTouristSheet({
             phoneVal = phoneVal.slice(phoneDialCodeCountry.dialCode.length).trim();
           }
         }
-        
+
         let matchedCountry = COUNTRIES.find(c => c.code === initialData.countryCode);
         if (matchedCountry) {
           setSelectedCountry(matchedCountry);
@@ -385,7 +385,7 @@ export function AddTouristSheet({
 
   const handleGenerate = async (type: 'text' | 'pdf' | 'manual_pdf') => {
     setIsGenerating(true);
-    
+
     try {
       if (type === 'manual_pdf') {
         if (!itinerary || itinerary.length === 0) {
@@ -432,7 +432,7 @@ export function AddTouristSheet({
           try {
             const errData = await response.json();
             errMsg = errData.detail || errMsg;
-          } catch (e) {}
+          } catch (e) { }
           throw new Error(errMsg);
         }
 
@@ -461,7 +461,7 @@ export function AddTouristSheet({
           try {
             const errData = await response.json();
             errMsg = errData.detail || errMsg;
-          } catch (e) {}
+          } catch (e) { }
           throw new Error(errMsg);
         }
 
@@ -482,7 +482,7 @@ export function AddTouristSheet({
         }
 
         setUploadProgress(0);
-        
+
         // Simulate progress while waiting for the Gemini API
         const progressInterval = setInterval(() => {
           setUploadProgress(prev => {
@@ -512,7 +512,7 @@ export function AddTouristSheet({
             try {
               const errData = await response.json();
               errMsg = errData.detail || errMsg;
-            } catch (e) {}
+            } catch (e) { }
             throw new Error(errMsg);
           }
 
@@ -541,8 +541,8 @@ export function AddTouristSheet({
                 destinations: [
                   {
                     location: (day.ui_destinations && day.ui_destinations[0]) || day.ui_title || day.destination || "Various",
-                    activities: day.ui_activities && day.ui_activities.length > 0 
-                      ? day.ui_activities 
+                    activities: day.ui_activities && day.ui_activities.length > 0
+                      ? day.ui_activities
                       : (day.description ? [day.description] : [])
                   }
                 ]
@@ -716,7 +716,7 @@ export function AddTouristSheet({
       name: formData.name,
       country: formData.country || "TBD",
       countryCode: formData.countryCode || "UN",
-      pax: formData.pax,
+      pax: Number(formData.pax) || 1,
       arrival: formData.arrival || "TBD",
       departure: formData.departure || "",
       duration: formData.duration || "TBD",
@@ -744,13 +744,13 @@ export function AddTouristSheet({
     onOpenChange(false);
   };
 
-  const filteredCountries = COUNTRIES.filter(c => 
+  const filteredCountries = COUNTRIES.filter(c =>
     c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     c.dialCode.includes(searchQuery) ||
     c.code.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const filteredCountryList = COUNTRIES.filter(c => 
+  const filteredCountryList = COUNTRIES.filter(c =>
     c.name.toLowerCase().includes(countrySearchQuery.toLowerCase()) ||
     c.code.toLowerCase().includes(countrySearchQuery.toLowerCase())
   );
@@ -761,8 +761,8 @@ export function AddTouristSheet({
         <SheetHeader className="px-6 py-4 border-b border-border bg-card">
           <SheetTitle>{mode === "lead" ? "Add New Inquiry" : (initialData ? "Confirm Tour" : "Add New Client")}</SheetTitle>
           <SheetDescription>
-            {mode === "lead" 
-              ? "Create a new lead profile. Only the name is mandatory." 
+            {mode === "lead"
+              ? "Create a new lead profile. Only the name is mandatory."
               : "Create a confirmed client profile. All personal details are required."}
           </SheetDescription>
           {/* Datalist for hotel autocomplete */}
@@ -772,7 +772,7 @@ export function AddTouristSheet({
             ))}
           </datalist>
         </SheetHeader>
-        
+
         <ScrollArea className="flex-1 p-6">
           <div className="grid gap-6">
             {/* Personal Details */}
@@ -781,11 +781,11 @@ export function AddTouristSheet({
                 <Settings2 className="h-4 w-4" />
                 Personal Information
               </h3>
-              
+
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label className={cn(errors.name && "text-destructive")}>Full Name *</Label>
-                  <Input className={cn(errors.name && "border-destructive focus-visible:ring-destructive")} value={formData.name} onChange={e => { setFormData({...formData, name: e.target.value}); if (errors.name) setErrors({...errors, name: ""}); }} placeholder="e.g. John Doe" />
+                  <Input className={cn(errors.name && "border-destructive focus-visible:ring-destructive")} value={formData.name} onChange={e => { setFormData({ ...formData, name: e.target.value }); if (errors.name) setErrors({ ...errors, name: "" }); }} placeholder="e.g. John Doe" />
                   {errors.name && <div className="text-[10px] text-destructive flex items-center gap-1"><AlertCircle className="h-3 w-3" /> {errors.name}</div>}
                 </div>
                 <div className="space-y-2 col-span-2">
@@ -831,7 +831,7 @@ export function AddTouristSheet({
                           autoFocus
                         />
                       </div>
-                      <div className="overflow-y-auto flex-1 max-h-[200px] py-1">
+                      <div className="overflow-y-auto flex-1 max-h-[200px] py-1" style={{ scrollbarWidth: 'thin' }} onWheel={(e) => e.stopPropagation()} onTouchMove={(e) => e.stopPropagation()}>
                         {filteredCountryList.map((c) => (
                           <button
                             key={c.code}
@@ -877,7 +877,7 @@ export function AddTouristSheet({
                 </div>
                 <div className="space-y-2">
                   <Label className={cn(errors.passport && "text-destructive")}>Passport Number {mode === "confirmed" && "*"}</Label>
-                  <Input className={cn(errors.passport && "border-destructive focus-visible:ring-destructive")} value={formData.passport} onChange={e => { setFormData({...formData, passport: e.target.value}); if (errors.passport) setErrors({...errors, passport: ""}); }} placeholder="e.g. P1234567" />
+                  <Input className={cn(errors.passport && "border-destructive focus-visible:ring-destructive")} value={formData.passport} onChange={e => { setFormData({ ...formData, passport: e.target.value }); if (errors.passport) setErrors({ ...errors, passport: "" }); }} placeholder="e.g. P1234567" />
                   {errors.passport && <div className="text-[10px] text-destructive flex items-center gap-1"><AlertCircle className="h-3 w-3" /> {errors.passport}</div>}
                 </div>
                 <div className="space-y-2">
@@ -916,7 +916,7 @@ export function AddTouristSheet({
                             autoFocus
                           />
                         </div>
-                        <div className="overflow-y-auto flex-1 max-h-[200px] py-1">
+                        <div className="overflow-y-auto flex-1 max-h-[200px] py-1" style={{ scrollbarWidth: 'thin' }} onWheel={(e) => e.stopPropagation()} onTouchMove={(e) => e.stopPropagation()}>
                           {filteredCountries.map((c) => (
                             <button
                               key={c.code}
@@ -947,33 +947,43 @@ export function AddTouristSheet({
                         </div>
                       </PopoverContent>
                     </Popover>
-                    <Input 
+                    <Input
                       className={cn(
                         "rounded-l-none",
                         errors.phone && "border-destructive focus-visible:ring-destructive"
-                      )} 
-                      value={formData.phone} 
-                      onChange={e => { 
-                        setFormData({...formData, phone: e.target.value}); 
-                        if (errors.phone) setErrors({...errors, phone: ""}); 
-                      }} 
-                      placeholder={`e.g. ${selectedCountry.placeholder}`} 
+                      )}
+                      value={formData.phone}
+                      onChange={e => {
+                        setFormData({ ...formData, phone: e.target.value });
+                        if (errors.phone) setErrors({ ...errors, phone: "" });
+                      }}
+                      placeholder={`e.g. ${selectedCountry.placeholder}`}
                     />
                   </div>
                   {errors.phone && <div className="text-[10px] text-destructive flex items-center gap-1"><AlertCircle className="h-3 w-3" /> {errors.phone}</div>}
                 </div>
                 <div className="space-y-2">
                   <Label className={cn(errors.email && "text-destructive")}>Email {mode === "confirmed" && "*"}</Label>
-                  <Input className={cn(errors.email && "border-destructive focus-visible:ring-destructive")} value={formData.email} onChange={e => { setFormData({...formData, email: e.target.value}); if (errors.email) setErrors({...errors, email: ""}); }} placeholder="john@example.com" />
+                  <Input className={cn(errors.email && "border-destructive focus-visible:ring-destructive")} value={formData.email} onChange={e => { setFormData({ ...formData, email: e.target.value }); if (errors.email) setErrors({ ...errors, email: "" }); }} placeholder="john@example.com" />
                   {errors.email && <div className="text-[10px] text-destructive flex items-center gap-1"><AlertCircle className="h-3 w-3" /> {errors.email}</div>}
                 </div>
                 <div className="space-y-2">
                   <Label>Pax (Group Size)</Label>
-                  <Input type="number" min="1" value={formData.pax} onChange={e => setFormData({...formData, pax: parseInt(e.target.value) || 1})} />
+                  <Input
+                    type="number"
+                    min="1"
+                    max="100"
+                    value={formData.pax}
+                    onChange={e => {
+                      let val = e.target.value;
+                      if (val !== "" && Number(val) > 100) val = "100";
+                      setFormData({ ...formData, pax: val as any });
+                    }}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label className={cn(errors.agent && "text-destructive")}>Agent {mode === "confirmed" && "*"}</Label>
-                  <Select value={formData.agent} onValueChange={v => { setFormData({...formData, agent: v}); if (errors.agent) setErrors({...errors, agent: ""}); }}>
+                  <Select value={formData.agent} onValueChange={v => { setFormData({ ...formData, agent: v }); if (errors.agent) setErrors({ ...errors, agent: "" }); }}>
                     <SelectTrigger className={cn(errors.agent && "border-destructive focus:ring-destructive")}><SelectValue placeholder="Select Agent" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="All Agents">Select Agent</SelectItem>
@@ -986,7 +996,7 @@ export function AddTouristSheet({
                 </div>
                 <div className="space-y-2">
                   <Label className={cn(errors.driver && "text-destructive")}>Driver / Guide {mode === "confirmed" && "*"}</Label>
-                  <Select value={formData.driver} onValueChange={v => { setFormData({...formData, driver: v}); if (errors.driver) setErrors({...errors, driver: ""}); }}>
+                  <Select value={formData.driver} onValueChange={v => { setFormData({ ...formData, driver: v }); if (errors.driver) setErrors({ ...errors, driver: "" }); }}>
                     <SelectTrigger className={cn(errors.driver && "border-destructive focus:ring-destructive")}><SelectValue placeholder="Select Driver" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="All Drivers">Select Driver / Guide</SelectItem>
@@ -999,22 +1009,22 @@ export function AddTouristSheet({
                 </div>
                 <div className="space-y-2">
                   <Label className={cn(errors.arrival && "text-destructive")}>Arrival Date {mode === "confirmed" && "*"}</Label>
-                  <Input type="date" className={cn(errors.arrival && "border-destructive focus-visible:ring-destructive")} value={formData.arrival} onChange={e => { setFormData({...formData, arrival: e.target.value}); if (errors.arrival) setErrors({...errors, arrival: ""}); }} />
+                  <Input type="date" className={cn("dark:[color-scheme:dark]", errors.arrival && "border-destructive focus-visible:ring-destructive")} value={formData.arrival} onChange={e => { setFormData({ ...formData, arrival: e.target.value }); if (errors.arrival) setErrors({ ...errors, arrival: "" }); }} />
                   {errors.arrival && <div className="text-[10px] text-destructive flex items-center gap-1"><AlertCircle className="h-3 w-3" /> {errors.arrival}</div>}
                 </div>
                 <div className="space-y-2">
                   <Label className={cn(errors.departure && "text-destructive")}>Departure Date {mode === "confirmed" && "*"}</Label>
-                  <Input type="date" className={cn(errors.departure && "border-destructive focus-visible:ring-destructive")} value={formData.departure} onChange={e => { setFormData({...formData, departure: e.target.value}); if (errors.departure) setErrors({...errors, departure: ""}); }} />
+                  <Input type="date" className={cn("dark:[color-scheme:dark]", errors.departure && "border-destructive focus-visible:ring-destructive")} value={formData.departure} onChange={e => { setFormData({ ...formData, departure: e.target.value }); if (errors.departure) setErrors({ ...errors, departure: "" }); }} />
                   {errors.departure && <div className="text-[10px] text-destructive flex items-center gap-1"><AlertCircle className="h-3 w-3" /> {errors.departure}</div>}
                 </div>
                 <div className="space-y-2">
                   <Label className={cn(errors.duration && "text-destructive")}>Duration {mode === "confirmed" && "*"}</Label>
-                  <Input className={cn(errors.duration && "border-destructive focus-visible:ring-destructive")} value={formData.duration} onChange={e => { setFormData({...formData, duration: e.target.value}); if (errors.duration) setErrors({...errors, duration: ""}); }} placeholder="e.g. 7 Days" />
+                  <Input className={cn(errors.duration && "border-destructive focus-visible:ring-destructive")} value={formData.duration} onChange={e => { setFormData({ ...formData, duration: e.target.value }); if (errors.duration) setErrors({ ...errors, duration: "" }); }} placeholder="e.g. 7 Days" />
                   {errors.duration && <div className="text-[10px] text-destructive flex items-center gap-1"><AlertCircle className="h-3 w-3" /> {errors.duration}</div>}
                 </div>
                 <div className="space-y-2">
                   <Label>Status</Label>
-                  <Select value={formData.status} onValueChange={v => setFormData({...formData, status: v})}>
+                  <Select value={formData.status} onValueChange={v => setFormData({ ...formData, status: v })}>
                     <SelectTrigger><SelectValue placeholder="Select Status" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="Upcoming">Upcoming</SelectItem>
@@ -1046,9 +1056,9 @@ export function AddTouristSheet({
                             const newGroup = [...formData.group];
                             if (!newGroup[i]) newGroup[i] = { name: "", passport: "", phone: "", email: "", countryCode: "GB" };
                             newGroup[i].name = e.target.value;
-                            setFormData({...formData, group: newGroup});
+                            setFormData({ ...formData, group: newGroup });
                             if (errors[`group_${i}_name`]) {
-                              const newErrors = {...errors};
+                              const newErrors = { ...errors };
                               delete newErrors[`group_${i}_name`];
                               setErrors(newErrors);
                             }
@@ -1061,9 +1071,9 @@ export function AddTouristSheet({
                             const newGroup = [...formData.group];
                             if (!newGroup[i]) newGroup[i] = { name: "", passport: "", phone: "", email: "", countryCode: "GB" };
                             newGroup[i].passport = e.target.value;
-                            setFormData({...formData, group: newGroup});
+                            setFormData({ ...formData, group: newGroup });
                             if (errors[`group_${i}_passport`]) {
-                              const newErrors = {...errors};
+                              const newErrors = { ...errors };
                               delete newErrors[`group_${i}_passport`];
                               setErrors(newErrors);
                             }
@@ -1075,8 +1085,8 @@ export function AddTouristSheet({
                             Phone {mode === "confirmed" && "*"}
                           </Label>
                           <div className="flex gap-0">
-                            <Popover 
-                              open={!!memberPopoverOpen[i]} 
+                            <Popover
+                              open={!!memberPopoverOpen[i]}
                               onOpenChange={(isOpen) => setMemberPopoverOpen(prev => ({ ...prev, [i]: isOpen }))}
                             >
                               <PopoverTrigger asChild>
@@ -1113,8 +1123,8 @@ export function AddTouristSheet({
                                     autoFocus
                                   />
                                 </div>
-                                <div className="overflow-y-auto flex-1 max-h-[200px] py-1">
-                                  {COUNTRIES.filter(c => 
+                                <div className="overflow-y-auto flex-1 max-h-[200px] py-1" style={{ scrollbarWidth: 'thin' }} onWheel={(e) => e.stopPropagation()} onTouchMove={(e) => e.stopPropagation()}>
+                                  {COUNTRIES.filter(c =>
                                     c.name.toLowerCase().includes((memberSearchQuery[i] || "").toLowerCase()) ||
                                     c.dialCode.includes(memberSearchQuery[i] || "") ||
                                     c.code.toLowerCase().includes((memberSearchQuery[i] || "").toLowerCase())
@@ -1154,24 +1164,24 @@ export function AddTouristSheet({
                                 </div>
                               </PopoverContent>
                             </Popover>
-                            <Input 
+                            <Input
                               className={cn(
                                 "h-8 text-sm rounded-l-none",
                                 errors[`group_${i}_phone`] && "border-destructive focus-visible:ring-destructive"
-                              )} 
-                              value={formData.group[i]?.phone || ""} 
-                              onChange={e => { 
+                              )}
+                              value={formData.group[i]?.phone || ""}
+                              onChange={e => {
                                 const newGroup = [...formData.group];
                                 if (!newGroup[i]) newGroup[i] = { name: "", passport: "", phone: "", email: "", countryCode: "GB" };
                                 newGroup[i].phone = e.target.value;
-                                setFormData({...formData, group: newGroup}); 
+                                setFormData({ ...formData, group: newGroup });
                                 if (errors[`group_${i}_phone`]) {
-                                  const newErrors = {...errors};
+                                  const newErrors = { ...errors };
                                   delete newErrors[`group_${i}_phone`];
                                   setErrors(newErrors);
                                 }
-                              }} 
-                              placeholder={`e.g. ${(COUNTRIES.find(c => c.code === (formData.group[i]?.countryCode || "GB")) || COUNTRIES[0]).placeholder}`} 
+                              }}
+                              placeholder={`e.g. ${(COUNTRIES.find(c => c.code === (formData.group[i]?.countryCode || "GB")) || COUNTRIES[0]).placeholder}`}
                             />
                           </div>
                           {errors[`group_${i}_phone`] && <div className="text-[10px] text-destructive flex items-center gap-1 mt-0.5"><AlertCircle className="h-3 w-3" /> {errors[`group_${i}_phone`]}</div>}
@@ -1180,23 +1190,23 @@ export function AddTouristSheet({
                           <Label className={cn("text-xs", errors[`group_${i}_email`] && "text-destructive")}>
                             Email {mode === "confirmed" && "*"}
                           </Label>
-                          <Input 
+                          <Input
                             className={cn(
                               "h-8 text-sm",
                               errors[`group_${i}_email`] && "border-destructive focus-visible:ring-destructive"
-                            )} 
-                            value={formData.group[i]?.email || ""} 
-                            onChange={e => { 
+                            )}
+                            value={formData.group[i]?.email || ""}
+                            onChange={e => {
                               const newGroup = [...formData.group];
                               if (!newGroup[i]) newGroup[i] = { name: "", passport: "", phone: "", email: "", countryCode: "GB" };
                               newGroup[i].email = e.target.value;
-                              setFormData({...formData, group: newGroup}); 
+                              setFormData({ ...formData, group: newGroup });
                               if (errors[`group_${i}_email`]) {
-                                const newErrors = {...errors};
+                                const newErrors = { ...errors };
                                 delete newErrors[`group_${i}_email`];
                                 setErrors(newErrors);
                               }
-                            }} 
+                            }}
                             placeholder="john@example.com"
                           />
                           {errors[`group_${i}_email`] && <div className="text-[10px] text-destructive flex items-center gap-1 mt-0.5"><AlertCircle className="h-3 w-3" /> {errors[`group_${i}_email`]}</div>}
@@ -1214,7 +1224,7 @@ export function AddTouristSheet({
                 <FileText className="h-4 w-4" />
                 Itinerary Builder
               </h3>
-              
+
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                 <TabsList className="grid w-full grid-cols-3">
                   <TooltipProvider>
@@ -1246,7 +1256,7 @@ export function AddTouristSheet({
                     </Tooltip>
                   </TooltipProvider>
                 </TabsList>
-                
+
                 <TabsContent value="manual" className="pt-4 space-y-4">
                   {itinerary.map((day, i) => (
                     <div key={i} className="border border-border p-4 rounded-md space-y-3 bg-accent/20 relative">
@@ -1270,15 +1280,15 @@ export function AddTouristSheet({
                             <Label className="text-xs">Hotel</Label>
                             <Input className="h-8 text-sm" list="hotels-list" value={day.hotel} onChange={e => {
                               const val = e.target.value;
-                              const updated = [...itinerary]; 
-                              updated[i].hotel = val; 
-                              
+                              const updated = [...itinerary];
+                              updated[i].hotel = val;
+
                               // Auto-fill email if a match is found
                               const matched = hotels.find(h => h.hotel_name === val);
                               if (matched && matched.hotel_email) {
                                 updated[i].hotelEmail = matched.hotel_email;
                               }
-                              
+
                               setItinerary(updated);
                             }} />
                           </div>
@@ -1318,7 +1328,7 @@ export function AddTouristSheet({
                                   </div>
                                   <div className="grid gap-2">
                                     <Label htmlFor={`message-${i}`}>Message</Label>
-                                    <textarea 
+                                    <textarea
                                       id={`message-${i}`}
                                       className="flex min-h-[160px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                                       defaultValue={`Dear Reservation Team at ${day.hotel},\n\nWe would like to request a new booking for our client, ${formData.name || "Client Name"} (Group Size: ${formData.pax}), arriving for Day ${day.day} of their tour.\n\nPlease check your availability for these dates and provide us with a quotation.\n\nWe look forward to hearing from you soon.\n\nBest regards,\nCeylon Signature Travels`}
@@ -1333,7 +1343,7 @@ export function AddTouristSheet({
                           </div>
                         )}
                       </div>
-                      
+
                       <div className="space-y-3 pt-2">
                         <Label className="text-xs text-muted-foreground uppercase tracking-wider">Destinations & Activities</Label>
 
@@ -1436,17 +1446,17 @@ export function AddTouristSheet({
                       </div>
                     </div>
                   ))}
-                  
+
                   <Button variant="outline" className="w-full gap-2 border-dashed" onClick={() => setItinerary([...itinerary, { day: itinerary.length + 1, title: "", hotel: "", hotelEmail: "", destinations: [{ location: "", activities: "" }] }])}>
                     <Plus className="h-4 w-4" />
                     Add Day
                   </Button>
-                  
+
                   {itinerary.length > 0 && (
                     <div className="pt-2">
-                      <Button 
-                        variant="default" 
-                        className="w-full gap-2 bg-primary/90 hover:bg-primary" 
+                      <Button
+                        variant="default"
+                        className="w-full gap-2 bg-primary/90 hover:bg-primary"
                         onClick={() => handleGenerate('manual_pdf')}
                         disabled={isGenerating}
                       >
@@ -1456,24 +1466,24 @@ export function AddTouristSheet({
                     </div>
                   )}
                 </TabsContent>
-                
+
                 <TabsContent value="text" className="pt-4 space-y-4">
                   <div className="text-sm text-muted-foreground">Paste rough itinerary notes or chat logs below. AI will extract the days, hotels, and locations.</div>
-                  <Textarea 
-                    placeholder="E.g. They arrive on the 24th and stay at Galle Face Hotel. Next day they go to Dambulla and stay at Kandalama..." 
+                  <Textarea
+                    placeholder="E.g. They arrive on the 24th and stay at Galle Face Hotel. Next day they go to Dambulla and stay at Kandalama..."
                     className="min-h-[150px]"
                     value={itineraryText}
                     onChange={e => setItineraryText(e.target.value)}
                   />
-                  <Button 
-                    className="w-full" 
+                  <Button
+                    className="w-full"
                     onClick={() => handleGenerate('text')}
                     disabled={isGenerating || !itineraryText.trim()}
                   >
                     {isGenerating ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generating...</> : "Generate Itinerary"}
                   </Button>
                 </TabsContent>
-                
+
                 <TabsContent value="pdf" className="pt-4 space-y-4">
                   <input
                     ref={fileInputRef}
@@ -1520,7 +1530,7 @@ export function AddTouristSheet({
                       )}
                     </div>
                   </div>
-                  
+
                   {isGenerating && (
                     <div className="space-y-2 pb-2">
                       <div className="flex justify-between text-xs text-muted-foreground">
@@ -1543,7 +1553,7 @@ export function AddTouristSheet({
             </div>
           </div>
         </ScrollArea>
-        
+
         <SheetFooter className="px-6 py-4 border-t border-border bg-card">
           <SheetClose asChild>
             <Button variant="outline">Cancel</Button>
