@@ -6,7 +6,7 @@ load_dotenv()
 resend.api_key = os.environ.get("RESEND_API_KEY")
 
 params = {
-    "from": "System Test <bookings@contact.ceylonst.ggff.net>",
+    "from": "System Test <bookings@contact.nextoura.bond>",
     "to": ["gihanpasinduofficial@gmail.com"],
     "subject": "Hello from CST",
     "text": "This is a simple plain text message to test if the domain is completely blocked by Gmail or just the HTML content."
