@@ -9,6 +9,8 @@ The project is structured iteratively:
 - **Version 1.0 (MVP):** Core back-office operations (Web Dashboard & Backend API).
 - **Version 2.0:** Mobile Application extension for drivers/guides to view itineraries and sync offline.
 
+> ℹ️ Current repository scope: this repository currently contains the **backend API** and **web frontend** projects. The mobile app is part of the roadmap but is not included in this codebase yet.
+
 ---
 
 ## 🏗️ System Architecture
@@ -125,7 +127,7 @@ erDiagram
 ### Prerequisites
 - Node.js (v18+)
 - Python (3.10+)
-- Flutter SDK (3.2.0+)
+- Flutter SDK (3.2.0+, only if working on the separate mobile app project)
 - Git
 
 ### 1. Backend Setup
@@ -134,7 +136,7 @@ cd backend
 python -m venv venv
 # Windows: venv\Scripts\activate | Mac/Linux: source venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env # Update Supabase & DB credentials
+# create backend/.env manually with the required variables listed below
 uvicorn main:app --reload
 ```
 
@@ -147,10 +149,54 @@ npm run dev
 
 ### 3. Mobile App Setup
 ```bash
-cd CST-App
-flutter pub get
-flutter run
+# Mobile app source is not included in this repository.
+# Use this section as a placeholder for the future CST-App repository.
 ```
+
+---
+
+## 📁 Repository Structure
+
+```text
+Nextoura-CST/
+├── backend/                  # FastAPI application, SQLAlchemy models, Alembic migrations
+├── frontend/                 # React + Vite dashboard
+├── test_api.py               # Backend API smoke script
+├── test_query.py             # Playwright-based UI/API verification script
+├── verify_page.py            # Direct database verification helper
+├── SRS.md                    # Software requirements specification
+└── README.md
+```
+
+---
+
+## 🔐 Environment Variables
+
+Create local environment files before running the apps:
+
+- `backend/.env`
+  - `DATABASE_URL`
+  - `SUPABASE_URL`
+  - `SUPABASE_SERVICE_ROLE_KEY`
+  - `RESEND_API_KEY`
+  - `GEMINI_API_KEY`
+  - `PEXELS_API_KEY`
+  - `SENTRY_DSN` (optional)
+
+- `frontend/.env`
+  - `VITE_SUPABASE_URL`
+  - `VITE_SUPABASE_ANON_KEY`
+
+> ✅ Keep secrets out of version control and rotate any credentials that were ever exposed.
+
+---
+
+## 📘 API Documentation
+
+When the backend is running, FastAPI auto-generated docs are available at:
+
+- Swagger UI: `http://localhost:8000/docs`
+- ReDoc: `http://localhost:8000/redoc`
 
 ---
 
@@ -160,3 +206,23 @@ flutter run
 * **Offline-First Mobile App:** Drivers can view their assigned itineraries even without an internet connection using local SQLite caching.
 * **Real-time Notifications:** Alerts for last-minute itinerary changes or driver reassignment.
 * **Automated PDF Generation:** Generating customized trip summaries and invoices.
+
+---
+
+## 🧪 Verification & Checks
+
+### Frontend checks
+```bash
+cd frontend
+npm run lint
+npm run build
+```
+
+### Utility verification scripts (optional)
+Run these only after configuring environment variables and starting required services:
+
+```bash
+python verify_page.py
+python test_api.py
+python test_query.py
+```
